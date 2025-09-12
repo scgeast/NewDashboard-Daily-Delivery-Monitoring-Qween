@@ -3,20 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Summary Daily Delivery</title>
+  <title>Summary Daily Delivery Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --primary: #3498db;
-      --secondary: #2c3e50;
+      --secondary: #f8f9fa;
       --accent: #e74c3c;
       --light: #ecf0f1;
       --dark: #2c3e50;
       --success: #27ae60;
       --warning: #f39c12;
+      --sidebar-bg: #f1f3f5;
+      --sidebar-text: #333;
       --highlight-colors: (
-        #e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6, #1abc9c, #e67e22, #2980b9, #d35400, #c0392b
+        #e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6,
+        #1abc9c, #e67e22, #2980b9, #d35400, #c0392b
       );
     }
 
@@ -38,8 +41,8 @@
     /* SIDEBAR */
     #sidebar {
       width: 280px;
-      background-color: var(--secondary);
-      color: white;
+      background-color: var(--sidebar-bg);
+      color: var(--sidebar-text);
       transition: all 0.3s ease;
       overflow-y: auto;
       z-index: 1000;
@@ -55,7 +58,7 @@
     #sidebar-header {
       padding: 15px;
       text-align: center;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid #ddd;
     }
 
     #sidebar-header h3 {
@@ -94,8 +97,9 @@
     .filter-group {
       margin-bottom: 20px;
       padding: 15px;
-      background-color: rgba(255,255,255,0.1);
+      background-color: white;
       border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .filter-group label {
@@ -103,19 +107,20 @@
       margin-bottom: 8px;
       font-weight: bold;
       font-size: 0.9em;
+      color: #555;
     }
 
     .filter-group select {
       width: 100%;
       padding: 8px;
       border-radius: 4px;
-      border: none;
-      background-color: rgba(255,255,255,0.2);
-      color: white;
+      border: 1px solid #ddd;
+      background-color: white;
+      color: #333;
     }
 
     .filter-group select option {
-      background-color: #34495e;
+      background-color: #fff;
     }
 
     .toggle-label {
@@ -189,7 +194,7 @@
       align-items: center;
       margin-bottom: 20px;
       padding: 15px;
-      background-color: var(--secondary);
+      background-color: var(--primary);
       color: white;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -197,6 +202,7 @@
 
     .header h1 {
       font-size: 1.8rem;
+      margin: 0;
     }
 
     .last-update {
@@ -278,6 +284,7 @@
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      min-height: 300px;
     }
 
     .chart-title {
@@ -286,11 +293,6 @@
       color: var(--dark);
       border-bottom: 1px solid #eee;
       padding-bottom: 8px;
-    }
-
-    .highlight {
-      font-weight: bold;
-      color: var(--accent);
     }
 
     .upload-area {
@@ -578,7 +580,7 @@
           tabContents.forEach(c => c.classList.remove('active'));
           btn.classList.add('active');
           document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
-          redrawAllCharts(); // Redraw on tab switch
+          redrawAllCharts();
         });
       });
 
@@ -917,11 +919,11 @@
       const ctx = document.getElementById('canvas-avg-volume-plant').getContext('2d');
       charts['avgVolumeByPlant'] = new Chart(ctx, {
         type: 'bar',
-        data: {
+         {
           labels,
           datasets: [{
             label: 'Avg Volume per Trip (m³)',
-            data: values,
+             values,
             backgroundColor: highlightColors.slice(0, labels.length),
             borderColor: highlightColors.slice(0, labels.length),
             borderWidth: 1
@@ -980,7 +982,7 @@
       const ctx = document.getElementById('canvas-avg-volume-day').getContext('2d');
       charts['avgVolumePerDay'] = new Chart(ctx, {
         type: 'line',
-        data: {
+         {
           labels,
           datasets: [{
             label: 'Avg Volume per Day (m³)',
@@ -1030,11 +1032,11 @@
       const ctx = document.getElementById('canvas-volume-truck').getContext('2d');
       charts['volumePerTruck'] = new Chart(ctx, {
         type: 'bar',
-        data: {
+         {
           labels,
           datasets: [{
             label: 'Total Volume per Truck (m³)',
-            data: values,
+             values,
             backgroundColor: highlightColors.slice(0, labels.length),
             borderColor: highlightColors.slice(0, labels.length),
             borderWidth: 1
@@ -1086,7 +1088,7 @@
           labels,
           datasets: [{
             label: 'Total Trips per Truck',
-            data: values,
+             values,
             backgroundColor: highlightColors.slice(0, labels.length),
             borderColor: highlightColors.slice(0, labels.length),
             borderWidth: 1
@@ -1129,7 +1131,7 @@
         data: {
           labels: ['Avg Load per Truck'],
           datasets: [{
-            data: [avg, 100 - avg],
+             [avg, 100 - avg],
             backgroundColor: ['#3498db', '#ecf0f1'],
             borderWidth: 0,
             cutout: '70%'
@@ -1239,7 +1241,7 @@
       const ctx = document.getElementById('canvas-trend-distance').getContext('2d');
       charts['trendDistance'] = new Chart(ctx, {
         type: 'line',
-        data: {
+         {
           labels,
           datasets: [{
             label: 'Total Volume by Distance Range',
@@ -1339,11 +1341,11 @@
       const ctx = document.getElementById('canvas-volume-customer').getContext('2d');
       charts['volumePerCustomer'] = new Chart(ctx, {
         type: 'bar',
-        data: {
+         {
           labels,
           datasets: [{
             label: 'Volume (m³)',
-            data: values,
+             values,
             backgroundColor: highlightColors.slice(0, labels.length),
             borderColor: highlightColors.slice(0, labels.length),
             borderWidth: 1
