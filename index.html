@@ -95,6 +95,8 @@
 
     #sidebar-content {
       padding: 15px;
+      max-height: calc(100vh - 100px); /* Hindari scroll bar */
+      overflow-y: hidden; /* Hilangkan scroll bar */
     }
 
     .filter-group {
@@ -423,7 +425,7 @@
 
       <div class="filter-group">
         <div class="toggle-label">
-          <span>Data Label On/Off</span>
+          <span style="color: var(--primary);">Data Label On/Off</span>
           <label class="toggle-switch">
             <input type="checkbox" id="data-label-toggle" checked>
             <span class="toggle-slider"></span>
