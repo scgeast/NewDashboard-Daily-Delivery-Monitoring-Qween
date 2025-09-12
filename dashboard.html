@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Summary Daily Delivery</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #3498db;
+      --secondary: #2c3e50;
+      --accent: #e74c3c;
+      --light: #ecf0f1;
+      --dark: #2c3e50;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --highlight-colors: (
+        #e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6, #1abc9c, #e67e22, #2980b9, #d35400, #c0392b
+      );
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f5f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: row;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: 280px;
+      background-color: var(--secondary);
+      color: white;
+      transition: all 0.3s ease;
+      overflow-y: auto;
+      z-index: 1000;
+      height: 100vh;
+      position: fixed;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    #sidebar.collapsed {
+      width: 60px;
+    }
+
+    #sidebar-header {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #sidebar-header h3 {
+      overflow: hidden;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+
+    #sidebar.collapsed h3 {
+      display: none;
+    }
+
+    #toggle-btn {
+      position: absolute;
+      top: 15px;
+      right: -25px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      z-index: 1001;
+    }
+
+    #sidebar-content {
+      padding: 15px;
+    }
+
+    .filter-group {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: rgba(255,255,255,0.1);
+      border-radius: 8px;
+    }
+
+    .filter-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+
+    .filter-group select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: none;
+      background-color: rgba(255,255,255,0.2);
+      color: white;
+    }
+
+    .filter-group select option {
+      background-color: #34495e;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+      margin-left: 10px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(26px);
+    }
+
+    /* MAIN CONTENT */
+    #main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 20px;
+      transition: margin-left 0.3s ease;
+    }
+
+    #main-content.sidebar-collapsed {
+      margin-left: 60px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: var(--secondary);
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+    }
+
+    .last-update {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .periode {
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+      color: #555;
+    }
+
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .kpi-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .kpi-card h3 {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .kpi-card p {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--dark);
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      background: #f1f1f1;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      border-radius: 8px 8px 0 0;
+      margin-right: 5px;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .chart-container {
+      margin-bottom: 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+
+    .chart-title {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      color: var(--dark);
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+
+    .highlight {
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 30px;
+      background-color: #fafafa;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+
+    .upload-area:hover {
+      border-color: var(--primary);
+    }
+
+    .upload-area input {
+      display: none;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 15px;
+      color: #777;
+      font-size: 0.9rem;
+      margin-top: 30px;
+      border-top: 1px solid #eee;
+    }
+
+    .top10-highlight {
+      background-color: rgba(231, 76, 60, 0.2);
+      border-left: 4px solid #e74c3c;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #sidebar {
+        width: 60px;
+      }
+      #main-content {
+        margin-left: 60px;
+      }
+      .header h1 {
+        font-size: 1.5rem;
+      }
+      .kpi-card p {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <h3>Dashboard</h3>
+    </div>
+    <button id="toggle-btn"><<</button>
+
+    <div id="sidebar-content">
+      <div class="upload-area" id="upload-area">
+        <input type="file" id="excel-file" accept=".xlsx,.xls" />
+        <p>Drag & Drop Excel File or Click to Upload</p>
+        <small>Min: 2KB | Max: 30MB</small>
+      </div>
+
+      <div class="filter-group">
+        <label>Date Range</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="date" id="start-date" />
+          <input type="date" id="end-date" />
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Area</label>
+        <select id="filter-area" multiple size="5">
+          <option value="all">Select All</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Plant</label>
+        <select id="filter-plant" multiple size="5">
+          <option value="all">Select All</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Truck Type</label>
+        <select id="filter-truck-type" multiple size="5">
+          <option value="all">Select All</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <div class="toggle-label">
+          <span>Data Label On/Off</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="data-label-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content">
+    <div class="header">
+      <h1 id="dashboard-title">Summary Daily Delivery...Area (All)</h1>
+      <div class="last-update" id="last-update">Last update: --</div>
+    </div>
+
+    <div class="periode" id="periode">Periode: --</div>
+
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <h3>Total Area</h3>
+        <p id="kpi-area">0</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Total Plant</h3>
+        <p id="kpi-plant">0</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Total Volume (m³)</h3>
+        <p id="kpi-volume">0</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Avg Volume (m³)</h3>
+        <p id="kpi-avg-volume">0</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Total Truck</h3>
+        <p id="kpi-truck">0</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Avg Load / Truck</h3>
+        <p id="kpi-avg-load">0</p>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="logistic">LOGISTIC</button>
+      <button class="tab-btn" data-tab="sales">SALES AND CUSTOMER PERFORMANCE</button>
+    </div>
+
+    <!-- TAB 1: LOGISTIC -->
+    <div id="tab-logistic" class="tab-content active">
+      <h2 class="chart-title">A. Delivery</h2>
+      
+      <div id="chart-volume-by-area" class="chart-container" style="display:none;">
+        <h3 class="chart-title">Volume by Area</h3>
+        <canvas id="canvas-volume-area"></canvas>
+      </div>
+
+      <div id="chart-volume-by-plant" class="chart-container">
+        <h3 class="chart-title">Volume by Plant</h3>
+        <canvas id="canvas-volume-plant"></canvas>
+      </div>
+
+      <div id="chart-avg-volume-by-plant" class="chart-container">
+        <h3 class="chart-title">Avg Volume by Plant</h3>
+        <canvas id="canvas-avg-volume-plant"></canvas>
+      </div>
+
+      <div id="chart-avg-volume-per-day" class="chart-container">
+        <h3 class="chart-title">Avg Volume per Day</h3>
+        <canvas id="canvas-avg-volume-day"></canvas>
+      </div>
+
+      <h2 class="chart-title">B. Utilization Truck</h2>
+
+      <div id="chart-volume-per-truck" class="chart-container">
+        <h3 class="chart-title">Volume per Truck</h3>
+        <canvas id="canvas-volume-truck"></canvas>
+      </div>
+
+      <div id="chart-total-trip-per-truck" class="chart-container">
+        <h3 class="chart-title">Total Trip per Truck</h3>
+        <canvas id="canvas-trip-truck"></canvas>
+      </div>
+
+      <div id="chart-avg-load-per-truck" class="chart-container">
+        <h3 class="chart-title">Avg Load per Truck</h3>
+        <canvas id="canvas-avg-load-truck"></canvas>
+      </div>
+
+      <h2 class="chart-title">C. Distance</h2>
+
+      <div id="chart-avg-distance-per-plant" class="chart-container">
+        <h3 class="chart-title">Avg Distance per Plant</h3>
+        <canvas id="canvas-avg-distance-plant"></canvas>
+      </div>
+
+      <div id="chart-trend-volume-by-distance" class="chart-container">
+        <h3 class="chart-title">Trend Volume by Distance</h3>
+        <canvas id="canvas-trend-distance"></canvas>
+      </div>
+    </div>
+
+    <!-- TAB 2: SALES -->
+    <div id="tab-sales" class="tab-content">
+      <h2 class="chart-title">A. Volume per Sales</h2>
+      <div class="chart-container">
+        <canvas id="canvas-volume-sales"></canvas>
+      </div>
+
+      <h2 class="chart-title">B. Volume per End Customer</h2>
+      <div class="chart-container">
+        <canvas id="canvas-volume-customer"></canvas>
+      </div>
+    </div>
+
+    <div class="footer">
+      Summary Daily Delivery And Sales by L=23-51Xe.
+    </div>
+  </div>
+
+  <script>
+    // Global Data
+    let rawData = [];
+    let filteredData = [];
+    let charts = {};
+    let highlightColors = [
+      '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
+      '#1abc9c', '#e67e22', '#2980b9', '#d35400', '#c0392b'
+    ];
+
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const mainContent = document.getElementById('main-content');
+    const uploadArea = document.getElementById('upload-area');
+    const excelFile = document.getElementById('excel-file');
+    const dashboardTitle = document.getElementById('dashboard-title');
+    const lastUpdate = document.getElementById('last-update');
+    const periode = document.getElementById('periode');
+    const kpiArea = document.getElementById('kpi-area');
+    const kpiPlant = document.getElementById('kpi-plant');
+    const kpiVolume = document.getElementById('kpi-volume');
+    const kpiAvgVolume = document.getElementById('kpi-avg-volume');
+    const kpiTruck = document.getElementById('kpi-truck');
+    const kpiAvgLoad = document.getElementById('kpi-avg-load');
+
+    const filterArea = document.getElementById('filter-area');
+    const filterPlant = document.getElementById('filter-plant');
+    const filterTruckType = document.getElementById('filter-truck-type');
+    const startDate = document.getElementById('start-date');
+    const endDate = document.getElementById('end-date');
+    const dataLabelToggle = document.getElementById('data-label-toggle');
+
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // Initialize
+    init();
+
+    function init() {
+      setupEventListeners();
+      updateLastUpdateTime();
+    }
+
+    function setupEventListeners() {
+      toggleBtn.addEventListener('click', toggleSidebar);
+      excelFile.addEventListener('change', handleFileUpload);
+      uploadArea.addEventListener('click', () => excelFile.click());
+
+      // Filter event listeners
+      [filterArea, filterPlant, filterTruckType, startDate, endDate].forEach(el => {
+        el.addEventListener('change', applyFilters);
+      });
+
+      dataLabelToggle.addEventListener('change', () => {
+        redrawAllCharts();
+      });
+
+      // Tab switching
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabButtons.forEach(b => b.classList.remove('active'));
+          tabContents.forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+          redrawAllCharts(); // Redraw on tab switch
+        });
+      });
+
+      // Prevent default drag behavior
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+      });
+
+      uploadArea.addEventListener('drop', handleDrop, false);
+    }
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    function highlight() {
+      uploadArea.style.borderColor = '#3498db';
+    }
+
+    function unhighlight() {
+      uploadArea.style.borderColor = '#ccc';
+    }
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length) {
+        excelFile.files = files;
+        handleFileUpload();
+      }
+    }
+
+    function handleFileUpload() {
+      const file = excelFile.files[0];
+      if (!file) return;
+
+      if (file.size < 2 * 1024) {
+        alert("File must be at least 2KB!");
+        return;
+      }
+      if (file.size > 30 * 1024 * 1024) {
+        alert("File must be less than 30MB!");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        // Convert to object array with headers from first row
+        const headers = rawData[0].map(h => String(h).trim());
+        rawData = rawData.slice(1).map(row => {
+          const obj = {};
+          headers.forEach((header, idx) => {
+            obj[header] = row[idx] !== undefined ? row[idx] : null;
+          });
+          return obj;
+        });
+
+        // Extract unique values for filters
+        populateFilters();
+
+        // Apply initial filters
+        applyFilters();
+
+        // Show success
+        console.log("✅ Excel processed successfully");
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function populateFilters() {
+      const areas = [...new Set(rawData.map(r => r.Area || ''))].filter(a => a);
+      const plants = [...new Set(rawData.map(r => r['Plant Name'] || ''))].filter(p => p);
+      const truckTypes = [...new Set(rawData.map(r => r['Truck Type'] || ''))].filter(t => t);
+
+      // Clear and repopulate Area filter
+      filterArea.innerHTML = '<option value="all">Select All</option>';
+      areas.forEach(area => {
+        const opt = document.createElement('option');
+        opt.value = area;
+        opt.textContent = area;
+        filterArea.appendChild(opt);
+      });
+
+      // Clear and repopulate Plant filter
+      filterPlant.innerHTML = '<option value="all">Select All</option>';
+      plants.forEach(plant => {
+        const opt = document.createElement('option');
+        opt.value = plant;
+        opt.textContent = plant;
+        filterPlant.appendChild(opt);
+      });
+
+      // Clear and repopulate Truck Type filter
+      filterTruckType.innerHTML = '<option value="all">Select All</option>';
+      truckTypes.forEach(type => {
+        const opt = document.createElement('option');
+        opt.value = type;
+        opt.textContent = type;
+        filterTruckType.appendChild(opt);
+      });
+
+      // Select all by default
+      Array.from(filterArea.options).forEach(opt => opt.selected = true);
+      Array.from(filterPlant.options).forEach(opt => opt.selected = true);
+      Array.from(filterTruckType.options).forEach(opt => opt.selected = true);
+    }
+
+    function applyFilters() {
+      const selectedAreas = Array.from(filterArea.selectedOptions).map(o => o.value);
+      const selectedPlants = Array.from(filterPlant.selectedOptions).map(o => o.value);
+      const selectedTruckTypes = Array.from(filterTruckType.selectedOptions).map(o => o.value);
+      const start = startDate.value ? new Date(startDate.value) : null;
+      const end = endDate.value ? new Date(endDate.value) : null;
+
+      filteredData = rawData.filter(row => {
+        const areaMatch = selectedAreas.includes('all') || selectedAreas.includes(row.Area);
+        const plantMatch = selectedPlants.includes('all') || selectedPlants.includes(row['Plant Name']);
+        const truckTypeMatch = selectedTruckTypes.includes('all') || selectedTruckTypes.includes(row['Truck Type']);
+
+        let dateMatch = true;
+        if (row.DP_No && row['Date']) {
+          const dateStr = row['Date'];
+          let date;
+          if (typeof dateStr === 'string') {
+            date = new Date(dateStr);
+          } else if (dateStr instanceof Date) {
+            date = dateStr;
+          }
+          if (start && date < start) return false;
+          if (end && date > end) return false;
+        }
+
+        return areaMatch && plantMatch && truckTypeMatch;
+      });
+
+      // Update KPIs
+      updateKPIs();
+
+      // Update Dashboard Title & Periode
+      const areaText = selectedAreas.includes('all') ? 'All' : selectedAreas.join(', ');
+      dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaText})`;
+
+      const periodText = start && end
+        ? `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
+        : 'All Dates';
+      periode.textContent = `Periode: ${periodText}`;
+
+      // Show/hide Volume by Area based on "Select All"
+      const volumeByAreaContainer = document.getElementById('chart-volume-by-area');
+      if (selectedAreas.includes('all')) {
+        volumeByAreaContainer.style.display = 'block';
+      } else {
+        volumeByAreaContainer.style.display = 'none';
+      }
+
+      // Redraw all charts
+      redrawAllCharts();
+    }
+
+    function updateKPIs() {
+      const totalArea = [...new Set(filteredData.map(r => r.Area))].filter(a => a).length;
+      const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].filter(p => p).length;
+      const totalVolume = filteredData.reduce((sum, r) => sum + (parseFloat(r.QTY) || 0), 0);
+      const avgVolume = totalVolume > 0 ? (totalVolume / filteredData.length).toFixed(2) : 0;
+      const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].filter(t => t).length;
+      const avgLoad = totalTruck > 0 ? (totalVolume / totalTruck).toFixed(2) : 0;
+
+      kpiArea.textContent = totalArea;
+      kpiPlant.textContent = totalPlant;
+      kpiVolume.textContent = totalVolume.toFixed(2);
+      kpiAvgVolume.textContent = avgVolume;
+      kpiTruck.textContent = totalTruck;
+      kpiAvgLoad.textContent = avgLoad;
+    }
+
+    function redrawAllCharts() {
+      // Destroy existing charts
+      Object.keys(charts).forEach(key => {
+        if (charts[key]) charts[key].destroy();
+      });
+      charts = {};
+
+      const showLabels = dataLabelToggle.checked;
+
+      // Volume by Area (only if Select All)
+      if (Array.from(filterArea.selectedOptions).some(o => o.value === 'all')) {
+        renderVolumeByArea(showLabels);
+      }
+
+      renderVolumeByPlant(showLabels);
+      renderAvgVolumeByPlant(showLabels);
+      renderAvgVolumePerDay(showLabels);
+      renderVolumePerTruck(showLabels);
+      renderTotalTripPerTruck(showLabels);
+      renderAvgLoadPerTruck(showLabels);
+      renderAvgDistancePerPlant(showLabels);
+      renderTrendVolumeByDistance(showLabels);
+      renderVolumePerSales(showLabels);
+      renderVolumePerCustomer(showLabels);
+    }
+
+    // CHART RENDERERS
+    function renderVolumeByArea(showLabels) {
+      const data = {};
+      filteredData.forEach(row => {
+        const area = row.Area || 'Unknown';
+        data[area] = (data[area] || 0) + (parseFloat(row.QTY) || 0);
+      });
+
+      const labels = Object.keys(data);
+      const values = Object.values(data);
+
+      const ctx = document.getElementById('canvas-volume-area').getContext('2d');
+      charts['volumeByArea'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Volume (m³)',
+            data: values,
+            backgroundColor: highlightColors.slice(0, labels.length),
+            borderColor: highlightColors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          elements: {
+            bar: { borderRadius: 5 }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderVolumeByPlant(showLabels) {
+      const data = {};
+      filteredData.forEach(row => {
+        const plant = row['Plant Name'] || 'Unknown';
+        data[plant] = (data[plant] || 0) + (parseFloat(row.QTY) || 0);
+      });
+
+      const labels = Object.keys(data).sort((a,b) => data[b] - data[a]).slice(0, 10);
+      const values = labels.map(l => data[l]);
+
+      const ctx = document.getElementById('canvas-volume-plant').getContext('2d');
+      charts['volumeByPlant'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Volume (m³)',
+            data: values,
+            backgroundColor: highlightColors.slice(0, labels.length),
+            borderColor: highlightColors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          elements: {
+            bar: { borderRadius: 5 }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderAvgVolumeByPlant(showLabels) {
+      const plantVolumes = {};
+      const plantCounts = {};
+
+      filteredData.forEach(row => {
+        const plant = row['Plant Name'] || 'Unknown';
+        const qty = parseFloat(row.QTY) || 0;
+        plantVolumes[plant] = (plantVolumes[plant] || 0) + qty;
+        plantCounts[plant] = (plantCounts[plant] || 0) + 1;
+      });
+
+      const avgData = {};
+      Object.keys(plantVolumes).forEach(plant => {
+        avgData[plant] = (plantVolumes[plant] / plantCounts[plant]).toFixed(2);
+      });
+
+      const labels = Object.keys(avgData).sort((a,b) => avgData[b] - avgData[a]).slice(0, 10);
+      const values = labels.map(l => parseFloat(avgData[l]));
+
+      const ctx = document.getElementById('canvas-avg-volume-plant').getContext('2d');
+      charts['avgVolumeByPlant'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Avg Volume per Trip (m³)',
+            data: values,
+            backgroundColor: highlightColors.slice(0, labels.length),
+            borderColor: highlightColors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 1 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          elements: {
+            bar: { borderRadius: 5 }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderAvgVolumePerDay(showLabels) {
+      const dailyData = {};
+
+      filteredData.forEach(row => {
+        const dateStr = row['Date'];
+        let date;
+        if (typeof dateStr === 'string') {
+          date = new Date(dateStr);
+        } else if (dateStr instanceof Date) {
+          date = dateStr;
+        }
+        if (!date || isNaN(date.getTime())) return;
+
+        const dayKey = date.toISOString().split('T')[0];
+        const qty = parseFloat(row.QTY) || 0;
+        if (!dailyData[dayKey]) dailyData[dayKey] = { total: 0, count: 0 };
+        dailyData[dayKey].total += qty;
+        dailyData[dayKey].count += 1;
+      });
+
+      const sortedDates = Object.keys(dailyData).sort();
+      const labels = sortedDates.map(d => new Date(d).toLocaleDateString('id-ID'));
+      const values = sortedDates.map(d => (dailyData[d].total / dailyData[d].count).toFixed(2));
+
+      const ctx = document.getElementById('canvas-avg-volume-day').getContext('2d');
+      charts['avgVolumePerDay'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Avg Volume per Day (m³)',
+            data: values,
+            fill: false,
+            borderColor: '#3498db',
+            tension: 0.1,
+            pointRadius: 4,
+            pointBackgroundColor: '#3498db',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 1 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderVolumePerTruck(showLabels) {
+      const truckData = {};
+      filteredData.forEach(row => {
+        const truck = row['Truck No'] || 'Unknown';
+        const qty = parseFloat(row.QTY) || 0;
+        truckData[truck] = (truckData[truck] || 0) + qty;
+      });
+
+      const labels = Object.keys(truckData).sort((a,b) => truckData[b] - truckData[a]).slice(0, 10);
+      const values = labels.map(l => truckData[l]);
+
+      const ctx = document.getElementById('canvas-volume-truck').getContext('2d');
+      charts['volumePerTruck'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Total Volume per Truck (m³)',
+            data: values,
+            backgroundColor: highlightColors.slice(0, labels.length),
+            borderColor: highlightColors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          elements: {
+            bar: { borderRadius: 5 }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderTotalTripPerTruck(showLabels) {
+      const tripData = {};
+
+      filteredData.forEach(row => {
+        const key = `${row['Truck No']} - ${row['DP No']}`;
+        const truck = row['Truck No'] || 'Unknown';
+        if (!tripData[truck]) tripData[truck] = new Set();
+        tripData[truck].add(row['DP No']);
+      });
+
+      const labels = Object.keys(tripData).sort((a,b) => tripData[b].size - tripData[a].size).slice(0, 10);
+      const values = labels.map(l => tripData[l].size);
+
+      const ctx = document.getElementById('canvas-trip-truck').getContext('2d');
+      charts['totalTripPerTruck'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Total Trips per Truck',
+            data: values,
+            backgroundColor: highlightColors.slice(0, labels.length),
+            borderColor: highlightColors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          elements: {
+            bar: { borderRadius: 5 }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderAvgLoadPerTruck(showLabels) {
+      const totalVolume = filteredData.reduce((sum, r) => sum + (parseFloat(r.QTY) || 0), 0);
+      const totalTrucks = [...new Set(filteredData.map(r => r['Truck No']))].filter(t => t).length;
+      const avg = totalTrucks > 0 ? (totalVolume / totalTrucks).toFixed(2) : 0;
+
+      const ctx = document.getElementById('canvas-avg-load-truck').getContext('2d');
+      charts['avgLoadPerTruck'] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Avg Load per Truck'],
+          datasets: [{
+            data: [avg, 100 - avg],
+            backgroundColor: ['#3498db', '#ecf0f1'],
+            borderWidth: 0,
+            cutout: '70%'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `Avg Load: ${context.raw} m³`;
+                }
+              }
+            },
+            title: {
+              display: true,
+              text: 'Avg Load per Truck',
+              font: { size: 16 }
+            }
+          },
+          animation: { duration: 800 },
+          cutout: '70%',
+          layout: { padding: 10 }
+        }
+      });
+    }
+
+    function renderAvgDistancePerPlant(showLabels) {
+      const plantDist = {};
+      const plantCount = {};
+
+      filteredData.forEach(row => {
+        const plant = row['Plant Name'] || 'Unknown';
+        const dist = parseFloat(row.Distance) || 0;
+        if (dist <= 0) return;
+
+        plantDist[plant] = (plantDist[plant] || 0) + dist;
+        plantCount[plant] = (plantCount[plant] || 0) + 1;
+      });
+
+      const avgDist = {};
+      Object.keys(plantDist).forEach(p => {
+        avgDist[p] = (plantDist[p] / plantCount[p]).toFixed(1);
+      });
+
+      const labels = Object.keys(avgDist).sort((a,b) => avgDist[b] - avgDist[a]).slice(0, 10);
+      const values = labels.map(l => parseFloat(avgDist[l]));
+
+      const ctx = document.getElementById('canvas-avg-distance-plant').getContext('2d');
+      charts['avgDistancePerPlant'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Avg Distance (km)',
+            data: values,
+            backgroundColor: highlightColors.slice(0, labels.length),
+            borderColor: highlightColors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 1 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          elements: {
+            bar: { borderRadius: 5 }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderTrendVolumeByDistance(showLabels) {
+      const bins = {};
+      const binSize = 20;
+
+      filteredData.forEach(row => {
+        const dist = parseFloat(row.Distance) || 0;
+        const qty = parseFloat(row.QTY) || 0;
+        if (dist <= 0 || qty <= 0) return;
+
+        const bin = Math.floor(dist / binSize) * binSize;
+        bins[bin] = (bins[bin] || 0) + qty;
+      });
+
+      const labels = Object.keys(bins).map(k => `${parseInt(k)}-${parseInt(k)+binSize} km`);
+      const values = Object.values(bins);
+
+      const ctx = document.getElementById('canvas-trend-distance').getContext('2d');
+      charts['trendDistance'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Total Volume by Distance Range',
+            data: values,
+            fill: false,
+            borderColor: '#e74c3c',
+            tension: 0.1,
+            pointRadius: 4,
+            pointBackgroundColor: '#e74c3c',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderVolumePerSales(showLabels) {
+      const salesData = {};
+      filteredData.forEach(row => {
+        const sales = row['Sales Man'] || 'Unknown';
+        const qty = parseFloat(row.QTY) || 0;
+        salesData[sales] = (salesData[sales] || 0) + qty;
+      });
+
+      const labels = Object.keys(salesData).sort((a,b) => salesData[b] - salesData[a]).slice(0, 10);
+      const values = labels.map(l => salesData[l]);
+
+      const ctx = document.getElementById('canvas-volume-sales').getContext('2d');
+      charts['volumePerSales'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Volume (m³)',
+            data: values,
+            backgroundColor: highlightColors.slice(0, labels.length),
+            borderColor: highlightColors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          elements: {
+            bar: { borderRadius: 5 }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function renderVolumePerCustomer(showLabels) {
+      const customerData = {};
+      filteredData.forEach(row => {
+        const cust = row['End Customer Name'] || 'Unknown';
+        const qty = parseFloat(row.QTY) || 0;
+        customerData[cust] = (customerData[cust] || 0) + qty;
+      });
+
+      const labels = Object.keys(customerData).sort((a,b) => customerData[b] - customerData[a]).slice(0, 10);
+      const values = labels.map(l => customerData[l]);
+
+      const ctx = document.getElementById('canvas-volume-customer').getContext('2d');
+      charts['volumePerCustomer'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Volume (m³)',
+            data: values,
+            backgroundColor: highlightColors.slice(0, labels.length),
+            borderColor: highlightColors.slice(0, labels.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 }
+            },
+            x: {
+              ticks: { maxRotation: 45, minRotation: 0 }
+            }
+          },
+          animation: { duration: 800 },
+          elements: {
+            bar: { borderRadius: 5 }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    function toggleSidebar() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('sidebar-collapsed');
+      toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
+    }
+
+    function updateLastUpdateTime() {
+      const now = new Date();
+      lastUpdate.textContent = `Last update: ${now.toLocaleString('id-ID')}`;
+      setInterval(updateLastUpdateTime, 60000); // Update every minute
+    }
+  </script>
+</body>
+</html>
