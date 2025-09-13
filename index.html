@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Summary Daily Delivery</title>
 
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.ico">
-
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS (xlsx) -->
@@ -716,6 +713,30 @@
       return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
     }
 
+    // Normalisasi area (untuk menangani variasi nama)
+    function normalizeArea(area) {
+      if (!area) return area;
+      const map = {
+        'east': 'East Java',
+        'west indonesia 1': 'West Java',
+        'west indonesia 2': 'West Java',
+        'west indonesia 3': 'West Java',
+        'east indonesia': 'East Java',
+        'jakarta special capital region': 'Jakarta',
+        'lampung': 'Lampung',
+        'banten': 'Banten',
+        'jawa timur': 'East Java',
+        'jawa tengah': 'Central Java',
+        'sumatera': 'Sumatra',
+        'kalimantan': 'Kalimantan',
+        'sulawesi': 'Sulawesi',
+        'nusa tenggara': 'Nusa Tenggara',
+        'papua': 'Papua'
+      };
+      const clean = area.toLowerCase().trim();
+      return map[clean] || area;
+    }
+
     // DOM Elements — diambil setelah DOM siap
     let sidebar, main, toggleBtn, excelFile, startDate, endDate, dataLabelToggle;
     let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolume, kpiTruck, kpiAvgLoadTruck, lastUpdate;
@@ -840,6 +861,7 @@
             throw new Error(`Sheet "${firstSheetName}" kosong.`);
           }
 
+          // --- PARSE SEMUA BARIS SEBAGAI ARRAY 2D ---
           const jsonData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: null,
@@ -850,16 +872,30 @@
             throw new Error("Tidak ada data dalam sheet.");
           }
 
+          // 🔍 DETEKSI JIKA BARIS PERTAMA ADALAH HEADER GABUNGAN DENGAN '|'
+          const firstRow = jsonData[0];
+          if (Array.isArray(firstRow) && firstRow.length === 1 && typeof firstRow[0] === 'string') {
+            const headerStr = firstRow[0];
+            // Cek apakah ini header gabungan dengan separator |
+            if (headerStr.includes('|')) {
+              // Split header gabungan menjadi array kolom
+              const splitHeaders = headerStr.split('|').map(h => h.trim());
+              // Ganti baris pertama dengan header yang sudah dipisah
+              jsonData[0] = splitHeaders;
+            }
+          }
+
+          // Daftar kolom kunci yang harus ada
           const colMap = {
             'DP No': ['dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn'],
-            'QTY': ['qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah'],
-            'Area': ['area', 'region', 'wilayah', 'lokasi', 'zone', 'regional'],
-            'Plant Name': ['plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location', 'site'],
-            'Truck No': ['truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id'],
-            'Truck Type': ['truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk'],
-            'Sales Man': ['sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan'],
-            'End Customer Name': ['end customer name', 'customer', 'end_customer', 'client', 'pelanggan', 'cust_name'],
-            'Distance': ['distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km']
+            'QTY': ['qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah', 'qty m3', 'volume m3'],
+            'Area': ['area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'province'],
+            'Plant Name': ['plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location', 'site', 'plantname'],
+            'Truck No': ['truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id', 'truck no ', 'truck_no_', 'truckno ', 'trk_no_', 'truckid'],
+            'Truck Type': ['truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk', 'trucktype', 'type_truck', 'trk_type_', 'tipe truk'],
+            'Sales Man': ['sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan', 'sales_man', 'sales-man', 'sales ', 'sales_'],
+            'End Customer Name': ['end customer name', 'customer', 'end_customer', 'client', 'pelanggan', 'cust_name', 'end_customer_name', 'customer_name', 'cust name'],
+            'Distance': ['distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km', 'distance ', 'dist_', 'jarak_', 'km_']
           };
 
           let headerRowIndex = -1;
@@ -896,7 +932,10 @@
             );
           }
 
+          // Ambil header dari baris yang ditemukan
           const headers = jsonData[headerRowIndex].map(h => h ? String(h).trim() : '');
+
+          // Buat mapping header asli → standard key
           const headerToStandard = {};
           let foundAny = false;
 
@@ -919,6 +958,7 @@
             );
           }
 
+          // Ambil data dari baris setelah header
           rawData = jsonData.slice(headerRowIndex + 1).map(row => {
             if (!Array.isArray(row)) return {};
             const mappedRow = {};
@@ -948,6 +988,7 @@
             ...row,
             'QTY': parseFloat(row['QTY']) || 0,
             'Distance': parseFloat(row['Distance']) || 0,
+            'Area': normalizeArea(row['Area']), // NORMALISASI AREA
             'Date': extractDateFromRow(row)
           }));
 
@@ -983,7 +1024,7 @@
     }
 
     function extractDateFromRow(row) {
-      const dateCols = ['date', 'delivery date', 'delivery_date', 'tanggal'];
+      const dateCols = ['date', 'delivery date', 'delivery_date', 'tanggal', 'dp date'];
       for (let col in row) {
         if (dateCols.some(d => col.toLowerCase().includes(d))) {
           const val = row[col];
@@ -1034,24 +1075,7 @@
       menu.appendChild(option);
     }
 
-    function toggleDropdown(id) {
-      const dropdown = document.getElementById(id);
-      const menu = dropdown.querySelector('.dropdown-menu');
-      const icon = dropdown.querySelector('.dropdown-header i');
-      const label = dropdown.querySelector('.dropdown-header span');
-
-      if (menu.style.display === 'block') {
-        menu.style.display = 'none';
-        icon.classList.remove('fa-chevron-up');
-        icon.classList.add('fa-chevron-down');
-      } else {
-        menu.style.display = 'block';
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-up');
-      }
-    }
-
-    // 👇 NEW: Tangani klik pada option di dropdown custom
+    // Fungsi untuk menangani klik pada option di custom dropdown
     document.addEventListener('click', function(e) {
       const option = e.target.closest('.dropdown-menu option');
       if (!option) return;
@@ -1076,6 +1100,23 @@
       // Terapkan filter otomatis
       applyFilters();
     });
+
+    function toggleDropdown(id) {
+      const dropdown = document.getElementById(id);
+      const menu = dropdown.querySelector('.dropdown-menu');
+      const icon = dropdown.querySelector('.dropdown-header i');
+      const label = dropdown.querySelector('.dropdown-header span');
+
+      if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+      } else {
+        menu.style.display = 'block';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+      }
+    }
 
     function applyFilters() {
       let filtered = [...rawData];
