@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Summary Daily Delivery</title>
 
-  <!-- Favicon (minimal emoji) -->
-  <link rel="icon" href="image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -716,39 +716,83 @@
       return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
     }
 
-    // DOM Elements
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('main');
-    const toggleBtn = document.getElementById('toggleSidebar');
-    const excelFile = document.getElementById('excelFile');
-    const startDate = document.getElementById('startDate');
-    const endDate = document.getElementById('endDate');
-    const dataLabelToggle = document.getElementById('dataLabelToggle');
-    const dashboardTitle = document.getElementById('dashboardTitle');
-    const periodeText = document.getElementById('periodeText');
-    const kpiArea = document.getElementById('kpiArea');
-    const kpiPlant = document.getElementById('kpiPlant');
-    const kpiVolume = document.getElementById('kpiVolume');
-    const kpiAvgVolume = document.getElementById('kpiAvgVolume');
-    const kpiTruck = document.getElementById('kpiTruck');
-    const kpiAvgLoadTruck = document.getElementById('kpiAvgLoadTruck');
-    const lastUpdate = document.getElementById('lastUpdate');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const errorMessage = document.getElementById('errorMessage');
+    // DOM Elements — diambil setelah DOM siap
+    let sidebar, main, toggleBtn, excelFile, startDate, endDate, dataLabelToggle;
+    let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolume, kpiTruck, kpiAvgLoadTruck, lastUpdate;
+    let loadingOverlay, errorMessage;
 
-    // Toggle Sidebar
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-      main.classList.toggle('collapsed');
-      toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
+    // Inisialisasi elemen setelah DOM siap
+    document.addEventListener('DOMContentLoaded', () => {
+      sidebar = document.getElementById('sidebar');
+      main = document.getElementById('main');
+      toggleBtn = document.getElementById('toggleSidebar');
+      excelFile = document.getElementById('excelFile');
+      startDate = document.getElementById('startDate');
+      endDate = document.getElementById('endDate');
+      dataLabelToggle = document.getElementById('dataLabelToggle');
+      dashboardTitle = document.getElementById('dashboardTitle');
+      periodeText = document.getElementById('periodeText');
+      kpiArea = document.getElementById('kpiArea');
+      kpiPlant = document.getElementById('kpiPlant');
+      kpiVolume = document.getElementById('kpiVolume');
+      kpiAvgVolume = document.getElementById('kpiAvgVolume');
+      kpiTruck = document.getElementById('kpiTruck');
+      kpiAvgLoadTruck = document.getElementById('kpiAvgLoadTruck');
+      lastUpdate = document.getElementById('lastUpdate');
+      loadingOverlay = document.getElementById('loadingOverlay');
+      errorMessage = document.getElementById('errorMessage');
+
+      if (!sidebar || !toggleBtn) {
+        console.error("DOM elements not found!");
+        return;
+      }
+
+      // Toggle Sidebar
+      toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        main.classList.toggle('collapsed');
+        toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
+      });
+
+      // Handle File Upload
+      excelFile.addEventListener('change', handleFileUpload);
+
+      // Filter Event Listeners
+      [startDate, endDate].forEach(el => {
+        el.addEventListener('change', applyFilters);
+      });
+
+      dataLabelToggle.addEventListener('change', () => {
+        dataLabelsEnabled = dataLabelToggle.checked;
+        updateCharts();
+      });
+
+      // Tab Switching
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          const tabId = tab.getAttribute('data-tab');
+          document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
+        });
+      });
+
+      // Initialize on load
+      window.addEventListener('load', () => {
+        const today = new Date();
+        const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+        startDate.valueAsDate = yesterday;
+        endDate.valueAsDate = today;
+        applyFilters();
+      });
     });
 
-    // Handle File Upload
+    // --- FUNGSI UTAMA ---
     function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
 
-      // Validasi ukuran file
       const fileSizeMB = file.size / (1024 * 1024);
       if (fileSizeMB < 0.002) {
         alert("File terlalu kecil! Minimal 2KB.");
@@ -759,7 +803,6 @@
         return;
       }
 
-      // Validasi ekstensi
       const ext = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
       if (!ext) {
         loadingOverlay.style.display = 'none';
@@ -771,7 +814,6 @@
         return;
       }
 
-      // Show loading
       loadingOverlay.style.display = 'flex';
       errorMessage.style.display = 'none';
 
@@ -798,7 +840,6 @@
             throw new Error(`Sheet "${firstSheetName}" kosong.`);
           }
 
-          // --- PARSE SEMUA BARIS SEBAGAI ARRAY 2D ---
           const jsonData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: null,
@@ -809,51 +850,19 @@
             throw new Error("Tidak ada data dalam sheet.");
           }
 
-          // Daftar kolom kunci yang harus ada
           const colMap = {
-            'DP No': [
-              'dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn',
-              'dpno', 'dp no.', 'dp_no_', 'dp no ', 'dpno '
-            ],
-            'QTY': [
-              'qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah',
-              'qty_m3', 'volume_m3', 'qte_m3', 'qty m3', 'volume m3'
-            ],
-            'Area': [
-              'area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'area ',
-              'area_', 'region_'
-            ],
-            'Plant Name': [
-              'plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location',
-              'site', 'plantname', 'plant-name', 'plant name ', 'plant_name_'
-            ],
-            'Truck No': [
-              'truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id',
-              'truck no ', 'truck_no_', 'truckno ', 'trk_no_', 'truckid'
-            ],
-            'Truck Type': [
-              'truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk',
-              'trucktype', 'type_truck', 'trk_type_', 'tipe truk'
-            ],
-            'Sales Man': [
-              'sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan',
-              'sales_man', 'sales-man', 'sales ', 'sales_'
-            ],
-            'End Customer Name': [
-              'end customer name', 'customer', 'end_customer', 'client', 'pelanggan',
-              'cust_name', 'end_customer_name', 'customer_name', 'cust name',
-              'end customer', 'pelanggan ', 'cust_'
-            ],
-            'Distance': [
-              'distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km',
-              'distance ', 'dist_', 'jarak_', 'km_'
-            ]
+            'DP No': ['dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn'],
+            'QTY': ['qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah'],
+            'Area': ['area', 'region', 'wilayah', 'lokasi', 'zone', 'regional'],
+            'Plant Name': ['plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location', 'site'],
+            'Truck No': ['truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id'],
+            'Truck Type': ['truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk'],
+            'Sales Man': ['sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan'],
+            'End Customer Name': ['end customer name', 'customer', 'end_customer', 'client', 'pelanggan', 'cust_name'],
+            'Distance': ['distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km']
           };
 
-          // Cari baris pertama yang mengandung minimal 1 kolom kunci
-          const colMapKeys = Object.keys(colMap);
           let headerRowIndex = -1;
-
           for (let i = 0; i < jsonData.length; i++) {
             const row = jsonData[i];
             if (!Array.isArray(row)) continue;
@@ -864,7 +873,7 @@
               if (cell === null || cell === undefined) continue;
 
               const cleanCell = String(cell).trim().toLowerCase();
-              for (const key of colMapKeys) {
+              for (const key of Object.keys(colMap)) {
                 const aliases = colMap[key].map(normalizeKey);
                 if (aliases.includes(cleanCell)) {
                   hasValidHeader = true;
@@ -887,10 +896,7 @@
             );
           }
 
-          // Ambil header dari baris yang ditemukan
           const headers = jsonData[headerRowIndex].map(h => h ? String(h).trim() : '');
-
-          // Buat mapping header asli → standard key
           const headerToStandard = {};
           let foundAny = false;
 
@@ -913,7 +919,6 @@
             );
           }
 
-          // Ambil data dari baris setelah header
           rawData = jsonData.slice(headerRowIndex + 1).map(row => {
             if (!Array.isArray(row)) return {};
             const mappedRow = {};
@@ -1062,6 +1067,7 @@
         });
       }
 
+      // Gunakan dropdown custom — bukan select tradisional
       const areaMenu = document.getElementById('areaMenu');
       const selectedAreas = Array.from(areaMenu.selectedOptions).map(o => o.value);
       if (!selectedAreas.includes('all')) {
@@ -1210,7 +1216,7 @@
 
       const datasets = [{
         label: title,
-        data: values,
+         values,
         backgroundColor: backgroundColors,
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1247,7 +1253,7 @@
 
       const datasets = [{
         label: title,
-        data: values,
+         values,
         backgroundColor: '#2ecc71',
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1290,7 +1296,7 @@
 
       const datasets = [{
         label: 'Avg Volume (m³)',
-        data: values,
+         values,
         borderColor: '#3498db',
         backgroundColor: 'rgba(52, 152, 219, 0.1)',
         tension: 0.3,
@@ -1329,7 +1335,7 @@
 
       const datasets = [{
         label: 'Volume vs Distance',
-        data: points,
+         points,
         backgroundColor: 'rgba(52, 152, 219, 0.6)',
         borderColor: 'rgba(52, 152, 219, 0.8)',
         pointRadius: 4,
@@ -1358,36 +1364,6 @@
 
       charts[canvasId] = new Chart(ctx, config);
     }
-
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-        tab.classList.add('active');
-        const tabId = tab.getAttribute('data-tab');
-        document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
-      });
-    });
-
-    [startDate, endDate].forEach(el => {
-      el.addEventListener('change', applyFilters);
-    });
-
-    dataLabelToggle.addEventListener('change', () => {
-      dataLabelsEnabled = dataLabelToggle.checked;
-      updateCharts();
-    });
-
-    window.addEventListener('load', () => {
-      const today = new Date();
-      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-      startDate.valueAsDate = yesterday;
-      endDate.valueAsDate = today;
-      applyFilters();
-    });
-
-    excelFile.addEventListener('change', handleFileUpload);
   </script>
 </body>
 </html>
