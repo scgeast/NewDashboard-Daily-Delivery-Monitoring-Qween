@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Summary Daily Delivery</title>
 
-  <!-- Favicon (minimal) -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  <!-- Favicon (minimal emoji) -->
+  <link rel="icon" href="image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -152,6 +152,7 @@
       font-weight: 500;
     }
 
+    /* Error Message */
     .error-message {
       position: absolute;
       top: 50%;
@@ -306,7 +307,7 @@
       margin-left: 60px;
     }
 
-    /* DASHBOARD HEADER (Diperluas dengan judul besar di tengah + ikon kalender) */
+    /* DASHBOARD HEADER */
     .dashboard-header-expanded {
       display: flex;
       flex-direction: column;
@@ -516,15 +517,15 @@
       <!-- Loading Overlay -->
       <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Processing your data...</div>
+        <div class="loading-text">Memproses data...</div>
       </div>
 
       <!-- Failure Message -->
-      <div class="error-message" id="errorMessage">Failure! Invalid or corrupted file.</div>
+      <div class="error-message" id="errorMessage">Gagal! File tidak valid atau tidak lengkap.</div>
     </div>
 
     <div class="filter-section">
-      <h4>Date Range</h4>
+      <h4>Tanggal</h4>
       <input type="date" id="startDate" />
       <input type="date" id="endDate" />
 
@@ -539,7 +540,7 @@
         </div>
       </div>
 
-      <h4>Plant</h4>
+      <h4>Pabrik</h4>
       <div class="custom-dropdown" id="plantDropdown">
         <div class="dropdown-header" onclick="toggleDropdown('plantDropdown')">
           <span id="plantLabel">Select All</span>
@@ -550,7 +551,7 @@
         </div>
       </div>
 
-      <h4>Truck Type</h4>
+      <h4>Tipe Truk</h4>
       <div class="custom-dropdown" id="truckTypeDropdown">
         <div class="dropdown-header" onclick="toggleDropdown('truckTypeDropdown')">
           <span id="truckTypeLabel">Select All</span>
@@ -573,7 +574,7 @@
 
   <!-- MAIN CONTENT -->
   <div id="main">
-    <!-- DASHBOARD HEADER (Diperluas dengan judul besar di tengah + ikon kalender) -->
+    <!-- DASHBOARD HEADER -->
     <div class="dashboard-header-expanded">
       <div class="header-top">
         <div class="header-center">
@@ -596,7 +597,7 @@
         <p id="kpiArea">0</p>
       </div>
       <div class="kpi-card">
-        <h3>Total Plant</h3>
+        <h3>Total Pabrik</h3>
         <p id="kpiPlant">0</p>
       </div>
       <div class="kpi-card">
@@ -608,7 +609,7 @@
         <p id="kpiAvgVolume">0</p>
       </div>
       <div class="kpi-card">
-        <h3>Total Truck</h3>
+        <h3>Total Truk</h3>
         <p id="kpiTruck">0</p>
       </div>
       <div class="kpi-card">
@@ -738,19 +739,30 @@
     });
 
     // Handle File Upload
-    excelFile.addEventListener('change', handleFileUpload);
-
     function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
 
+      // Validasi ukuran file
       const fileSizeMB = file.size / (1024 * 1024);
       if (fileSizeMB < 0.002) {
-        alert("File too small! Minimum 2KB.");
+        alert("File terlalu kecil! Minimal 2KB.");
         return;
       }
       if (fileSizeMB > 30) {
-        alert("File too large! Maximum 30MB.");
+        alert("File terlalu besar! Maksimal 30MB.");
+        return;
+      }
+
+      // Validasi ekstensi
+      const ext = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
+      if (!ext) {
+        loadingOverlay.style.display = 'none';
+        errorMessage.textContent = "Gagal! Silakan unggah file berformat .xlsx atau .xls.";
+        errorMessage.style.display = 'block';
+        setTimeout(() => {
+          errorMessage.style.display = 'none';
+        }, 8000);
         return;
       }
 
@@ -762,61 +774,123 @@
       reader.onload = function (event) {
         try {
           const data = new Uint8Array(event.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, {
+            type: 'array',
+            bookSheets: true,
+            cellNF: false,
+            cellText: false,
+            cellDates: true
+          });
+
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            throw new Error("Tidak ditemukan sheet dalam file.");
+          }
+
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
 
-          // Convert to JSON
-          rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          if (!worksheet || Object.keys(worksheet).length === 0) {
+            throw new Error(`Sheet "${firstSheetName}" kosong.`);
+          }
 
-          // Parse headers (first row)
-          const headers = rawData[0].map(h => String(h).trim());
-          rawData = rawData.slice(1).map(row => {
-            const obj = {};
-            headers.forEach((header, idx) => {
-              obj[header] = row[idx] !== undefined ? row[idx] : null;
-            });
-            return obj;
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            defval: null,
+            blankrows: false
           });
 
-          // Normalize column names (case-insensitive, trim)
+          if (jsonData.length < 1) {
+            throw new Error("Tidak ada data dalam sheet.");
+          }
+
+          // --- NORMALISASI KOLOM ---
           const colMap = {
-            'DP No': ['dp no', 'dp_no', 'dpno', 'dp no'],
-            'QTY': ['qty', 'quantity', 'qty (m3)', 'volume'],
-            'Area': ['area', 'region'],
-            'Plant Name': ['plant name', 'plant', 'plant_name'],
-            'Truck No': ['truck no', 'truck_number', 'truckno'],
-            'Truck Type': ['truck type', 'truck_type'],
-            'Sales Man': ['sales man', 'salesman', 'sales'],
-            'End Customer Name': ['end customer name', 'customer', 'end_customer'],
-            'Distance': ['distance', 'dist']
+            'DP No': [
+              'dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn',
+              'dpno', 'dp no.', 'dp_no_', 'dp no ', 'dpno '
+            ],
+            'QTY': [
+              'qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah',
+              'qty_m3', 'volume_m3', 'qte_m3', 'qty m3', 'volume m3'
+            ],
+            'Area': [
+              'area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'area ',
+              'area_', 'region_'
+            ],
+            'Plant Name': [
+              'plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location',
+              'site', 'plantname', 'plant-name', 'plant name ', 'plant_name_'
+            ],
+            'Truck No': [
+              'truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id',
+              'truck no ', 'truck_no_', 'truckno ', 'trk_no_', 'truckid'
+            ],
+            'Truck Type': [
+              'truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk',
+              'trucktype', 'type_truck', 'trk_type_', 'tipe truk'
+            ],
+            'Sales Man': [
+              'sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan',
+              'sales_man', 'sales-man', 'sales ', 'sales_'
+            ],
+            'End Customer Name': [
+              'end customer name', 'customer', 'end_customer', 'client', 'pelanggan',
+              'cust_name', 'end_customer_name', 'customer_name', 'cust name',
+              'end customer', 'pelanggan ', 'cust_'
+            ],
+            'Distance': [
+              'distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km',
+              'distance ', 'dist_', 'jarak_', 'km_'
+            ]
           };
 
-          // Map columns to standardized keys
-          rawData = rawData.map(row => {
+          function normalizeKey(str) {
+            return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+          }
+
+          const headers = jsonData[0].map(h => h ? String(h).trim() : '');
+          const headerToStandard = {};
+          let foundAny = false;
+
+          headers.forEach(header => {
+            const cleanHeader = normalizeKey(header);
+            for (const [standardKey, aliases] of Object.entries(colMap)) {
+              const normalizedAliases = aliases.map(normalizeKey);
+              if (normalizedAliases.includes(cleanHeader)) {
+                headerToStandard[header] = standardKey;
+                foundAny = true;
+                break;
+              }
+            }
+          });
+
+          if (!foundAny) {
+            throw new Error(
+              "Gagal! Tidak ditemukan kolom wajib. Pastikan file Anda memiliki salah satu dari:\n" +
+              "DP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance"
+            );
+          }
+
+          rawData = jsonData.slice(1).map(row => {
             const mappedRow = {};
             Object.keys(colMap).forEach(key => {
-              const possibleKeys = colMap[key];
-              let foundKey = null;
-              for (const pk of possibleKeys) {
-                for (const rk in row) {
-                  if (rk.toLowerCase().trim() === pk) {
-                    foundKey = rk;
-                    break;
-                  }
+              let foundHeader = null;
+              for (const [originalHeader, stdKey] of Object.entries(headerToStandard)) {
+                if (stdKey === key) {
+                  foundHeader = originalHeader;
+                  break;
                 }
-                if (foundKey) break;
               }
-              mappedRow[key] = foundKey ? row[foundKey] : null;
+              const idx = headers.indexOf(foundHeader);
+              mappedRow[key] = idx >= 0 && idx < row.length ? row[idx] : null;
             });
             return mappedRow;
           });
 
-          // Clean and convert types
-          rawData = rawData.filter(row => 
-            row['DP No'] && 
-            row['QTY'] !== null && 
-            row['Area'] !== null && 
+          rawData = rawData.filter(row =>
+            row['DP No'] !== null &&
+            row['QTY'] !== null &&
+            row['Area'] !== null &&
             row['Plant Name'] !== null &&
             row['Truck No'] !== null &&
             row['Truck Type'] !== null &&
@@ -827,39 +901,41 @@
             ...row,
             'QTY': parseFloat(row['QTY']) || 0,
             'Distance': parseFloat(row['Distance']) || 0,
-            'Date': extractDateFromRow(row) // Try to extract date from any column with date-like values
+            'Date': extractDateFromRow(row)
           }));
 
-          // Extract unique values for filters
+          if (rawData.length === 0) {
+            throw new Error("Semua baris gagal divalidasi. Periksa apakah data Anda lengkap dan benar.");
+          }
+
           updateFilters();
-
-          // Initial filter and render
           applyFilters();
-
-          // Hide loading
           loadingOverlay.style.display = 'none';
 
         } catch (err) {
-          console.error("Failed to read Excel file:", err);
+          console.error("Error reading Excel:", err);
           loadingOverlay.style.display = 'none';
+          errorMessage.textContent = "Gagal! " + (err.message || "File tidak bisa dibaca. Coba simpan ulang sebagai .xlsx.");
           errorMessage.style.display = 'block';
           setTimeout(() => {
             errorMessage.style.display = 'none';
-          }, 5000);
+          }, 8000);
         }
       };
+
       reader.onerror = function () {
         loadingOverlay.style.display = 'none';
+        errorMessage.textContent = "Gagal! Gagal membaca file. Coba gunakan file lain.";
         errorMessage.style.display = 'block';
         setTimeout(() => {
           errorMessage.style.display = 'none';
-        }, 5000);
+        }, 8000);
       };
+
       reader.readAsArrayBuffer(file);
     }
 
     function extractDateFromRow(row) {
-      // Try common date column names
       const dateCols = ['date', 'delivery date', 'delivery_date', 'tanggal'];
       for (let col in row) {
         if (dateCols.some(d => col.toLowerCase().includes(d))) {
@@ -870,12 +946,11 @@
           } else if (val instanceof Date) {
             return val;
           } else if (typeof val === 'number') {
-            // Excel serial date number
             return new Date(Math.round((val - 25569) * 86400 * 1000));
           }
         }
       }
-      return new Date(); // fallback
+      return new Date();
     }
 
     function updateFilters() {
@@ -883,12 +958,10 @@
       const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
       const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
 
-      // Clear and repopulate selects
       clearDropdown('areaMenu');
       clearDropdown('plantMenu');
       clearDropdown('truckTypeMenu');
 
-      // Add "Select All"
       addOption('areaMenu', "Select All", "all");
       areas.forEach(a => addOption('areaMenu', a, a));
 
@@ -920,7 +993,6 @@
       const icon = dropdown.querySelector('.dropdown-header i');
       const label = dropdown.querySelector('.dropdown-header span');
 
-      // Toggle visibility
       if (menu.style.display === 'block') {
         menu.style.display = 'none';
         icon.classList.remove('fa-chevron-up');
@@ -935,7 +1007,6 @@
     function applyFilters() {
       let filtered = [...rawData];
 
-      // Date Filter
       const start = startDate.value ? new Date(startDate.value) : null;
       const end = endDate.value ? new Date(endDate.value) : null;
 
@@ -949,21 +1020,18 @@
         });
       }
 
-      // Area Filter
       const areaMenu = document.getElementById('areaMenu');
       const selectedAreas = Array.from(areaMenu.selectedOptions).map(o => o.value);
       if (!selectedAreas.includes('all')) {
         filtered = filtered.filter(row => selectedAreas.includes(row.Area));
       }
 
-      // Plant Filter
       const plantMenu = document.getElementById('plantMenu');
       const selectedPlants = Array.from(plantMenu.selectedOptions).map(o => o.value);
       if (!selectedPlants.includes('all')) {
         filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
       }
 
-      // Truck Type Filter
       const truckTypeMenu = document.getElementById('truckTypeMenu');
       const selectedTruckTypes = Array.from(truckTypeMenu.selectedOptions).map(o => o.value);
       if (!selectedTruckTypes.includes('all')) {
@@ -971,16 +1039,10 @@
       }
 
       filteredData = filtered;
-
-      // Update KPIs
       updateKPIs();
-
-      // Update UI
       updateDashboardTitle();
       updatePeriodeText();
       updateCharts();
-
-      // Update last update time
       lastUpdate.textContent = `Last Update: ${new Date().toLocaleString()}`;
     }
 
@@ -1012,108 +1074,35 @@
       periodeText.textContent = `Periode: ${start} - ${end}`;
     }
 
-    // CHARTS RENDERING
     function updateCharts() {
       destroyAllCharts();
 
       if (!filteredData.length) return;
 
-      // Show/Hide Volume by Area based on "Select All"
       const areaFilterSelected = Array.from(document.getElementById('areaMenu').selectedOptions).map(o => o.value);
       const showVolumeByArea = areaFilterSelected.includes('all');
       document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
 
-      // A1. Volume by Area
       if (showVolumeByArea) {
-        createBarChart(
-          'chartVolumeByArea',
-          'Volume by Area',
-          getGroupedData('Area', 'QTY'),
-          true
-        );
+        createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
       }
 
-      // A2. Volume by Plant
-      createBarChart(
-        'chartVolumeByPlant',
-        'Volume by Plant',
-        getGroupedData('Plant Name', 'QTY'),
-        true
-      );
+      createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
+      createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
+      createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
+      createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
+      createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
 
-      // A3. Avg Volume by Plant
-      createBarChart(
-        'chartAvgVolumeByPlant',
-        'Avg Volume by Plant',
-        getGroupedData('Plant Name', 'QTY', true),
-        true
-      );
-
-      // A4. Avg Volume per Day (Line Chart)
-      createLineChart(
-        'chartAvgVolumePerDay',
-        'Avg Volume per Day',
-        getDailyAvgVolume()
-      );
-
-      // B1. Volume per Truck
-      createBarChart(
-        'chartVolumePerTruck',
-        'Volume per Truck',
-        getGroupedData('Truck No', 'QTY'),
-        true
-      );
-
-      // B2. Total Trip per Truck (unique DP No per Truck)
-      const tripData = getTripCountByTruck();
-      createBarChart(
-        'chartTotalTripPerTruck',
-        'Total Trip per Truck',
-        tripData,
-        true
-      );
-
-      // B3. Avg Load per Truck (Total Volume / Total Truck)
       const totalVol = filteredData.reduce((s, r) => s + r.QTY, 0);
       const totalTrucks = [...new Set(filteredData.map(r => r['Truck No']))].length;
       const avgLoad = totalTrucks > 0 ? totalVol / totalTrucks : 0;
-      createSingleValueBarChart(
-        'chartAvgLoadPerTruck',
-        'Avg Load per Truck',
-        avgLoad.toFixed(2),
-        'm³'
-      );
+      createSingleValueBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', avgLoad.toFixed(2), 'm³');
 
-      // C1. Avg Distance per Plant
-      createBarChart(
-        'chartAvgDistancePerPlant',
-        'Avg Distance per Plant',
-        getGroupedData('Plant Name', 'Distance', true),
-        true
-      );
+      createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
+      createScatterChart('chartTrendVolumeByDistance', 'Trend Volume by Distance', filteredData.map(r => ({ x: r.Distance, y: r.QTY })));
 
-      // C2. Trend Volume by Distance (Scatter)
-      createScatterChart(
-        'chartTrendVolumeByDistance',
-        'Trend Volume by Distance',
-        filteredData.map(r => ({ x: r.Distance, y: r.QTY }))
-      );
-
-      // SALES: Volume per Sales
-      createBarChart(
-        'chartVolumePerSales',
-        'Volume per Sales',
-        getGroupedData('Sales Man', 'QTY'),
-        true
-      );
-
-      // CUSTOMER: Volume per End Customer
-      createBarChart(
-        'chartVolumePerCustomer',
-        'Volume per End Customer',
-        getGroupedData('End Customer Name', 'QTY'),
-        true
-      );
+      createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
+      createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
     }
 
     function getGroupedData(groupBy, metric, isAvg = false) {
@@ -1128,7 +1117,7 @@
       return Array.from(map.entries()).map(([key, values]) => ({
         label: key,
         value: isAvg ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : values.reduce((a,b)=>a+b,0)
-      })).sort((a,b) => b.value - a.value).slice(0, 10); // Top 10
+      })).sort((a,b) => b.value - a.value).slice(0, 10);
     }
 
     function getTripCountByTruck() {
@@ -1143,7 +1132,7 @@
       return Array.from(tripMap.entries()).map(([truck, trips]) => ({
         label: truck,
         value: trips.size
-      })).sort((a,b) => b.value - a.value).slice(0, 10); // Top 10
+      })).sort((a,b) => b.value - a.value).slice(0, 10);
     }
 
     function getDailyAvgVolume() {
@@ -1187,7 +1176,7 @@
 
       const config = {
         type: 'bar',
-        data: {
+         {
           labels,
           datasets
         },
@@ -1224,7 +1213,7 @@
 
       const config = {
         type: 'bar',
-        data: {
+         {
           labels,
           datasets
         },
@@ -1259,7 +1248,7 @@
 
       const datasets = [{
         label: 'Avg Volume (m³)',
-        data: values,
+         values,
         borderColor: '#3498db',
         backgroundColor: 'rgba(52, 152, 219, 0.1)',
         tension: 0.3,
@@ -1270,7 +1259,7 @@
 
       const config = {
         type: 'line',
-        data: {
+         {
           labels,
           datasets
         },
@@ -1307,7 +1296,7 @@
 
       const config = {
         type: 'scatter',
-        data: {
+         {
           datasets
         },
         options: {
@@ -1328,7 +1317,6 @@
       charts[canvasId] = new Chart(ctx, config);
     }
 
-    // Tab Switching
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1340,7 +1328,6 @@
       });
     });
 
-    // Filter Event Listeners
     [startDate, endDate].forEach(el => {
       el.addEventListener('change', applyFilters);
     });
@@ -1350,15 +1337,15 @@
       updateCharts();
     });
 
-    // Initialize on load
     window.addEventListener('load', () => {
-      // Auto-fill today's date range
       const today = new Date();
       const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
       startDate.valueAsDate = yesterday;
       endDate.valueAsDate = today;
       applyFilters();
     });
+
+    excelFile.addEventListener('change', handleFileUpload);
   </script>
 </body>
 </html>
