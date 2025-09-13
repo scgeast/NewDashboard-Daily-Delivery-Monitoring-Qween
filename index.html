@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Summary Daily Delivery</title>
-
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS (xlsx) -->
@@ -22,10 +21,7 @@
       --light: #ecf0f1;
       --dark: #2c3e50;
       --gray: #95a5a6;
-      --highlight-colors: (
-        #e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6,
-        #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b
-      );
+      --highlight-colors: (#e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6, #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b);
     }
 
     * {
@@ -57,7 +53,7 @@
       width: 60px;
     }
 
-    /* Toggle Button - Transparan, hanya ikon */
+    /* Toggle Button */
     #toggleSidebar {
       position: absolute;
       top: 10px;
@@ -428,6 +424,7 @@
       display: block;
     }
 
+    /* CHART CONTAINER */
     .chart-container {
       background: white;
       padding: 20px;
@@ -466,57 +463,26 @@
       #main {
         margin-left: 60px;
       }
-
-      .header-top {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-      }
-
-      .header-center {
-        text-align: left;
-        margin-left: 10px;
-      }
-
-      .header-right {
-        margin-top: 4px;
-        text-align: left;
-      }
-
-      .dashboard-header-expanded {
-        padding: 20px 15px 10px;
-      }
-
       .header-center h1 {
         font-size: 22px;
-      }
-
-      .header-periode {
-        font-size: 13px;
-      }
-
-      .kpi-card p {
-        font-size: 20px;
       }
     }
   </style>
 </head>
 <body>
+
   <!-- SIDEBAR -->
   <div id="sidebar">
     <button class="toggle-btn" id="toggleSidebar">></button>
-
     <div class="upload-section">
       <input type="file" id="excelFile" accept=".xlsx,.xls" />
       <button class="upload-btn" onclick="document.getElementById('excelFile').click()">Upload Excel</button>
       <div class="upload-info">Min: 2KB | Max: 30MB</div>
-
       <!-- Loading Overlay -->
       <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Memproses data...</div>
       </div>
-
       <!-- Failure Message -->
       <div class="error-message" id="errorMessage">Gagal! File tidak valid atau tidak lengkap.</div>
     </div>
@@ -681,7 +647,6 @@
         <h3 class="chart-title">A. Volume per Sales</h3>
         <canvas id="chartVolumePerSales"></canvas>
       </div>
-
       <!-- B. Customer -->
       <div class="chart-container">
         <h3 class="chart-title">B. Volume per End Customer</h3>
@@ -690,9 +655,7 @@
     </div>
 
     <!-- FOOTER -->
-    <div class="footer">
-      Summary Daily Delivery And Sales by L=23-51Xe.
-    </div>
+    <div class="footer">Summary Daily Delivery And Sales by L=23-51Xe.</div>
   </div>
 
   <script>
@@ -703,10 +666,7 @@
     let dataLabelsEnabled = true;
 
     // Colors for highlighting (Top 10)
-    const highlightColors = [
-      '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
-      '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
-    ];
+    const highlightColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'];
 
     // Helper: Normalize string to alphanumeric only
     function normalizeKey(str) {
@@ -809,7 +769,7 @@
       });
     });
 
-    // --- FUNGSI UTAMA ---
+    // - FUNGSI UTAMA -
     function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -856,12 +816,11 @@
 
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-
           if (!worksheet || Object.keys(worksheet).length === 0) {
             throw new Error(`Sheet "${firstSheetName}" kosong.`);
           }
 
-          // --- PARSE SEMUA BARIS SEBAGAI ARRAY 2D ---
+          // PARSE SEMUA BARIS SEBAGAI ARRAY 2D
           const jsonData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: null,
@@ -872,20 +831,17 @@
             throw new Error("Tidak ada data dalam sheet.");
           }
 
-          // 🔍 DETEKSI JIKA BARIS PERTAMA ADALAH HEADER GABUNGAN DENGAN '|'
+          // DETEKSI JIKA BARIS PERTAMA ADALAH HEADER GABUNGAN DENGAN '|'
           const firstRow = jsonData[0];
           if (Array.isArray(firstRow) && firstRow.length === 1 && typeof firstRow[0] === 'string') {
             const headerStr = firstRow[0];
-            // Cek apakah ini header gabungan dengan separator |
             if (headerStr.includes('|')) {
-              // Split header gabungan menjadi array kolom
               const splitHeaders = headerStr.split('|').map(h => h.trim());
-              // Ganti baris pertama dengan header yang sudah dipisah
               jsonData[0] = splitHeaders;
             }
           }
 
-          // Daftar kolom kunci yang harus ada
+          // Daftar kolom wajib (gunakan NAMA EXAK seperti di file Anda)
           const colMap = {
             'DP No': ['dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn'],
             'QTY': ['qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah', 'qty m3', 'volume m3'],
@@ -902,12 +858,10 @@
           for (let i = 0; i < jsonData.length; i++) {
             const row = jsonData[i];
             if (!Array.isArray(row)) continue;
-
             let hasValidHeader = false;
             for (let j = 0; j < row.length; j++) {
               const cell = row[j];
               if (cell === null || cell === undefined) continue;
-
               const cleanCell = String(cell).trim().toLowerCase();
               for (const key of Object.keys(colMap)) {
                 const aliases = colMap[key].map(normalizeKey);
@@ -918,7 +872,6 @@
               }
               if (hasValidHeader) break;
             }
-
             if (hasValidHeader) {
               headerRowIndex = i;
               break;
@@ -926,10 +879,7 @@
           }
 
           if (headerRowIndex === -1) {
-            throw new Error(
-              "Gagal! Tidak ditemukan header yang valid. Pastikan file Anda memiliki salah satu dari:\n" +
-              "DP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance"
-            );
+            throw new Error("Gagal! Tidak ditemukan header yang valid. Pastikan file Anda memiliki salah satu dari:\nDP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance");
           }
 
           // Ambil header dari baris yang ditemukan
@@ -938,7 +888,6 @@
           // Buat mapping header asli → standard key
           const headerToStandard = {};
           let foundAny = false;
-
           headers.forEach(header => {
             const cleanHeader = normalizeKey(header);
             for (const [standardKey, aliases] of Object.entries(colMap)) {
@@ -952,10 +901,7 @@
           });
 
           if (!foundAny) {
-            throw new Error(
-              "Gagal! Tidak ditemukan kolom wajib. Pastikan file Anda memiliki salah satu dari:\n" +
-              "DP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance"
-            );
+            throw new Error("Gagal! Tidak ditemukan kolom wajib. Pastikan file Anda memiliki salah satu dari:\nDP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance");
           }
 
           // Ambil data dari baris setelah header
@@ -986,9 +932,9 @@
             row['Distance'] !== null
           ).map(row => ({
             ...row,
-            'QTY': parseFloat(row['QTY']) || 0,
-            'Distance': parseFloat(row['Distance']) || 0,
-            'Area': normalizeArea(row['Area']), // NORMALISASI AREA
+            'QTY': parseFloat(String(row['QTY']).replace(',', '.')) || 0, // <-- KOMA KE TITIK!
+            'Distance': parseFloat(String(row['Distance']).replace(',', '.')) || 0, // <-- KOMA KE TITIK!
+            'Area': normalizeArea(row['Area']),
             'Date': extractDateFromRow(row)
           }));
 
@@ -999,7 +945,6 @@
           updateFilters();
           applyFilters();
           loadingOverlay.style.display = 'none';
-
         } catch (err) {
           console.error("Error reading Excel:", err);
           loadingOverlay.style.display = 'none';
@@ -1079,9 +1024,8 @@
     document.addEventListener('click', function(e) {
       const option = e.target.closest('.dropdown-menu option');
       if (!option) return;
-
       const menu = option.closest('.dropdown-menu');
-      const dropdown = menu.parentElement;
+      const dropdown = dropdown.parentElement;
       const label = dropdown.querySelector('.dropdown-header span');
 
       // Hapus 'selected' dari semua opsi
@@ -1124,7 +1068,6 @@
       // Date Filter
       const start = startDate.value ? new Date(startDate.value) : null;
       const end = endDate.value ? new Date(endDate.value) : null;
-
       if (start || end) {
         filtered = filtered.filter(row => {
           const rowDate = row.Date;
@@ -1135,7 +1078,7 @@
         });
       }
 
-      // Area Filter — UNTUK CUSTOM DROPDOWN
+      // Area Filter
       const areaMenu = document.getElementById('areaMenu');
       const selectedAreaOptions = areaMenu.querySelectorAll('option[selected]');
       const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
@@ -1143,7 +1086,7 @@
         filtered = filtered.filter(row => selectedAreas.includes(row.Area));
       }
 
-      // Plant Filter — UNTUK CUSTOM DROPDOWN
+      // Plant Filter
       const plantMenu = document.getElementById('plantMenu');
       const selectedPlantOptions = plantMenu.querySelectorAll('option[selected]');
       const selectedPlants = Array.from(selectedPlantOptions).map(o => o.value);
@@ -1151,7 +1094,7 @@
         filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
       }
 
-      // Truck Type Filter — UNTUK CUSTOM DROPDOWN
+      // Truck Type Filter
       const truckTypeMenu = document.getElementById('truckTypeMenu');
       const selectedTruckTypeOptions = truckTypeMenu.querySelectorAll('option[selected]');
       const selectedTruckTypes = Array.from(selectedTruckTypeOptions).map(o => o.value);
@@ -1184,8 +1127,8 @@
     }
 
     function updateDashboardTitle() {
-      const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.textContent);
-      const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
+      const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.value);
+      const areaDisplay = areaFilterSelected.includes('all') ? 'All' : areaFilterSelected.join(', ');
       dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
     }
 
@@ -1197,7 +1140,6 @@
 
     function updateCharts() {
       destroyAllCharts();
-
       if (!filteredData.length) return;
 
       const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.value);
@@ -1211,6 +1153,7 @@
       createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
       createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
       createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
+
       createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
       createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
 
@@ -1265,12 +1208,10 @@
         dailyMap.get(dateStr).count += 1;
       });
 
-      return Array.from(dailyMap.entries())
-        .map(([date, { sum, count }]) => ({
-          date,
-          avg: (sum / count).toFixed(2)
-        }))
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      return Array.from(dailyMap.entries()).map(([date, { sum, count }]) => ({
+        date,
+        avg: (sum / count).toFixed(2)
+      })).sort((a, b) => new Date(a.date) - new Date(b.date));
     }
 
     function destroyAllCharts() {
@@ -1282,14 +1223,13 @@
       const ctx = document.getElementById(canvasId).getContext('2d');
       const labels = data.map(d => d.label);
       const values = data.map(d => d.value);
-
-      const backgroundColors = enableHighlight
-        ? labels.map((_, i) => highlightColors[i % highlightColors.length])
-        : Array(labels.length).fill('#3498db');
+      const backgroundColors = enableHighlight ?
+        labels.map((_, i) => highlightColors[i % highlightColors.length]) :
+        Array(labels.length).fill('#3498db');
 
       const datasets = [{
         label: title,
-         values,
+        values,
         backgroundColor: backgroundColors,
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1308,10 +1248,109 @@
             legend: { display: false },
             tooltip: { enabled: dataLabelsEnabled },
             title: { display: true, text: title, font: { size: 16 } },
+            datalabels: {
+              display: dataLabelsEnabled,
+              formatter: (value) => value.toLocaleString(),
+              color: '#000',
+              font: { weight: 'bold' }
+            }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#555' } },
-            x: { ticks: { color: '#555', maxRotation: 45, minRotation: 0 } }
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#555' }
+            },
+            x: {
+              ticks: { color: '#555', maxRotation: 45, minRotation: 0 }
+            }
+          }
+        }
+      };
+
+      charts[canvasId] = new Chart(ctx, config);
+    }
+
+    function createLineChart(canvasId, title, data) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const labels = data.map(d => d.date);
+      const values = data.map(d => parseFloat(d.avg));
+
+      const datasets = [{
+        label: 'Avg Volume (m³)',
+        values,
+        borderColor: '#3498db',
+        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 8
+      }];
+
+      const config = {
+        type: 'line',
+        data: {
+          labels,
+          datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: dataLabelsEnabled },
+            title: { display: true, text: title, font: { size: 16 } },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#555' }
+            },
+            x: {
+              ticks: { color: '#555', maxRotation: 45 }
+            }
+          }
+        }
+      };
+
+      charts[canvasId] = new Chart(ctx, config);
+    }
+
+    function createScatterChart(canvasId, title, data) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const points = data.map(p => ({ x: p.x, y: p.y }));
+
+      const datasets = [{
+        label: 'Volume vs Distance',
+        points,
+        backgroundColor: 'rgba(52, 152, 219, 0.6)',
+        borderColor: 'rgba(52, 152, 219, 0.8)',
+        pointRadius: 4,
+        pointHoverRadius: 8
+      }];
+
+      const config = {
+        type: 'scatter',
+        data: {
+          datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: dataLabelsEnabled },
+            title: { display: true, text: title, font: { size: 16 } },
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Distance (km)' },
+              ticks: { color: '#555' }
+            },
+            y: {
+              title: { display: true, text: 'Volume (m³)' },
+              beginAtZero: true,
+              ticks: { color: '#555' }
+            }
           }
         }
       };
@@ -1326,7 +1365,7 @@
 
       const datasets = [{
         label: title,
-         values,
+        values,
         backgroundColor: '#2ecc71',
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1355,82 +1394,6 @@
           scales: {
             y: { display: false, beginAtZero: true },
             x: { display: false }
-          }
-        }
-      };
-
-      charts[canvasId] = new Chart(ctx, config);
-    }
-
-    function createLineChart(canvasId, title, data) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      const labels = data.map(d => d.date);
-      const values = data.map(d => parseFloat(d.avg));
-
-      const datasets = [{
-        label: 'Avg Volume (m³)',
-         values,
-        borderColor: '#3498db',
-        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-        tension: 0.3,
-        fill: true,
-        pointRadius: 4,
-        pointHoverRadius: 8
-      }];
-
-      const config = {
-        type: 'line',
-        data: {
-          labels,
-          datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: dataLabelsEnabled },
-            title: { display: true, text: title, font: { size: 16 } },
-          },
-          scales: {
-            y: { beginAtZero: true, ticks: { color: '#555' } },
-            x: { ticks: { color: '#555', maxRotation: 45 } }
-          }
-        }
-      };
-
-      charts[canvasId] = new Chart(ctx, config);
-    }
-
-    function createScatterChart(canvasId, title, data) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      const points = data.map(p => ({ x: p.x, y: p.y }));
-
-      const datasets = [{
-        label: 'Volume vs Distance',
-         points,
-        backgroundColor: 'rgba(52, 152, 219, 0.6)',
-        borderColor: 'rgba(52, 152, 219, 0.8)',
-        pointRadius: 4,
-        pointHoverRadius: 8
-      }];
-
-      const config = {
-        type: 'scatter',
-        data: {
-          datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: dataLabelsEnabled },
-            title: { display: true, text: title, font: { size: 16 } },
-          },
-          scales: {
-            x: { title: { display: true, text: 'Distance (km)' }, ticks: { color: '#555' } },
-            y: { title: { display: true, text: 'Volume (m³)' }, beginAtZero: true, ticks: { color: '#555' } }
           }
         }
       };
