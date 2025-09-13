@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Summary Daily Delivery</title>
 
+  <!-- Favicon (minimal) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SheetJS (xlsx) -->
@@ -83,6 +86,7 @@
       padding: 15px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
       text-align: center;
+      position: relative;
     }
 
     .upload-section input[type="file"] {
@@ -108,6 +112,64 @@
     .upload-info {
       font-size: 12px;
       color: #bdc3c7;
+    }
+
+    /* Loading Spinner */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: white;
+      border-radius: 8px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .error-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #e74c3c;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 8px;
+      font-weight: bold;
+      z-index: 1001;
+      display: none;
+      animation: fadeInOut 3s ease-in-out;
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
     }
 
     /* Filter Section */
@@ -450,6 +512,15 @@
       <input type="file" id="excelFile" accept=".xlsx,.xls" />
       <button class="upload-btn" onclick="document.getElementById('excelFile').click()">Upload Excel</button>
       <div class="upload-info">Min: 2KB | Max: 30MB</div>
+
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing your data...</div>
+      </div>
+
+      <!-- Failure Message -->
+      <div class="error-message" id="errorMessage">Failure! Invalid or corrupted file.</div>
     </div>
 
     <div class="filter-section">
@@ -656,6 +727,8 @@
     const kpiTruck = document.getElementById('kpiTruck');
     const kpiAvgLoadTruck = document.getElementById('kpiAvgLoadTruck');
     const lastUpdate = document.getElementById('lastUpdate');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const errorMessage = document.getElementById('errorMessage');
 
     // Toggle Sidebar
     toggleBtn.addEventListener('click', () => {
@@ -681,82 +754,106 @@
         return;
       }
 
+      // Show loading
+      loadingOverlay.style.display = 'flex';
+      errorMessage.style.display = 'none';
+
       const reader = new FileReader();
       reader.onload = function (event) {
-        const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
+        try {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
 
-        // Convert to JSON
-        rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
-        // Parse headers (first row)
-        const headers = rawData[0].map(h => String(h).trim());
-        rawData = rawData.slice(1).map(row => {
-          const obj = {};
-          headers.forEach((header, idx) => {
-            obj[header] = row[idx] !== undefined ? row[idx] : null;
+          // Convert to JSON
+          rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          // Parse headers (first row)
+          const headers = rawData[0].map(h => String(h).trim());
+          rawData = rawData.slice(1).map(row => {
+            const obj = {};
+            headers.forEach((header, idx) => {
+              obj[header] = row[idx] !== undefined ? row[idx] : null;
+            });
+            return obj;
           });
-          return obj;
-        });
 
-        // Normalize column names (case-insensitive, trim)
-        const colMap = {
-          'DP No': ['dp no', 'dp_no', 'dpno', 'dp no'],
-          'QTY': ['qty', 'quantity', 'qty (m3)', 'volume'],
-          'Area': ['area', 'region'],
-          'Plant Name': ['plant name', 'plant', 'plant_name'],
-          'Truck No': ['truck no', 'truck_number', 'truckno'],
-          'Truck Type': ['truck type', 'truck_type'],
-          'Sales Man': ['sales man', 'salesman', 'sales'],
-          'End Customer Name': ['end customer name', 'customer', 'end_customer'],
-          'Distance': ['distance', 'dist']
-        };
+          // Normalize column names (case-insensitive, trim)
+          const colMap = {
+            'DP No': ['dp no', 'dp_no', 'dpno', 'dp no'],
+            'QTY': ['qty', 'quantity', 'qty (m3)', 'volume'],
+            'Area': ['area', 'region'],
+            'Plant Name': ['plant name', 'plant', 'plant_name'],
+            'Truck No': ['truck no', 'truck_number', 'truckno'],
+            'Truck Type': ['truck type', 'truck_type'],
+            'Sales Man': ['sales man', 'salesman', 'sales'],
+            'End Customer Name': ['end customer name', 'customer', 'end_customer'],
+            'Distance': ['distance', 'dist']
+          };
 
-        // Map columns to standardized keys
-        rawData = rawData.map(row => {
-          const mappedRow = {};
-          Object.keys(colMap).forEach(key => {
-            const possibleKeys = colMap[key];
-            let foundKey = null;
-            for (const pk of possibleKeys) {
-              for (const rk in row) {
-                if (rk.toLowerCase().trim() === pk) {
-                  foundKey = rk;
-                  break;
+          // Map columns to standardized keys
+          rawData = rawData.map(row => {
+            const mappedRow = {};
+            Object.keys(colMap).forEach(key => {
+              const possibleKeys = colMap[key];
+              let foundKey = null;
+              for (const pk of possibleKeys) {
+                for (const rk in row) {
+                  if (rk.toLowerCase().trim() === pk) {
+                    foundKey = rk;
+                    break;
+                  }
                 }
+                if (foundKey) break;
               }
-              if (foundKey) break;
-            }
-            mappedRow[key] = foundKey ? row[foundKey] : null;
+              mappedRow[key] = foundKey ? row[foundKey] : null;
+            });
+            return mappedRow;
           });
-          return mappedRow;
-        });
 
-        // Clean and convert types
-        rawData = rawData.filter(row => 
-          row['DP No'] && 
-          row['QTY'] !== null && 
-          row['Area'] !== null && 
-          row['Plant Name'] !== null &&
-          row['Truck No'] !== null &&
-          row['Truck Type'] !== null &&
-          row['Sales Man'] !== null &&
-          row['End Customer Name'] !== null &&
-          row['Distance'] !== null
-        ).map(row => ({
-          ...row,
-          'QTY': parseFloat(row['QTY']) || 0,
-          'Distance': parseFloat(row['Distance']) || 0,
-          'Date': extractDateFromRow(row) // Try to extract date from any column with date-like values
-        }));
+          // Clean and convert types
+          rawData = rawData.filter(row => 
+            row['DP No'] && 
+            row['QTY'] !== null && 
+            row['Area'] !== null && 
+            row['Plant Name'] !== null &&
+            row['Truck No'] !== null &&
+            row['Truck Type'] !== null &&
+            row['Sales Man'] !== null &&
+            row['End Customer Name'] !== null &&
+            row['Distance'] !== null
+          ).map(row => ({
+            ...row,
+            'QTY': parseFloat(row['QTY']) || 0,
+            'Distance': parseFloat(row['Distance']) || 0,
+            'Date': extractDateFromRow(row) // Try to extract date from any column with date-like values
+          }));
 
-        // Extract unique values for filters
-        updateFilters();
+          // Extract unique values for filters
+          updateFilters();
 
-        // Initial filter and render
-        applyFilters();
+          // Initial filter and render
+          applyFilters();
+
+          // Hide loading
+          loadingOverlay.style.display = 'none';
+
+        } catch (err) {
+          console.error("Failed to read Excel file:", err);
+          loadingOverlay.style.display = 'none';
+          errorMessage.style.display = 'block';
+          setTimeout(() => {
+            errorMessage.style.display = 'none';
+          }, 5000);
+        }
+      };
+      reader.onerror = function () {
+        loadingOverlay.style.display = 'none';
+        errorMessage.style.display = 'block';
+        setTimeout(() => {
+          errorMessage.style.display = 'none';
+        }, 5000);
       };
       reader.readAsArrayBuffer(file);
     }
@@ -1082,7 +1179,7 @@
 
       const datasets = [{
         label: title,
-         values, // ✅ BENAR: gunakan 'data', bukan langsung nilai
+         values,
         backgroundColor: backgroundColors,
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1090,7 +1187,7 @@
 
       const config = {
         type: 'bar',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1210,7 +1307,7 @@
 
       const config = {
         type: 'scatter',
-         {
+        data: {
           datasets
         },
         options: {
