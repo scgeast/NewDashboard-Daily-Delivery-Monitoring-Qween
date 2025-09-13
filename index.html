@@ -122,18 +122,63 @@
       opacity: 0.9;
     }
 
-    .filter-section select, .filter-section input[type="date"] {
+    /* Custom Dropdown */
+    .custom-dropdown {
+      position: relative;
       width: 100%;
-      padding: 8px;
       margin-bottom: 10px;
-      border-radius: 4px;
-      border: none;
-      font-size: 14px;
+    }
+
+    .dropdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
       background-color: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
       color: white;
     }
 
-    /* Data Label Toggle Switch (Modern Slider) */
+    .dropdown-header i {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background-color: rgba(255,255,255,0.9);
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .dropdown-menu option {
+      padding: 8px 12px;
+      color: #333;
+      font-size: 14px;
+      background: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .dropdown-menu option:hover {
+      background-color: #f0f0f0;
+    }
+
+    .dropdown-menu option[selected] {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    /* Data Label Toggle Switch */
     .data-label-toggle {
       display: flex;
       align-items: center;
@@ -227,7 +272,7 @@
 
     .header-center h1 {
       margin: 0;
-      font-size: 28px; /* Lebih besar */
+      font-size: 28px;
       font-weight: 700;
       line-height: 1.2;
       letter-spacing: -0.5px;
@@ -413,19 +458,37 @@
       <input type="date" id="endDate" />
 
       <h4>Area</h4>
-      <select id="filterArea" multiple size="1"> <!-- Size 1 = single line dropdown -->
-        <option value="all">Select All</option>
-      </select>
+      <div class="custom-dropdown" id="areaDropdown">
+        <div class="dropdown-header" onclick="toggleDropdown('areaDropdown')">
+          <span id="areaLabel">Select All</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="dropdown-menu" id="areaMenu">
+          <option value="all" selected>Select All</option>
+        </div>
+      </div>
 
       <h4>Plant</h4>
-      <select id="filterPlant" multiple size="1">
-        <option value="all">Select All</option>
-      </select>
+      <div class="custom-dropdown" id="plantDropdown">
+        <div class="dropdown-header" onclick="toggleDropdown('plantDropdown')">
+          <span id="plantLabel">Select All</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="dropdown-menu" id="plantMenu">
+          <option value="all" selected>Select All</option>
+        </div>
+      </div>
 
       <h4>Truck Type</h4>
-      <select id="filterTruckType" multiple size="1">
-        <option value="all">Select All</option>
-      </select>
+      <div class="custom-dropdown" id="truckTypeDropdown">
+        <div class="dropdown-header" onclick="toggleDropdown('truckTypeDropdown')">
+          <span id="truckTypeLabel">Select All</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="dropdown-menu" id="truckTypeMenu">
+          <option value="all" selected>Select All</option>
+        </div>
+      </div>
     </div>
 
     <div class="data-label-toggle">
@@ -583,9 +646,6 @@
     const excelFile = document.getElementById('excelFile');
     const startDate = document.getElementById('startDate');
     const endDate = document.getElementById('endDate');
-    const filterArea = document.getElementById('filterArea');
-    const filterPlant = document.getElementById('filterPlant');
-    const filterTruckType = document.getElementById('filterTruckType');
     const dataLabelToggle = document.getElementById('dataLabelToggle');
     const dashboardTitle = document.getElementById('dashboardTitle');
     const periodeText = document.getElementById('periodeText');
@@ -727,32 +787,52 @@
       const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
 
       // Clear and repopulate selects
-      clearSelect(filterArea);
-      clearSelect(filterPlant);
-      clearSelect(filterTruckType);
+      clearDropdown('areaMenu');
+      clearDropdown('plantMenu');
+      clearDropdown('truckTypeMenu');
 
       // Add "Select All"
-      addOption(filterArea, "Select All", "all");
-      areas.forEach(a => addOption(filterArea, a, a));
+      addOption('areaMenu', "Select All", "all");
+      areas.forEach(a => addOption('areaMenu', a, a));
 
-      addOption(filterPlant, "Select All", "all");
-      plants.forEach(p => addOption(filterPlant, p, p));
+      addOption('plantMenu', "Select All", "all");
+      plants.forEach(p => addOption('plantMenu', p, p));
 
-      addOption(filterTruckType, "Select All", "all");
-      truckTypes.forEach(t => addOption(filterTruckType, t, t));
+      addOption('truckTypeMenu', "Select All", "all");
+      truckTypes.forEach(t => addOption('truckTypeMenu', t, t));
     }
 
-    function clearSelect(selectElement) {
-      while (selectElement.options.length > 0) {
-        selectElement.remove(0);
+    function clearDropdown(menuId) {
+      const menu = document.getElementById(menuId);
+      while (menu.children.length > 0) {
+        menu.removeChild(menu.firstChild);
       }
     }
 
-    function addOption(selectElement, text, value) {
+    function addOption(menuId, text, value) {
+      const menu = document.getElementById(menuId);
       const option = document.createElement('option');
       option.text = text;
       option.value = value;
-      selectElement.add(option);
+      menu.appendChild(option);
+    }
+
+    function toggleDropdown(id) {
+      const dropdown = document.getElementById(id);
+      const menu = dropdown.querySelector('.dropdown-menu');
+      const icon = dropdown.querySelector('.dropdown-header i');
+      const label = dropdown.querySelector('.dropdown-header span');
+
+      // Toggle visibility
+      if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+      } else {
+        menu.style.display = 'block';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+      }
     }
 
     function applyFilters() {
@@ -773,19 +853,22 @@
       }
 
       // Area Filter
-      const selectedAreas = Array.from(filterArea.selectedOptions).map(o => o.value);
+      const areaMenu = document.getElementById('areaMenu');
+      const selectedAreas = Array.from(areaMenu.selectedOptions).map(o => o.value);
       if (!selectedAreas.includes('all')) {
         filtered = filtered.filter(row => selectedAreas.includes(row.Area));
       }
 
       // Plant Filter
-      const selectedPlants = Array.from(filterPlant.selectedOptions).map(o => o.value);
+      const plantMenu = document.getElementById('plantMenu');
+      const selectedPlants = Array.from(plantMenu.selectedOptions).map(o => o.value);
       if (!selectedPlants.includes('all')) {
         filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
       }
 
       // Truck Type Filter
-      const selectedTruckTypes = Array.from(filterTruckType.selectedOptions).map(o => o.value);
+      const truckTypeMenu = document.getElementById('truckTypeMenu');
+      const selectedTruckTypes = Array.from(truckTypeMenu.selectedOptions).map(o => o.value);
       if (!selectedTruckTypes.includes('all')) {
         filtered = filtered.filter(row => selectedTruckTypes.includes(row['Truck Type']));
       }
@@ -821,7 +904,7 @@
     }
 
     function updateDashboardTitle() {
-      const selectedAreas = Array.from(filterArea.selectedOptions).map(o => o.text);
+      const selectedAreas = Array.from(document.getElementById('areaMenu').selectedOptions).map(o => o.text);
       const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
       dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
     }
@@ -839,7 +922,7 @@
       if (!filteredData.length) return;
 
       // Show/Hide Volume by Area based on "Select All"
-      const areaFilterSelected = Array.from(filterArea.selectedOptions).map(o => o.value);
+      const areaFilterSelected = Array.from(document.getElementById('areaMenu').selectedOptions).map(o => o.value);
       const showVolumeByArea = areaFilterSelected.includes('all');
       document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
 
@@ -1152,7 +1235,7 @@
     });
 
     // Filter Event Listeners
-    [startDate, endDate, filterArea, filterPlant, filterTruckType].forEach(el => {
+    [startDate, endDate].forEach(el => {
       el.addEventListener('change', applyFilters);
     });
 
