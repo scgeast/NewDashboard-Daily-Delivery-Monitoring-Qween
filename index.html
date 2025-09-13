@@ -1210,7 +1210,7 @@
 
       const datasets = [{
         label: title,
-         values,
+        data: values,
         backgroundColor: backgroundColors,
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1218,7 +1218,7 @@
 
       const config = {
         type: 'bar',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1247,7 +1247,7 @@
 
       const datasets = [{
         label: title,
-         values,
+        data: values,
         backgroundColor: '#2ecc71',
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1255,7 +1255,7 @@
 
       const config = {
         type: 'bar',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1290,7 +1290,7 @@
 
       const datasets = [{
         label: 'Avg Volume (m³)',
-         values,
+        data: values,
         borderColor: '#3498db',
         backgroundColor: 'rgba(52, 152, 219, 0.1)',
         tension: 0.3,
@@ -1301,7 +1301,7 @@
 
       const config = {
         type: 'line',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1329,7 +1329,7 @@
 
       const datasets = [{
         label: 'Volume vs Distance',
-         points,
+        data: points,
         backgroundColor: 'rgba(52, 152, 219, 0.6)',
         borderColor: 'rgba(52, 152, 219, 0.8)',
         pointRadius: 4,
@@ -1338,7 +1338,7 @@
 
       const config = {
         type: 'scatter',
-         {
+        data: {
           datasets
         },
         options: {
