@@ -3,22 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daily Delivery Monitoring</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js  "></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js  "></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css  ">
+  <title>Summary Daily Delivery</title>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS (xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
-    /* CSS yang sudah ada (tetap sama) */
     :root {
       --primary: #3498db;
-      --secondary: #f8f9fa;
-      --accent: #e74c3c;
+      --secondary: #2c3e50;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --danger: #e74c3c;
       --light: #ecf0f1;
       --dark: #2c3e50;
-      --header-bg: #2c3e50;
-      --kpi-bg: #3498db;
-      --kpi-text: white;
-      --sidebar-bg: #4a5568;
+      --gray: #95a5a6;
+      --highlight-colors: (
+        #e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6,
+        #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b
+      );
     }
 
     * {
@@ -29,357 +33,188 @@
     }
 
     body {
+      display: flex;
       background-color: #f5f7fa;
       color: #333;
-      display: flex;
-      flex-direction: row;
-      min-height: 100vh;
     }
 
     /* SIDEBAR */
     #sidebar {
       width: 280px;
-      background-color: var(--sidebar-bg);
+      background-color: var(--secondary);
       color: white;
       transition: all 0.3s ease;
-      overflow: hidden;
-      z-index: 1000;
+      overflow-y: auto;
       height: 100vh;
       position: fixed;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-      border-right: 1px solid #ddd;
+      z-index: 100;
     }
 
     #sidebar.collapsed {
       width: 60px;
     }
 
-    #sidebar-header {
+    #sidebar .header {
       padding: 15px;
       text-align: center;
       border-bottom: 1px solid rgba(255,255,255,0.1);
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
-    #toggle-btn {
+    #sidebar .header h3 {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    #sidebar .toggle-btn {
       position: absolute;
-      top: 15px;
-      right: -25px;
+      top: 10px;
+      right: -20px;
       background: var(--primary);
       color: white;
       border: none;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      width: 40px;
+      height: 40px;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-      z-index: 1001;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 101;
     }
 
-    #sidebar-content {
-      padding: 20px;
-      height: calc(100vh - 60px);
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-
-    .filter-group {
-      margin-bottom: 20px;
-      background: white;
-      border-radius: 8px;
+    #sidebar .filter-section {
       padding: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
-    .filter-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      font-size: 0.9em;
-      color: #4a5568;
+    #sidebar .filter-section h4 {
+      margin-bottom: 10px;
+      font-size: 14px;
+      opacity: 0.9;
     }
 
-    .upload-section {
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
+    #sidebar select, #sidebar input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: none;
+      font-size: 14px;
+    }
+
+    #sidebar .data-label-toggle {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    #sidebar .data-label-toggle input {
+      margin-right: 5px;
+    }
+
+    #sidebar .upload-section {
+      padding: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       text-align: center;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #sidebar .upload-section input[type="file"] {
+      display: none;
+    }
+
+    #sidebar .upload-btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
       cursor: pointer;
-      transition: all 0.3s;
-      border: 2px dashed #e2e8f0;
-      position: relative;
-    }
-
-    .upload-section:hover {
-      border-color: var(--primary);
-      background-color: #f7fafc;
-    }
-
-    .upload-section.drag-over {
-      border-color: var(--primary);
-      background-color: #e6f7ff;
-      transform: scale(1.02);
-    }
-
-    .upload-icon {
-      font-size: 2rem;
-      color: var(--primary);
+      font-size: 14px;
+      display: inline-block;
       margin-bottom: 10px;
     }
 
-    .upload-text {
-      color: #4a5568;
-      font-size: 0.9rem;
-      margin-bottom: 5px;
+    #sidebar .upload-btn:hover {
+      background-color: #2980b9;
     }
 
-    .upload-subtext {
-      color: #a0aec0;
-      font-size: 0.8rem;
-    }
-
-    .upload-section input {
-      position: absolute;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      cursor: pointer;
-    }
-
-    .filter-group select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
-      background-color: white;
-      color: #4a5568;
-      font-size: 0.9rem;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right 0.5rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-      padding-right: 2.5rem;
-    }
-
-    .filter-group select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-    }
-
-    .filter-group input[type="date"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
-      background-color: white;
-      color: #4a5568;
-      font-size: 0.9rem;
-    }
-
-    .date-range {
-      display: flex;
-      gap: 10px;
-    }
-
-    .date-range input {
-      flex: 1;
-    }
-
-    .toggle-section {
-      background: white;
-      border-radius: 8px;
-      padding: 15px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .toggle-label {
-      color: #4a5568;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 24px;
-    }
-
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #cbd5e0;
-      transition: .4s;
-      border-radius: 24px;
-    }
-
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-
-    .toggle-switch input:checked + .toggle-slider {
-      background-color: #4299e1;
-    }
-
-    .toggle-switch input:checked + .toggle-slider:before {
-      transform: translateX(26px);
-    }
-
-    .upload-status {
-      margin-top: 10px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      display: none;
-      text-align: center;
-    }
-
-    .upload-status.success {
-      background-color: #f0fff4;
-      color: #38a169;
-      border: 1px solid #9ae6b4;
-      display: block;
-    }
-
-    .upload-status.error {
-      background-color: #fed7d7;
-      color: #e53e3e;
-      border: 1px solid #feb2b2;
-      display: block;
-    }
-
-    .upload-status.processing {
-      background-color: #e6f7ff;
-      color: #1890ff;
-      border: 1px solid #91d5ff;
-      display: block;
-    }
-
-    .debug-panel {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 0.75rem;
-      color: #6c757d;
-      max-height: 150px;
-      overflow-y: auto;
-      display: none;
+    #sidebar .upload-info {
+      font-size: 12px;
+      color: #bdc3c7;
     }
 
     /* MAIN CONTENT */
-    #main-content {
-      flex: 1;
+    #main {
+      flex-grow: 1;
       margin-left: 280px;
       padding: 20px;
       transition: margin-left 0.3s ease;
     }
 
-    #main-content.sidebar-collapsed {
+    #main.collapsed {
       margin-left: 60px;
     }
 
-    .header {
+    .dashboard-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding: 15px;
-      background-color: var(--header-bg);
+      background-color: var(--secondary);
       color: white;
+      padding: 15px 20px;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
-    .header h1 {
-      font-size: 1.8rem;
+    .dashboard-header h1 {
+      font-size: 22px;
       margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .header h1 i {
-      font-size: 1.5rem;
     }
 
     .last-update {
-      font-size: 0.9rem;
+      font-size: 14px;
       opacity: 0.9;
     }
 
     .periode {
+      background-color: #eaf2f8;
+      padding: 10px 15px;
+      border-radius: 5px;
       margin-bottom: 20px;
-      font-size: 1.1rem;
-      color: #555;
+      font-weight: 500;
+      color: #2c3e50;
     }
 
     .kpi-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 15px;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }
 
     .kpi-card {
-      background: var(--kpi-bg);
-      color: var(--kpi-text);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       text-align: center;
-      transition: transform 0.2s;
-    }
-
-    .kpi-card:hover {
-      transform: translateY(-3px);
     }
 
     .kpi-card h3 {
-      font-size: 0.9rem;
-      color: rgba(255,255,255,0.8);
-      margin-bottom: 10px;
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-bottom: 5px;
     }
 
     .kpi-card p {
-      font-size: 1.8rem;
+      font-size: 24px;
       font-weight: bold;
-      color: white;
+      color: var(--dark);
     }
 
     .tabs {
@@ -388,20 +223,22 @@
       border-bottom: 1px solid #ddd;
     }
 
-    .tab-btn {
-      padding: 12px 24px;
-      background: #f1f1f1;
-      border: none;
+    .tab {
+      padding: 12px 20px;
       cursor: pointer;
-      font-size: 1rem;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-bottom: none;
       border-radius: 8px 8px 0 0;
       margin-right: 5px;
-      transition: all 0.3s;
     }
 
-    .tab-btn.active {
-      background: var(--primary);
-      color: white;
+    .tab.active {
+      background: white;
+      font-weight: bold;
+      border-bottom: 1px solid white;
+      position: relative;
+      z-index: 1;
     }
 
     .tab-content {
@@ -413,40 +250,32 @@
     }
 
     .chart-container {
-      margin-bottom: 30px;
       background: white;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-      min-height: 300px;
-      position: relative;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
 
     .chart-title {
-      font-size: 1.2rem;
+      font-size: 16px;
       margin-bottom: 15px;
-      color: var(--dark);
-      border-bottom: 1px solid #eee;
-      padding-bottom: 8px;
+      color: #2c3e50;
     }
 
-    .no-data-message {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #999;
-      font-size: 1rem;
-      text-align: center;
+    .highlight {
+      font-weight: bold;
+      color: #e74c3c;
     }
 
     .footer {
       text-align: center;
       padding: 15px;
-      color: #777;
-      font-size: 0.9rem;
-      margin-top: 30px;
+      color: #7f8c8d;
+      font-size: 14px;
+      background-color: #f5f7fa;
       border-top: 1px solid #eee;
+      margin-top: 20px;
     }
 
     /* Responsive */
@@ -454,837 +283,785 @@
       #sidebar {
         width: 60px;
       }
-      #main-content {
+      #main {
         margin-left: 60px;
       }
-      .header h1 {
-        font-size: 1.5rem;
+      .dashboard-header h1 {
+        font-size: 18px;
       }
       .kpi-card p {
-        font-size: 1.5rem;
+        font-size: 20px;
       }
     }
   </style>
 </head>
 <body>
-
-  <!-- Sidebar -->
+  <!-- SIDEBAR -->
   <div id="sidebar">
-    <div id="sidebar-header">
+    <button class="toggle-btn" id="toggleSidebar"><<</button>
+    <div class="header">
+      <h3>Dashboard</h3>
     </div>
-    <button id="toggle-btn"><<</button>
 
-    <div id="sidebar-content">
-      <div class="upload-section" id="upload-area">
-        <div class="upload-icon">
-          <i class="fas fa-cloud-upload-alt"></i>
-        </div>
-        <div class="upload-text">Drag & Drop Excel File</div>
-        <div class="upload-text">or Click to Upload</div>
-        <div class="upload-subtext">Min: 2KB | Max: 30MB</div>
-        <input type="file" id="excel-file" accept=".xlsx,.xls" />
-        <div class="upload-status" id="upload-status"></div>
-        <div class="debug-panel" id="debug-panel"></div>
-      </div>
+    <div class="upload-section">
+      <input type="file" id="excelFile" accept=".xlsx,.xls" />
+      <button class="upload-btn" onclick="document.getElementById('excelFile').click()">Upload Excel</button>
+      <div class="upload-info">Min: 2KB | Max: 30MB</div>
+    </div>
 
-      <div class="filter-group">
-        <label>Date Range</label>
-        <div class="date-range">
-          <input type="date" id="start-date" />
-          <input type="date" id="end-date" />
-        </div>
-      </div>
+    <div class="filter-section">
+      <h4>Date Range</h4>
+      <input type="date" id="startDate" />
+      <input type="date" id="endDate" />
 
-      <div class="filter-group">
-        <label>Area</label>
-        <select id="filter-area">
-          <option value="all">Select All</option>
-        </select>
-      </div>
+      <h4>Area</h4>
+      <select id="filterArea" multiple size="5">
+        <option value="all">Select All</option>
+      </select>
 
-      <div class="filter-group">
-        <label>Plant</label>
-        <select id="filter-plant">
-          <option value="all">Select All</option>
-        </select>
-      </div>
+      <h4>Plant</h4>
+      <select id="filterPlant" multiple size="5">
+        <option value="all">Select All</option>
+      </select>
 
-      <div class="filter-group">
-        <label>Truck Type</label>
-        <select id="filter-truck-type">
-          <option value="all">Select All</option>
-        </select>
-      </div>
+      <h4>Truck Type</h4>
+      <select id="filterTruckType" multiple size="5">
+        <option value="all">Select All</option>
+      </select>
+    </div>
 
-      <div class="toggle-section">
-        <div class="toggle-label">Data Label On/Off</div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="data-label-toggle" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
+    <div class="data-label-toggle">
+      <input type="checkbox" id="dataLabelToggle" checked />
+      <label for="dataLabelToggle">Data Labels On</label>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div id="main-content">
-    <div class="header">
-      <h1><i class="fas fa-hard-hat"></i> Summary Daily Delivery...Area (All)</h1>
-      <div class="last-update" id="last-update">Last update: --</div>
+  <!-- MAIN CONTENT -->
+  <div id="main">
+    <!-- DASHBOARD HEADER -->
+    <div class="dashboard-header">
+      <h1 id="dashboardTitle">Summary Daily Delivery...Area (All)</h1>
+      <div class="last-update" id="lastUpdate">Last Update: --</div>
     </div>
 
-    <div class="periode" id="periode">Periode: --</div>
+    <!-- PERIODE -->
+    <div class="periode" id="periodeText">Periode: --</div>
 
+    <!-- KPI -->
     <div class="kpi-container">
       <div class="kpi-card">
         <h3>Total Area</h3>
-        <p id="kpi-area">0</p>
+        <p id="kpiArea">0</p>
       </div>
       <div class="kpi-card">
         <h3>Total Plant</h3>
-        <p id="kpi-plant">0</p>
+        <p id="kpiPlant">0</p>
       </div>
       <div class="kpi-card">
         <h3>Total Volume (m³)</h3>
-        <p id="kpi-volume">0</p>
+        <p id="kpiVolume">0</p>
       </div>
       <div class="kpi-card">
         <h3>Avg Volume (m³)</h3>
-        <p id="kpi-avg-volume">0</p>
+        <p id="kpiAvgVolume">0</p>
       </div>
       <div class="kpi-card">
         <h3>Total Truck</h3>
-        <p id="kpi-truck">0</p>
+        <p id="kpiTruck">0</p>
       </div>
       <div class="kpi-card">
-        <h3>Avg Load / Truck</h3>
-        <p id="kpi-avg-load">0</p>
+        <h3>Avg Load/Truck (m³)</h3>
+        <p id="kpiAvgLoadTruck">0</p>
       </div>
     </div>
 
+    <!-- TABS -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="logistic">LOGISTIC</button>
-      <button class="tab-btn" data-tab="sales">SALES AND CUSTOMER PERFORMANCE</button>
+      <div class="tab active" data-tab="logistic">LOGISTIC</div>
+      <div class="tab" data-tab="sales">SALES AND CUSTOMER PERFORMANCE</div>
     </div>
 
-    <!-- TAB 1: LOGISTIC -->
-    <div id="tab-logistic" class="tab-content active">
-      <h2 class="chart-title">A. Delivery</h2>
-      
-      <div id="chart-volume-by-area" class="chart-container" style="display:none;">
-        <h3 class="chart-title">Volume by Area</h3>
-        <canvas id="canvas-volume-area"></canvas>
-        <div class="no-data-message" id="no-data-area" style="display:none;">No data available</div>
-      </div>
-
-      <div id="chart-volume-by-plant" class="chart-container">
-        <h3 class="chart-title">Volume by Plant</h3>
-        <canvas id="canvas-volume-plant"></canvas>
-        <div class="no-data-message" id="no-data-plant" style="display:none;">No data available</div>
-      </div>
-
-      <div id="chart-avg-volume-by-plant" class="chart-container">
-        <h3 class="chart-title">Avg Volume by Plant</h3>
-        <canvas id="canvas-avg-volume-plant"></canvas>
-        <div class="no-data-message" id="no-data-avg-plant" style="display:none;">No data available</div>
-      </div>
-
-      <div id="chart-avg-volume-per-day" class="chart-container">
-        <h3 class="chart-title">Avg Volume per Day</h3>
-        <canvas id="canvas-avg-volume-day"></canvas>
-        <div class="no-data-message" id="no-data-day" style="display:none;">No data available</div>
-      </div>
-
-      <h2 class="chart-title">B. Utilization Truck</h2>
-
-      <div id="chart-volume-per-truck" class="chart-container">
-        <h3 class="chart-title">Volume per Truck</h3>
-        <canvas id="canvas-volume-truck"></canvas>
-        <div class="no-data-message" id="no-data-truck" style="display:none;">No data available</div>
-      </div>
-
-      <div id="chart-total-trip-per-truck" class="chart-container">
-        <h3 class="chart-title">Total Trip per Truck</h3>
-        <canvas id="canvas-trip-truck"></canvas>
-        <div class="no-data-message" id="no-data-trip" style="display:none;">No data available</div>
-      </div>
-
-      <div id="chart-avg-load-per-truck" class="chart-container">
-        <h3 class="chart-title">Avg Load per Truck</h3>
-        <canvas id="canvas-avg-load-truck"></canvas>
-        <div class="no-data-message" id="no-data-load" style="display:none;">No data available</div>
-      </div>
-
-      <h2 class="chart-title">C. Distance</h2>
-
-      <div id="chart-avg-distance-per-plant" class="chart-container">
-        <h3 class="chart-title">Avg Distance per Plant</h3>
-        <canvas id="canvas-avg-distance-plant"></canvas>
-        <div class="no-data-message" id="no-data-distance" style="display:none;">No data available</div>
-      </div>
-
-      <div id="chart-trend-volume-by-distance" class="chart-container">
-        <h3 class="chart-title">Trend Volume by Distance</h3>
-        <canvas id="canvas-trend-distance"></canvas>
-        <div class="no-data-message" id="no-data-trend" style="display:none;">No data available</div>
-      </div>
-    </div>
-
-    <!-- TAB 2: SALES -->
-    <div id="tab-sales" class="tab-content">
-      <h2 class="chart-title">A. Volume per Sales</h2>
+    <!-- TAB CONTENT -->
+    <div id="tabLogistic" class="tab-content active">
+      <!-- A. Delivery -->
       <div class="chart-container">
-        <canvas id="canvas-volume-sales"></canvas>
-        <div class="no-data-message" id="no-data-sales" style="display:none;">No data available</div>
+        <h3 class="chart-title">A. Delivery</h3>
+        <div id="volumeByArea" class="chart-container" style="display:none;">
+          <h4 class="chart-title">A1. Volume by Area</h4>
+          <canvas id="chartVolumeByArea"></canvas>
+        </div>
+        <div id="volumeByPlant" class="chart-container">
+          <h4 class="chart-title">A2. Volume by Plant</h4>
+          <canvas id="chartVolumeByPlant"></canvas>
+        </div>
+        <div id="avgVolumeByPlant" class="chart-container">
+          <h4 class="chart-title">A3. Avg Volume by Plant</h4>
+          <canvas id="chartAvgVolumeByPlant"></canvas>
+        </div>
+        <div id="avgVolumePerDay" class="chart-container">
+          <h4 class="chart-title">A4. Avg Volume per Day</h4>
+          <canvas id="chartAvgVolumePerDay"></canvas>
+        </div>
       </div>
 
-      <h2 class="chart-title">B. Volume per End Customer</h2>
+      <!-- B. Utilization Truck -->
       <div class="chart-container">
-        <canvas id="canvas-volume-customer"></canvas>
-        <div class="no-data-message" id="no-data-customer" style="display:none;">No data available</div>
+        <h3 class="chart-title">B. Utilization Truck</h3>
+        <div id="volumePerTruck" class="chart-container">
+          <h4 class="chart-title">B1. Volume per Truck</h4>
+          <canvas id="chartVolumePerTruck"></canvas>
+        </div>
+        <div id="totalTripPerTruck" class="chart-container">
+          <h4 class="chart-title">B2. Total Trip per Truck</h4>
+          <canvas id="chartTotalTripPerTruck"></canvas>
+        </div>
+        <div id="avgLoadPerTruck" class="chart-container">
+          <h4 class="chart-title">B3. Avg Load per Truck</h4>
+          <canvas id="chartAvgLoadPerTruck"></canvas>
+        </div>
+      </div>
+
+      <!-- C. Distance -->
+      <div class="chart-container">
+        <h3 class="chart-title">C. Distance</h3>
+        <div id="avgDistancePerPlant" class="chart-container">
+          <h4 class="chart-title">C1. Avg Distance per Plant</h4>
+          <canvas id="chartAvgDistancePerPlant"></canvas>
+        </div>
+        <div id="trendVolumeByDistance" class="chart-container">
+          <h4 class="chart-title">C2. Trend Volume by Distance</h4>
+          <canvas id="chartTrendVolumeByDistance"></canvas>
+        </div>
       </div>
     </div>
 
+    <div id="tabSales" class="tab-content">
+      <!-- A. Sales -->
+      <div class="chart-container">
+        <h3 class="chart-title">A. Volume per Sales</h3>
+        <canvas id="chartVolumePerSales"></canvas>
+      </div>
+
+      <!-- B. Customer -->
+      <div class="chart-container">
+        <h3 class="chart-title">B. Volume per End Customer</h3>
+        <canvas id="chartVolumePerCustomer"></canvas>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
     <div class="footer">
       Summary Daily Delivery And Sales by L=23-51Xe.
     </div>
   </div>
 
   <script>
-    // Global Data
+    // Global Variables
     let rawData = [];
     let filteredData = [];
     let charts = {};
-    let highlightColors = [
+    let dataLabelsEnabled = true;
+
+    // Colors for highlighting (Top 10)
+    const highlightColors = [
       '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
-      '#1abc9c', '#e67e22', '#2980b9', '#d35400', '#c0392b'
+      '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
     ];
 
     // DOM Elements
     const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggle-btn');
-    const mainContent = document.getElementById('main-content');
-    const uploadArea = document.getElementById('upload-area');
-    const excelFile = document.getElementById('excel-file');
-    const uploadStatus = document.getElementById('upload-status');
-    const debugPanel = document.getElementById('debug-panel');
-    const dashboardTitle = document.querySelector('.header h1');
-    const lastUpdate = document.getElementById('last-update');
-    const periode = document.getElementById('periode');
-    
-    // KPI Elements
-    const kpiArea = document.getElementById('kpi-area');
-    const kpiPlant = document.getElementById('kpi-plant');
-    const kpiVolume = document.getElementById('kpi-volume');
-    const kpiAvgVolume = document.getElementById('kpi-avg-volume');
-    const kpiTruck = document.getElementById('kpi-truck');
-    const kpiAvgLoad = document.getElementById('kpi-avg-load');
+    const main = document.getElementById('main');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const excelFile = document.getElementById('excelFile');
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+    const filterArea = document.getElementById('filterArea');
+    const filterPlant = document.getElementById('filterPlant');
+    const filterTruckType = document.getElementById('filterTruckType');
+    const dataLabelToggle = document.getElementById('dataLabelToggle');
+    const dashboardTitle = document.getElementById('dashboardTitle');
+    const periodeText = document.getElementById('periodeText');
+    const kpiArea = document.getElementById('kpiArea');
+    const kpiPlant = document.getElementById('kpiPlant');
+    const kpiVolume = document.getElementById('kpiVolume');
+    const kpiAvgVolume = document.getElementById('kpiAvgVolume');
+    const kpiTruck = document.getElementById('kpiTruck');
+    const kpiAvgLoadTruck = document.getElementById('kpiAvgLoadTruck');
+    const lastUpdate = document.getElementById('lastUpdate');
 
-    // Filter Elements
-    const filterArea = document.getElementById('filter-area');
-    const filterPlant = document.getElementById('filter-plant');
-    const filterTruckType = document.getElementById('filter-truck-type');
-    const startDate = document.getElementById('start-date');
-    const endDate = document.getElementById('end-date');
-    const dataLabelToggle = document.getElementById('data-label-toggle');
+    // Toggle Sidebar
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      main.classList.toggle('collapsed');
+      toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
+    });
 
-    // Tab Elements
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+    // Handle File Upload
+    excelFile.addEventListener('change', handleFileUpload);
 
-    // Initialize
-    init();
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
 
-    function init() {
-      log('Initializing application...');
-      setupEventListeners();
-      updateLastUpdateTime();
-      log('Application initialized successfully');
-    }
-
-    function log(message) {
-      console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
-      if (debugPanel) {
-        debugPanel.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${message}</div>`;
-        debugPanel.scrollTop = debugPanel.scrollHeight;
-        debugPanel.style.display = 'block';
-      }
-    }
-
-    function setupEventListeners() {
-      log('Setting up event listeners...');
-      
-      // Sidebar toggle
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', toggleSidebar);
-      }
-      
-      // File upload
-      if (excelFile) {
-        excelFile.addEventListener('change', function(e) {
-          log('File input change detected');
-          handleFileUpload(e);
-        });
-      }
-
-      // Upload area click
-      if (uploadArea && excelFile) {
-        uploadArea.addEventListener('click', function(e) {
-          log('Upload area clicked');
-          if (e.target === excelFile) return; // Prevent double trigger
-          excelFile.click();
-        });
-      }
-
-      // Filter event listeners
-      const filterElements = [filterArea, filterPlant, filterTruckType, startDate, endDate];
-      filterElements.forEach(el => {
-        if (el) {
-          el.addEventListener('change', function() {
-            log(`Filter changed: ${el.id}`);
-            applyFilters();
-          });
-        }
-      });
-
-      // Data label toggle
-      if (dataLabelToggle) {
-        dataLabelToggle.addEventListener('change', function() {
-          log('Data label toggle changed');
-          redrawAllCharts();
-        });
-      }
-
-      // Tab switching
-      tabButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-          log(`Tab switched to: ${btn.dataset.tab}`);
-          tabButtons.forEach(b => b.classList.remove('active'));
-          tabContents.forEach(c => c.classList.remove('active'));
-          btn.classList.add('active');
-          const targetTab = document.getElementById(`tab-${btn.dataset.tab}`);
-          if (targetTab) {
-            targetTab.classList.add('active');
-          }
-          redrawAllCharts();
-        });
-      });
-
-      // Drag and drop setup
-      setupDragAndDrop();
-      
-      log('Event listeners setup completed');
-    }
-
-    function setupDragAndDrop() {
-      if (!uploadArea) return;
-      
-      log('Setting up drag and drop...');
-
-      // Prevent default drag behavior
-      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-      });
-
-      // Highlight drop area
-      ['dragenter', 'dragover'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, function() {
-          uploadArea.classList.add('drag-over');
-          log('Drag over detected');
-        }, false);
-      });
-
-      // Remove highlight
-      ['dragleave', 'drop'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, function() {
-          uploadArea.classList.remove('drag-over');
-          log('Drag leave/drop detected');
-        }, false);
-      });
-
-      // Handle drop
-      uploadArea.addEventListener('drop', function(e) {
-        log('Files dropped');
-        handleDrop(e);
-      }, false);
-    }
-
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    function handleDrop(e) {
-      const dt = e.dataTransfer;
-      const files = dt.files;
-      
-      log(`Files dropped: ${files.length}`);
-      
-      if (files.length > 0) {
-        const file = files[0];
-        log(`File: ${file.name} (${file.size} bytes)`);
-        
-        // Set file to input element
-        if (excelFile) {
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          excelFile.files = dataTransfer.files;
-          handleFileUpload();
-        }
-      }
-    }
-
-    function toggleSidebar() {
-      if (sidebar && mainContent && toggleBtn) {
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('sidebar-collapsed');
-        toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
-        log('Sidebar toggled');
-      }
-    }
-
-    function updateLastUpdateTime() {
-      if (lastUpdate) {
-        const now = new Date();
-        lastUpdate.textContent = `Last update: ${now.toLocaleString()}`;
-      }
-    }
-
-    function showUploadStatus(message, type) {
-      if (uploadStatus) {
-        uploadStatus.textContent = message;
-        uploadStatus.className = `upload-status ${type}`;
-        
-        if (type !== 'processing') {
-          setTimeout(() => {
-            uploadStatus.style.display = 'none';
-          }, 5000);
-        }
-      }
-      log(`Upload status: ${type} - ${message}`);
-    }
-
-    function handleFileUpload(event = null) {
-      if (!excelFile || !excelFile.files || excelFile.files.length === 0) {
-        log('No file selected');
-        showUploadStatus("No file selected", "error");
+      const fileSizeMB = file.size / (1024 * 1024);
+      if (fileSizeMB < 0.002) {
+        alert("File too small! Minimum 2KB.");
         return;
       }
-
-      const file = excelFile.files[0];
-      log(`Processing file: ${file.name} (${file.size} bytes, ${file.type})`);
-
-      // Validate file size
-      if (file.size < 2 * 1024) {
-        showUploadStatus("File must be at least 2KB!", "error");
+      if (fileSizeMB > 30) {
+        alert("File too large! Maximum 30MB.");
         return;
       }
-      
-      if (file.size > 30 * 1024 * 1024) {
-        showUploadStatus("File must be less than 30MB!", "error");
-        return;
-      }
-
-      // Validate file type
-      const validTypes = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel'
-      ];
-      
-      if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-        showUploadStatus("Please upload a valid Excel file!", "error");
-        return;
-      }
-
-      showUploadStatus("Processing file...", "processing");
 
       const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          log('File read successfully, parsing data...');
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          
-          // Get first worksheet
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-          
-          log(`Excel file parsed successfully. Rows: ${jsonData.length}`);
-          
-          // Process the data
-          processExcelData(jsonData);
-          showUploadStatus("File uploaded and processed successfully!", "success");
-          
-        } catch (error) {
-          log(`Error processing file: ${error.message}`);
-          showUploadStatus("Error processing file: " + error.message, "error");
-        }
+      reader.onload = function (event) {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // Convert to JSON
+        rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        // Parse headers (first row)
+        const headers = rawData[0].map(h => String(h).trim());
+        rawData = rawData.slice(1).map(row => {
+          const obj = {};
+          headers.forEach((header, idx) => {
+            obj[header] = row[idx] !== undefined ? row[idx] : null;
+          });
+          return obj;
+        });
+
+        // Normalize column names (case-insensitive, trim)
+        const colMap = {
+          'DP No': ['dp no', 'dp_no', 'dpno', 'dp no'],
+          'QTY': ['qty', 'quantity', 'qty (m3)', 'volume'],
+          'Area': ['area', 'region'],
+          'Plant Name': ['plant name', 'plant', 'plant_name'],
+          'Truck No': ['truck no', 'truck_number', 'truckno'],
+          'Truck Type': ['truck type', 'truck_type'],
+          'Sales Man': ['sales man', 'salesman', 'sales'],
+          'End Customer Name': ['end customer name', 'customer', 'end_customer'],
+          'Distance': ['distance', 'dist']
+        };
+
+        // Map columns to standardized keys
+        rawData = rawData.map(row => {
+          const mappedRow = {};
+          Object.keys(colMap).forEach(key => {
+            const possibleKeys = colMap[key];
+            let foundKey = null;
+            for (const pk of possibleKeys) {
+              for (const rk in row) {
+                if (rk.toLowerCase().trim() === pk) {
+                  foundKey = rk;
+                  break;
+                }
+              }
+              if (foundKey) break;
+            }
+            mappedRow[key] = foundKey ? row[foundKey] : null;
+          });
+          return mappedRow;
+        });
+
+        // Clean and convert types
+        rawData = rawData.filter(row => 
+          row['DP No'] && 
+          row['QTY'] !== null && 
+          row['Area'] !== null && 
+          row['Plant Name'] !== null &&
+          row['Truck No'] !== null &&
+          row['Truck Type'] !== null &&
+          row['Sales Man'] !== null &&
+          row['End Customer Name'] !== null &&
+          row['Distance'] !== null
+        ).map(row => ({
+          ...row,
+          'QTY': parseFloat(row['QTY']) || 0,
+          'Distance': parseFloat(row['Distance']) || 0,
+          'Date': extractDateFromRow(row) // Try to extract date from any column with date-like values
+        }));
+
+        // Extract unique values for filters
+        updateFilters();
+
+        // Initial filter and render
+        applyFilters();
       };
-      
-      reader.onerror = function() {
-        log('Error reading file');
-        showUploadStatus("Error reading file", "error");
-      };
-      
       reader.readAsArrayBuffer(file);
     }
 
-    function processExcelData(data) {
-      if (!data || data.length < 2) {
-        log('No data or insufficient rows in Excel file');
-        showUploadStatus("No valid data found in Excel file", "error");
-        return;
+    function extractDateFromRow(row) {
+      // Try common date column names
+      const dateCols = ['date', 'delivery date', 'delivery_date', 'tanggal'];
+      for (let col in row) {
+        if (dateCols.some(d => col.toLowerCase().includes(d))) {
+          const val = row[col];
+          if (typeof val === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}/.test(val)) {
+            const [day, month, year] = val.split('/');
+            return new Date(year, month - 1, day);
+          } else if (val instanceof Date) {
+            return val;
+          } else if (typeof val === 'number') {
+            // Excel serial date number
+            return new Date(Math.round((val - 25569) * 86400 * 1000));
+          }
+        }
       }
-
-      // Extract headers (first row)
-      const headers = data[0];
-      log(`Headers: ${headers.join(', ')}`);
-      
-      // Convert to array of objects
-      rawData = [];
-      for (let i = 1; i < data.length; i++) {
-        const row = data[i];
-        if (row.length === 0) continue;
-        
-        const obj = {};
-        headers.forEach((header, index) => {
-          obj[header] = row[index] !== undefined ? row[index] : null;
-        });
-        rawData.push(obj);
-      }
-      
-      log(`Processed ${rawData.length} rows of data`);
-      
-      // Update filters
-      updateFilters();
-      
-      // Apply initial filters and update dashboard
-      applyFilters();
+      return new Date(); // fallback
     }
 
     function updateFilters() {
-      // Clear existing options
-      filterArea.innerHTML = '<option value="all">Select All</option>';
-      filterPlant.innerHTML = '<option value="all">Select All</option>';
-      filterTruckType.innerHTML = '<option value="all">Select All</option>';
-      
-      // Get unique values for each filter
-      const areas = [...new Set(rawData.map(item => item.Area))].filter(Boolean);
-      const plants = [...new Set(rawData.map(item => item.Plant))].filter(Boolean);
-      const truckTypes = [...new Set(rawData.map(item => item['Truck Type']))].filter(Boolean);
-      
-      // Add options to filters
-      areas.forEach(area => {
-        const option = document.createElement('option');
-        option.value = area;
-        option.textContent = area;
-        filterArea.appendChild(option);
-      });
-      
-      plants.forEach(plant => {
-        const option = document.createElement('option');
-        option.value = plant;
-        option.textContent = plant;
-        filterPlant.appendChild(option);
-      });
-      
-      truckTypes.forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        option.textContent = type;
-        filterTruckType.appendChild(option);
-      });
-      
-      // Set date range
-      const dates = rawData.map(item => item.Date).filter(Boolean);
-      if (dates.length > 0) {
-        const minDate = new Date(Math.min(...dates.map(d => new Date(d))));
-        const maxDate = new Date(Math.max(...dates.map(d => new Date(d))));
-        
-        startDate.valueAsDate = minDate;
-        endDate.valueAsDate = maxDate;
-        
-        periode.textContent = `Periode: ${formatDate(minDate)} - ${formatDate(maxDate)}`;
+      const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
+      const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
+      const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
+
+      // Clear and repopulate selects
+      clearSelect(filterArea);
+      clearSelect(filterPlant);
+      clearSelect(filterTruckType);
+
+      // Add "Select All"
+      addOption(filterArea, "Select All", "all");
+      areas.forEach(a => addOption(filterArea, a, a));
+
+      addOption(filterPlant, "Select All", "all");
+      plants.forEach(p => addOption(filterPlant, p, p));
+
+      addOption(filterTruckType, "Select All", "all");
+      truckTypes.forEach(t => addOption(filterTruckType, t, t));
+    }
+
+    function clearSelect(selectElement) {
+      while (selectElement.options.length > 0) {
+        selectElement.remove(0);
       }
-      
-      log(`Filters updated: ${areas.length} areas, ${plants.length} plants, ${truckTypes.length} truck types`);
+    }
+
+    function addOption(selectElement, text, value) {
+      const option = document.createElement('option');
+      option.text = text;
+      option.value = value;
+      selectElement.add(option);
     }
 
     function applyFilters() {
-      log('Applying filters...');
-      
-      // Start with all data
-      filteredData = [...rawData];
-      
-      // Apply area filter
-      const selectedArea = filterArea.value;
-      if (selectedArea !== 'all') {
-        filteredData = filteredData.filter(item => item.Area === selectedArea);
-        dashboardTitle.innerHTML = `<i class="fas fa-hard-hat"></i> Summary Daily Delivery...Area (${selectedArea})`;
-      } else {
-        dashboardTitle.innerHTML = `<i class="fas fa-hard-hat"></i> Summary Daily Delivery...Area (All)`;
-      }
-      
-      // Apply plant filter
-      const selectedPlant = filterPlant.value;
-      if (selectedPlant !== 'all') {
-        filteredData = filteredData.filter(item => item.Plant === selectedPlant);
-      }
-      
-      // Apply truck type filter
-      const selectedTruckType = filterTruckType.value;
-      if (selectedTruckType !== 'all') {
-        filteredData = filteredData.filter(item => item['Truck Type'] === selectedTruckType);
-      }
-      
-      // Apply date filter
-      const start = startDate.valueAsDate;
-      const end = endDate.valueAsDate;
-      
-      if (start && end) {
-        filteredData = filteredData.filter(item => {
-          const itemDate = new Date(item.Date);
-          return itemDate >= start && itemDate <= end;
+      let filtered = [...rawData];
+
+      // Date Filter
+      const start = startDate.value ? new Date(startDate.value) : null;
+      const end = endDate.value ? new Date(endDate.value) : null;
+
+      if (start || end) {
+        filtered = filtered.filter(row => {
+          const rowDate = row.Date;
+          if (!rowDate) return false;
+          if (start && rowDate < start) return false;
+          if (end && rowDate > end) return false;
+          return true;
         });
-        
-        periode.textContent = `Periode: ${formatDate(start)} - ${formatDate(end)}`;
       }
-      
-      log(`Data filtered: ${filteredData.length} rows remaining`);
-      
-      // Update KPIs and charts
+
+      // Area Filter
+      const selectedAreas = Array.from(filterArea.selectedOptions).map(o => o.value);
+      if (!selectedAreas.includes('all')) {
+        filtered = filtered.filter(row => selectedAreas.includes(row.Area));
+      }
+
+      // Plant Filter
+      const selectedPlants = Array.from(filterPlant.selectedOptions).map(o => o.value);
+      if (!selectedPlants.includes('all')) {
+        filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
+      }
+
+      // Truck Type Filter
+      const selectedTruckTypes = Array.from(filterTruckType.selectedOptions).map(o => o.value);
+      if (!selectedTruckTypes.includes('all')) {
+        filtered = filtered.filter(row => selectedTruckTypes.includes(row['Truck Type']));
+      }
+
+      filteredData = filtered;
+
+      // Update KPIs
       updateKPIs();
+
+      // Update UI
+      updateDashboardTitle();
+      updatePeriodeText();
       updateCharts();
+
+      // Update last update time
+      lastUpdate.textContent = `Last Update: ${new Date().toLocaleString()}`;
     }
 
     function updateKPIs() {
-      if (filteredData.length === 0) {
-        kpiArea.textContent = '0';
-        kpiPlant.textContent = '0';
-        kpiVolume.textContent = '0';
-        kpiAvgVolume.textContent = '0';
-        kpiTruck.textContent = '0';
-        kpiAvgLoad.textContent = '0';
-        return;
-      }
-      
-      // Calculate KPIs
-      const areas = new Set(filteredData.map(item => item.Area)).size;
-      const plants = new Set(filteredData.map(item => item.Plant)).size;
-      const totalVolume = filteredData.reduce((sum, item) => sum + (item.Volume || 0), 0);
-      const avgVolume = totalVolume / filteredData.length;
-      const trucks = new Set(filteredData.map(item => item['Truck ID'])).size;
-      const avgLoad = totalVolume / (filteredData.length || 1);
-      
-      // Update KPI displays
-      kpiArea.textContent = areas.toLocaleString();
-      kpiPlant.textContent = plants.toLocaleString();
-      kpiVolume.textContent = totalVolume.toLocaleString();
-      kpiAvgVolume.textContent = avgVolume.toFixed(1);
-      kpiTruck.textContent = trucks.toLocaleString();
-      kpiAvgLoad.textContent = avgLoad.toFixed(1);
-      
-      log(`KPIs updated: ${areas} areas, ${plants} plants, ${totalVolume} volume`);
+      const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
+      const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
+      const totalVolume = filteredData.reduce((sum, r) => sum + r.QTY, 0);
+      const avgVolume = totalVolume > 0 ? (totalVolume / filteredData.length).toFixed(2) : 0;
+      const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].length;
+      const avgLoadPerTruck = totalTruck > 0 ? (totalVolume / totalTruck).toFixed(2) : 0;
+
+      kpiArea.textContent = totalArea;
+      kpiPlant.textContent = totalPlant;
+      kpiVolume.textContent = totalVolume.toFixed(2);
+      kpiAvgVolume.textContent = avgVolume;
+      kpiTruck.textContent = totalTruck;
+      kpiAvgLoadTruck.textContent = avgLoadPerTruck;
     }
 
+    function updateDashboardTitle() {
+      const selectedAreas = Array.from(filterArea.selectedOptions).map(o => o.text);
+      const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
+      dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
+    }
+
+    function updatePeriodeText() {
+      const start = startDate.value ? new Date(startDate.value).toLocaleDateString('id-ID') : '--';
+      const end = endDate.value ? new Date(endDate.value).toLocaleDateString('id-ID') : '--';
+      periodeText.textContent = `Periode: ${start} - ${end}`;
+    }
+
+    // CHARTS RENDERING
     function updateCharts() {
-      if (filteredData.length === 0) {
-        // Show no data messages
-        document.querySelectorAll('.no-data-message').forEach(el => {
-          el.style.display = 'block';
-        });
-        return;
+      destroyAllCharts();
+
+      if (!filteredData.length) return;
+
+      // Show/Hide Volume by Area based on "Select All"
+      const areaFilterSelected = Array.from(filterArea.selectedOptions).map(o => o.value);
+      const showVolumeByArea = areaFilterSelected.includes('all');
+      document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
+
+      // A1. Volume by Area
+      if (showVolumeByArea) {
+        createBarChart(
+          'chartVolumeByArea',
+          'Volume by Area',
+          getGroupedData('Area', 'QTY'),
+          true
+        );
       }
-      
-      // Hide no data messages
-      document.querySelectorAll('.no-data-message').forEach(el => {
-        el.style.display = 'none';
-      });
-      
-      // Create or update charts
-      createVolumeByAreaChart();
-      createVolumeByPlantChart();
-      createAvgVolumeByPlantChart();
-      createAvgVolumePerDayChart();
-      createVolumePerTruckChart();
-      createTotalTripPerTruckChart();
-      createAvgLoadPerTruckChart();
-      createAvgDistancePerPlantChart();
-      createTrendVolumeByDistanceChart();
-      createVolumePerSalesChart();
-      createVolumePerCustomerChart();
-      
-      log('Charts updated');
+
+      // A2. Volume by Plant
+      createBarChart(
+        'chartVolumeByPlant',
+        'Volume by Plant',
+        getGroupedData('Plant Name', 'QTY'),
+        true
+      );
+
+      // A3. Avg Volume by Plant
+      createBarChart(
+        'chartAvgVolumeByPlant',
+        'Avg Volume by Plant',
+        getGroupedData('Plant Name', 'QTY', true),
+        true
+      );
+
+      // A4. Avg Volume per Day (Line Chart)
+      createLineChart(
+        'chartAvgVolumePerDay',
+        'Avg Volume per Day',
+        getDailyAvgVolume()
+      );
+
+      // B1. Volume per Truck
+      createBarChart(
+        'chartVolumePerTruck',
+        'Volume per Truck',
+        getGroupedData('Truck No', 'QTY'),
+        true
+      );
+
+      // B2. Total Trip per Truck (unique DP No per Truck)
+      const tripData = getTripCountByTruck();
+      createBarChart(
+        'chartTotalTripPerTruck',
+        'Total Trip per Truck',
+        tripData,
+        true
+      );
+
+      // B3. Avg Load per Truck (Total Volume / Total Truck)
+      const totalVol = filteredData.reduce((s, r) => s + r.QTY, 0);
+      const totalTrucks = [...new Set(filteredData.map(r => r['Truck No']))].length;
+      const avgLoad = totalTrucks > 0 ? totalVol / totalTrucks : 0;
+      createSingleValueBarChart(
+        'chartAvgLoadPerTruck',
+        'Avg Load per Truck',
+        avgLoad.toFixed(2),
+        'm³'
+      );
+
+      // C1. Avg Distance per Plant
+      createBarChart(
+        'chartAvgDistancePerPlant',
+        'Avg Distance per Plant',
+        getGroupedData('Plant Name', 'Distance', true),
+        true
+      );
+
+      // C2. Trend Volume by Distance (Scatter or grouped bar)
+      createScatterChart(
+        'chartTrendVolumeByDistance',
+        'Trend Volume by Distance',
+        filteredData.map(r => ({ x: r.Distance, y: r.QTY }))
+      );
+
+      // SALES: Volume per Sales
+      createBarChart(
+        'chartVolumePerSales',
+        'Volume per Sales',
+        getGroupedData('Sales Man', 'QTY'),
+        true
+      );
+
+      // CUSTOMER: Volume per End Customer
+      createBarChart(
+        'chartVolumePerCustomer',
+        'Volume per End Customer',
+        getGroupedData('End Customer Name', 'QTY'),
+        true
+      );
     }
 
-    function redrawAllCharts() {
-      // Destroy all existing charts
-      Object.values(charts).forEach(chart => {
-        if (chart) {
-          chart.destroy();
-        }
+    function getGroupedData(groupBy, metric, isAvg = false) {
+      const map = new Map();
+      filteredData.forEach(row => {
+        const key = row[groupBy];
+        if (!key) return;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(parseFloat(row[metric]) || 0);
       });
-      
+
+      return Array.from(map.entries()).map(([key, values]) => ({
+        label: key,
+        value: isAvg ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : values.reduce((a,b)=>a+b,0)
+      })).sort((a,b) => b.value - a.value).slice(0, 10); // Top 10
+    }
+
+    function getTripCountByTruck() {
+      const tripMap = new Map();
+      filteredData.forEach(row => {
+        const key = `${row['Truck No']} - ${row['DP No']}`;
+        const truckNo = row['Truck No'];
+        if (!tripMap.has(truckNo)) tripMap.set(truckNo, new Set());
+        tripMap.get(truckNo).add(key);
+      });
+
+      return Array.from(tripMap.entries()).map(([truck, trips]) => ({
+        label: truck,
+        value: trips.size
+      })).sort((a,b) => b.value - a.value).slice(0, 10); // Top 10
+    }
+
+    function getDailyAvgVolume() {
+      const dailyMap = new Map();
+      filteredData.forEach(row => {
+        const dateStr = row.Date.toISOString().split('T')[0];
+        if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, { sum: 0, count: 0 });
+        dailyMap.get(dateStr).sum += row.QTY;
+        dailyMap.get(dateStr).count += 1;
+      });
+
+      return Array.from(dailyMap.entries())
+        .map(([date, { sum, count }]) => ({
+          date,
+          avg: (sum / count).toFixed(2)
+        }))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+
+    function destroyAllCharts() {
+      Object.values(charts).forEach(chart => chart.destroy());
       charts = {};
-      
-      // Recreate charts
+    }
+
+    function createBarChart(canvasId, title, data, enableHighlight = false) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const labels = data.map(d => d.label);
+      const values = data.map(d => d.value);
+
+      const backgroundColors = enableHighlight
+        ? labels.map((_, i) => highlightColors[i % highlightColors.length])
+        : Array(labels.length).fill('#3498db');
+
+      const datasets = [{
+        label: title,
+        data: values,
+        backgroundColor: backgroundColors,
+        borderColor: 'rgba(0,0,0,0.1)',
+        borderWidth: 1,
+      }];
+
+      const config = {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: dataLabelsEnabled },
+            title: { display: true, text: title, font: { size: 16 } },
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#555' } },
+            x: { ticks: { color: '#555', maxRotation: 45, minRotation: 0 } }
+          }
+        }
+      };
+
+      charts[canvasId] = new Chart(ctx, config);
+    }
+
+    function createSingleValueBarChart(canvasId, title, value, unit) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const labels = ['Avg Load'];
+      const values = [parseFloat(value)];
+
+      const config = {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: title,
+            data: values,
+            backgroundColor: '#2ecc71',
+            borderColor: 'rgba(0,0,0,0.1)',
+            borderWidth: 1,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: dataLabelsEnabled },
+            title: { display: true, text: title, font: { size: 16 } },
+            datalabels: {
+              display: dataLabelsEnabled,
+              formatter: (value) => `${value} ${unit}`,
+              color: '#000',
+              font: { weight: 'bold' }
+            }
+          },
+          scales: {
+            y: { display: false, beginAtZero: true },
+            x: { display: false }
+          }
+        }
+      };
+
+      charts[canvasId] = new Chart(ctx, config);
+    }
+
+    function createLineChart(canvasId, title, data) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const labels = data.map(d => d.date);
+      const values = data.map(d => parseFloat(d.avg));
+
+      const config = {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Avg Volume (m³)',
+            data: values,
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: dataLabelsEnabled },
+            title: { display: true, text: title, font: { size: 16 } },
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#555' } },
+            x: { ticks: { color: '#555', maxRotation: 45 } }
+          }
+        }
+      };
+
+      charts[canvasId] = new Chart(ctx, config);
+    }
+
+    function createScatterChart(canvasId, title, data) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      const points = data.map(p => ({ x: p.x, y: p.y }));
+
+      const config = {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Volume vs Distance',
+            data: points,
+            backgroundColor: 'rgba(52, 152, 219, 0.6)',
+            borderColor: 'rgba(52, 152, 219, 0.8)',
+            pointRadius: 4,
+            pointHoverRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: dataLabelsEnabled },
+            title: { display: true, text: title, font: { size: 16 } },
+          },
+          scales: {
+            x: { title: { display: true, text: 'Distance (km)' }, ticks: { color: '#555' } },
+            y: { title: { display: true, text: 'Volume (m³)' }, beginAtZero: true, ticks: { color: '#555' } }
+          }
+        }
+      };
+
+      charts[canvasId] = new Chart(ctx, config);
+    }
+
+    // Tab Switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        tab.classList.add('active');
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
+      });
+    });
+
+    // Filter Event Listeners
+    [startDate, endDate, filterArea, filterPlant, filterTruckType].forEach(el => {
+      el.addEventListener('change', applyFilters);
+    });
+
+    dataLabelToggle.addEventListener('change', () => {
+      dataLabelsEnabled = dataLabelToggle.checked;
       updateCharts();
-      
-      log('All charts redrawn');
-    }
+    });
 
-    function formatDate(date) {
-      return date.toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    }
-
-    // Chart creation functions (simplified examples)
-    function createVolumeByAreaChart() {
-      const ctx = document.getElementById('canvas-volume-area');
-      if (!ctx) return;
-      
-      // Sample data - replace with actual data processing
-      const areaData = {};
-      filteredData.forEach(item => {
-        if (!areaData[item.Area]) areaData[item.Area] = 0;
-        areaData[item.Area] += item.Volume || 0;
-      });
-      
-      const labels = Object.keys(areaData);
-      const data = Object.values(areaData);
-      
-      if (charts['volumeArea']) {
-        charts['volumeArea'].destroy();
-      }
-      
-      charts['volumeArea'] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Volume by Area',
-            data: data,
-            backgroundColor: highlightColors.slice(0, labels.length),
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Volume (m³)'
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function createVolumeByPlantChart() {
-      const ctx = document.getElementById('canvas-volume-plant');
-      if (!ctx) return;
-      
-      // Sample data - replace with actual data processing
-      const plantData = {};
-      filteredData.forEach(item => {
-        if (!plantData[item.Plant]) plantData[item.Plant] = 0;
-        plantData[item.Plant] += item.Volume || 0;
-      });
-      
-      const labels = Object.keys(plantData);
-      const data = Object.values(plantData);
-      
-      if (charts['volumePlant']) {
-        charts['volumePlant'].destroy();
-      }
-      
-      charts['volumePlant'] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Volume by Plant',
-            data: data,
-            backgroundColor: highlightColors.slice(0, labels.length),
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Volume (m³)'
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // Add other chart creation functions following the same pattern
-    function createAvgVolumeByPlantChart() {
-      // Implementation similar to above
-    }
-
-    function createAvgVolumePerDayChart() {
-      // Implementation similar to above
-    }
-
-    function createVolumePerTruckChart() {
-      // Implementation similar to above
-    }
-
-    function createTotalTripPerTruckChart() {
-      // Implementation similar to above
-    }
-
-    function createAvgLoadPerTruckChart() {
-      // Implementation similar to above
-    }
-
-    function createAvgDistancePerPlantChart() {
-      // Implementation similar to above
-    }
-
-    function createTrendVolumeByDistanceChart() {
-      // Implementation similar to above
-    }
-
-    function createVolumePerSalesChart() {
-      // Implementation similar to above
-    }
-
-    function createVolumePerCustomerChart() {
-      // Implementation similar to above
-    }
+    // Initialize on load
+    window.addEventListener('load', () => {
+      // Auto-fill today's date range
+      const today = new Date();
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      startDate.valueAsDate = yesterday;
+      endDate.valueAsDate = today;
+      applyFilters();
+    });
   </script>
 </body>
-</html>    
+</html>
