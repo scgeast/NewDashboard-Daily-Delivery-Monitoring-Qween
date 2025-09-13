@@ -1051,9 +1051,36 @@
       }
     }
 
+    // 👇 NEW: Tangani klik pada option di dropdown custom
+    document.addEventListener('click', function(e) {
+      const option = e.target.closest('.dropdown-menu option');
+      if (!option) return;
+
+      const menu = option.closest('.dropdown-menu');
+      const dropdown = menu.parentElement;
+      const label = dropdown.querySelector('.dropdown-header span');
+
+      // Hapus 'selected' dari semua opsi
+      menu.querySelectorAll('option').forEach(opt => opt.removeAttribute('selected'));
+
+      // Tambahkan 'selected' ke opsi yang diklik
+      option.setAttribute('selected', '');
+
+      // Update label dropdown
+      if (option.value === 'all') {
+        label.textContent = 'Select All';
+      } else {
+        label.textContent = option.textContent;
+      }
+
+      // Terapkan filter otomatis
+      applyFilters();
+    });
+
     function applyFilters() {
       let filtered = [...rawData];
 
+      // Date Filter
       const start = startDate.value ? new Date(startDate.value) : null;
       const end = endDate.value ? new Date(endDate.value) : null;
 
@@ -1067,21 +1094,26 @@
         });
       }
 
-      // Gunakan dropdown custom — bukan select tradisional
+      // Area Filter — UNTUK CUSTOM DROPDOWN
       const areaMenu = document.getElementById('areaMenu');
-      const selectedAreas = Array.from(areaMenu.selectedOptions).map(o => o.value);
+      const selectedAreaOptions = areaMenu.querySelectorAll('option[selected]');
+      const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
       if (!selectedAreas.includes('all')) {
         filtered = filtered.filter(row => selectedAreas.includes(row.Area));
       }
 
+      // Plant Filter — UNTUK CUSTOM DROPDOWN
       const plantMenu = document.getElementById('plantMenu');
-      const selectedPlants = Array.from(plantMenu.selectedOptions).map(o => o.value);
+      const selectedPlantOptions = plantMenu.querySelectorAll('option[selected]');
+      const selectedPlants = Array.from(selectedPlantOptions).map(o => o.value);
       if (!selectedPlants.includes('all')) {
         filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
       }
 
+      // Truck Type Filter — UNTUK CUSTOM DROPDOWN
       const truckTypeMenu = document.getElementById('truckTypeMenu');
-      const selectedTruckTypes = Array.from(truckTypeMenu.selectedOptions).map(o => o.value);
+      const selectedTruckTypeOptions = truckTypeMenu.querySelectorAll('option[selected]');
+      const selectedTruckTypes = Array.from(selectedTruckTypeOptions).map(o => o.value);
       if (!selectedTruckTypes.includes('all')) {
         filtered = filtered.filter(row => selectedTruckTypes.includes(row['Truck Type']));
       }
@@ -1111,7 +1143,7 @@
     }
 
     function updateDashboardTitle() {
-      const selectedAreas = Array.from(document.getElementById('areaMenu').selectedOptions).map(o => o.text);
+      const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.textContent);
       const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
       dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
     }
@@ -1127,7 +1159,7 @@
 
       if (!filteredData.length) return;
 
-      const areaFilterSelected = Array.from(document.getElementById('areaMenu').selectedOptions).map(o => o.value);
+      const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.value);
       const showVolumeByArea = areaFilterSelected.includes('all');
       document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
 
