@@ -711,6 +711,11 @@
       '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
     ];
 
+    // Helper: Normalize string to alphanumeric only
+    function normalizeKey(str) {
+      return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
     // DOM Elements
     const sidebar = document.getElementById('sidebar');
     const main = document.getElementById('main');
@@ -793,17 +798,18 @@
             throw new Error(`Sheet "${firstSheetName}" kosong.`);
           }
 
+          // --- PARSE SEMUA BARIS SEBAGAI ARRAY 2D ---
           const jsonData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: null,
             blankrows: false
           });
 
-          if (jsonData.length < 1) {
+          if (!Array.isArray(jsonData) || jsonData.length === 0) {
             throw new Error("Tidak ada data dalam sheet.");
           }
 
-          // --- NORMALISASI KOLOM ---
+          // Daftar kolom kunci yang harus ada
           const colMap = {
             'DP No': [
               'dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn',
@@ -844,11 +850,47 @@
             ]
           };
 
-          function normalizeKey(str) {
-            return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+          // Cari baris pertama yang mengandung minimal 1 kolom kunci
+          const colMapKeys = Object.keys(colMap);
+          let headerRowIndex = -1;
+
+          for (let i = 0; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            if (!Array.isArray(row)) continue;
+
+            let hasValidHeader = false;
+            for (let j = 0; j < row.length; j++) {
+              const cell = row[j];
+              if (cell === null || cell === undefined) continue;
+
+              const cleanCell = String(cell).trim().toLowerCase();
+              for (const key of colMapKeys) {
+                const aliases = colMap[key].map(normalizeKey);
+                if (aliases.includes(cleanCell)) {
+                  hasValidHeader = true;
+                  break;
+                }
+              }
+              if (hasValidHeader) break;
+            }
+
+            if (hasValidHeader) {
+              headerRowIndex = i;
+              break;
+            }
           }
 
-          const headers = jsonData[0].map(h => h ? String(h).trim() : '');
+          if (headerRowIndex === -1) {
+            throw new Error(
+              "Gagal! Tidak ditemukan header yang valid. Pastikan file Anda memiliki salah satu dari:\n" +
+              "DP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance"
+            );
+          }
+
+          // Ambil header dari baris yang ditemukan
+          const headers = jsonData[headerRowIndex].map(h => h ? String(h).trim() : '');
+
+          // Buat mapping header asli → standard key
           const headerToStandard = {};
           let foundAny = false;
 
@@ -871,7 +913,9 @@
             );
           }
 
-          rawData = jsonData.slice(1).map(row => {
+          // Ambil data dari baris setelah header
+          rawData = jsonData.slice(headerRowIndex + 1).map(row => {
+            if (!Array.isArray(row)) return {};
             const mappedRow = {};
             Object.keys(colMap).forEach(key => {
               let foundHeader = null;
@@ -885,9 +929,7 @@
               mappedRow[key] = idx >= 0 && idx < row.length ? row[idx] : null;
             });
             return mappedRow;
-          });
-
-          rawData = rawData.filter(row =>
+          }).filter(row =>
             row['DP No'] !== null &&
             row['QTY'] !== null &&
             row['Area'] !== null &&
@@ -936,57 +978,20 @@
     }
 
     function extractDateFromRow(row) {
-      // Coba ekstrak dari berbagai kemungkinan format tanggal
-      for (let key in row) {
-        const value = row[key];
-        if (!value) continue;
-        
-        // Jika sudah berupa objek Date
-        if (value instanceof Date) {
-          return value;
-        }
-        
-        // Jika berupa string yang mengandung format tanggal
-        if (typeof value === 'string') {
-          // Coba parsing berbagai format
-          const dateFormats = [
-            /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // DD/MM/YYYY
-            /(\d{4})-(\d{1,2})-(\d{1,2})/,   // YYYY-MM-DD
-            /(\d{1,2})-(\d{1,2})-(\d{4})/    // DD-MM-YYYY
-          ];
-          
-          for (let format of dateFormats) {
-            const match = value.match(format);
-            if (match) {
-              let day, month, year;
-              
-              if (format === dateFormats[0]) { // DD/MM/YYYY
-                day = parseInt(match[1], 10);
-                month = parseInt(match[2], 10) - 1;
-                year = parseInt(match[3], 10);
-              } else if (format === dateFormats[1]) { // YYYY-MM-DD
-                year = parseInt(match[1], 10);
-                month = parseInt(match[2], 10) - 1;
-                day = parseInt(match[3], 10);
-              } else if (format === dateFormats[2]) { // DD-MM-YYYY
-                day = parseInt(match[1], 10);
-                month = parseInt(match[2], 10) - 1;
-                year = parseInt(match[3], 10);
-              }
-              
-              return new Date(year, month, day);
-            }
+      const dateCols = ['date', 'delivery date', 'delivery_date', 'tanggal'];
+      for (let col in row) {
+        if (dateCols.some(d => col.toLowerCase().includes(d))) {
+          const val = row[col];
+          if (typeof val === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}/.test(val)) {
+            const [day, month, year] = val.split('/');
+            return new Date(year, month - 1, day);
+          } else if (val instanceof Date) {
+            return val;
+          } else if (typeof val === 'number') {
+            return new Date(Math.round((val - 25569) * 86400 * 1000));
           }
         }
-        
-        // Jika berupa angka (format Excel)
-        if (typeof value === 'number') {
-          // Konversi dari format serial number Excel ke JavaScript Date
-          return new Date(Math.round((value - 25569) * 86400 * 1000));
-        }
       }
-      
-      // Jika tidak ditemukan, gunakan tanggal hari ini
       return new Date();
     }
 
@@ -1028,19 +1033,13 @@
       const dropdown = document.getElementById(id);
       const menu = dropdown.querySelector('.dropdown-menu');
       const icon = dropdown.querySelector('.dropdown-header i');
-      
+      const label = dropdown.querySelector('.dropdown-header span');
+
       if (menu.style.display === 'block') {
         menu.style.display = 'none';
         icon.classList.remove('fa-chevron-up');
         icon.classList.add('fa-chevron-down');
       } else {
-        // Tutup semua dropdown lainnya
-        document.querySelectorAll('.dropdown-menu').forEach(dm => {
-          dm.style.display = 'none';
-          dm.previousElementSibling.querySelector('i').classList.remove('fa-chevron-up');
-          dm.previousElementSibling.querySelector('i').classList.add('fa-chevron-down');
-        });
-        
         menu.style.display = 'block';
         icon.classList.remove('fa-chevron-down');
         icon.classList.add('fa-chevron-up');
@@ -1211,7 +1210,7 @@
 
       const datasets = [{
         label: title,
-        data: values,
+         values,
         backgroundColor: backgroundColors,
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1219,7 +1218,7 @@
 
       const config = {
         type: 'bar',
-        data: {
+         {
           labels,
           datasets
         },
@@ -1228,7 +1227,7 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: { enabled: true },
+            tooltip: { enabled: dataLabelsEnabled },
             title: { display: true, text: title, font: { size: 16 } },
           },
           scales: {
@@ -1248,7 +1247,7 @@
 
       const datasets = [{
         label: title,
-        data: values,
+         values,
         backgroundColor: '#2ecc71',
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1256,7 +1255,7 @@
 
       const config = {
         type: 'bar',
-        data: {
+         {
           labels,
           datasets
         },
@@ -1267,6 +1266,12 @@
             legend: { display: false },
             tooltip: { enabled: dataLabelsEnabled },
             title: { display: true, text: title, font: { size: 16 } },
+            datalabels: {
+              display: dataLabelsEnabled,
+              formatter: (value) => `${value} ${unit}`,
+              color: '#000',
+              font: { weight: 'bold' }
+            }
           },
           scales: {
             y: { display: false, beginAtZero: true },
@@ -1285,7 +1290,7 @@
 
       const datasets = [{
         label: 'Avg Volume (m³)',
-        data: values,
+         values,
         borderColor: '#3498db',
         backgroundColor: 'rgba(52, 152, 219, 0.1)',
         tension: 0.3,
@@ -1296,7 +1301,7 @@
 
       const config = {
         type: 'line',
-        data: {
+         {
           labels,
           datasets
         },
@@ -1324,7 +1329,7 @@
 
       const datasets = [{
         label: 'Volume vs Distance',
-        data: points,
+         points,
         backgroundColor: 'rgba(52, 152, 219, 0.6)',
         borderColor: 'rgba(52, 152, 219, 0.8)',
         pointRadius: 4,
@@ -1333,7 +1338,7 @@
 
       const config = {
         type: 'scatter',
-        data: {
+         {
           datasets
         },
         options: {
@@ -1379,61 +1384,9 @@
       const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
       startDate.valueAsDate = yesterday;
       endDate.valueAsDate = today;
+      applyFilters();
     });
 
-    // Event listener untuk dropdown options
-    document.addEventListener('DOMContentLoaded', function() {
-      // Event listener untuk option dropdown
-      document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.addEventListener('click', function(e) {
-          if (e.target.tagName === 'OPTION') {
-            const dropdownId = this.id.replace('Menu', 'Dropdown');
-            const labelId = this.id.replace('Menu', 'Label');
-            const label = document.getElementById(labelId);
-            
-            // Jika memilih "Select All", hapus semua pilihan lainnya
-            if (e.target.value === 'all') {
-              Array.from(this.options).forEach(opt => {
-                opt.selected = (opt.value === 'all');
-              });
-              label.textContent = 'Select All';
-            } else {
-              // Hapus pilihan "Select All" jika memilih item lain
-              const allOption = this.querySelector('option[value="all"]');
-              if (allOption) allOption.selected = false;
-              
-              // Toggle pilihan item
-              e.target.selected = !e.target.selected;
-              
-              // Update label dengan jumlah item terpilih
-              const selectedCount = Array.from(this.selectedOptions).length;
-              label.textContent = selectedCount > 0 
-                ? `${selectedCount} selected` 
-                : 'Select All';
-            }
-            
-            // Terapkan filter setelah mengubah pilihan
-            applyFilters();
-          }
-        });
-      });
-      
-      // Event listener untuk menutup dropdown saat klik di luar
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('.custom-dropdown')) {
-          document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            menu.style.display = 'none';
-            const icon = menu.previousElementSibling.querySelector('i');
-            if (icon) {
-              icon.classList.remove('fa-chevron-up');
-              icon.classList.add('fa-chevron-down');
-            }
-          });
-        }
-      });
-    });
-
-    // Event listener untuk upload file
     excelFile.addEventListener('change', handleFileUpload);
   </script>
 </body>
