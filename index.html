@@ -936,20 +936,57 @@
     }
 
     function extractDateFromRow(row) {
-      const dateCols = ['date', 'delivery date', 'delivery_date', 'tanggal'];
-      for (let col in row) {
-        if (dateCols.some(d => col.toLowerCase().includes(d))) {
-          const val = row[col];
-          if (typeof val === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}/.test(val)) {
-            const [day, month, year] = val.split('/');
-            return new Date(year, month - 1, day);
-          } else if (val instanceof Date) {
-            return val;
-          } else if (typeof val === 'number') {
-            return new Date(Math.round((val - 25569) * 86400 * 1000));
+      // Coba ekstrak dari berbagai kemungkinan format tanggal
+      for (let key in row) {
+        const value = row[key];
+        if (!value) continue;
+        
+        // Jika sudah berupa objek Date
+        if (value instanceof Date) {
+          return value;
+        }
+        
+        // Jika berupa string yang mengandung format tanggal
+        if (typeof value === 'string') {
+          // Coba parsing berbagai format
+          const dateFormats = [
+            /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // DD/MM/YYYY
+            /(\d{4})-(\d{1,2})-(\d{1,2})/,   // YYYY-MM-DD
+            /(\d{1,2})-(\d{1,2})-(\d{4})/    // DD-MM-YYYY
+          ];
+          
+          for (let format of dateFormats) {
+            const match = value.match(format);
+            if (match) {
+              let day, month, year;
+              
+              if (format === dateFormats[0]) { // DD/MM/YYYY
+                day = parseInt(match[1], 10);
+                month = parseInt(match[2], 10) - 1;
+                year = parseInt(match[3], 10);
+              } else if (format === dateFormats[1]) { // YYYY-MM-DD
+                year = parseInt(match[1], 10);
+                month = parseInt(match[2], 10) - 1;
+                day = parseInt(match[3], 10);
+              } else if (format === dateFormats[2]) { // DD-MM-YYYY
+                day = parseInt(match[1], 10);
+                month = parseInt(match[2], 10) - 1;
+                year = parseInt(match[3], 10);
+              }
+              
+              return new Date(year, month, day);
+            }
           }
         }
+        
+        // Jika berupa angka (format Excel)
+        if (typeof value === 'number') {
+          // Konversi dari format serial number Excel ke JavaScript Date
+          return new Date(Math.round((value - 25569) * 86400 * 1000));
+        }
       }
+      
+      // Jika tidak ditemukan, gunakan tanggal hari ini
       return new Date();
     }
 
@@ -991,13 +1028,19 @@
       const dropdown = document.getElementById(id);
       const menu = dropdown.querySelector('.dropdown-menu');
       const icon = dropdown.querySelector('.dropdown-header i');
-      const label = dropdown.querySelector('.dropdown-header span');
-
+      
       if (menu.style.display === 'block') {
         menu.style.display = 'none';
         icon.classList.remove('fa-chevron-up');
         icon.classList.add('fa-chevron-down');
       } else {
+        // Tutup semua dropdown lainnya
+        document.querySelectorAll('.dropdown-menu').forEach(dm => {
+          dm.style.display = 'none';
+          dm.previousElementSibling.querySelector('i').classList.remove('fa-chevron-up');
+          dm.previousElementSibling.querySelector('i').classList.add('fa-chevron-down');
+        });
+        
         menu.style.display = 'block';
         icon.classList.remove('fa-chevron-down');
         icon.classList.add('fa-chevron-up');
@@ -1168,7 +1211,7 @@
 
       const datasets = [{
         label: title,
-         values,
+        data: values,
         backgroundColor: backgroundColors,
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1176,7 +1219,7 @@
 
       const config = {
         type: 'bar',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1185,7 +1228,7 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: { enabled: dataLabelsEnabled },
+            tooltip: { enabled: true },
             title: { display: true, text: title, font: { size: 16 } },
           },
           scales: {
@@ -1205,7 +1248,7 @@
 
       const datasets = [{
         label: title,
-         values,
+        data: values,
         backgroundColor: '#2ecc71',
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1213,7 +1256,7 @@
 
       const config = {
         type: 'bar',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1224,12 +1267,6 @@
             legend: { display: false },
             tooltip: { enabled: dataLabelsEnabled },
             title: { display: true, text: title, font: { size: 16 } },
-            datalabels: {
-              display: dataLabelsEnabled,
-              formatter: (value) => `${value} ${unit}`,
-              color: '#000',
-              font: { weight: 'bold' }
-            }
           },
           scales: {
             y: { display: false, beginAtZero: true },
@@ -1248,7 +1285,7 @@
 
       const datasets = [{
         label: 'Avg Volume (m³)',
-         values,
+        data: values,
         borderColor: '#3498db',
         backgroundColor: 'rgba(52, 152, 219, 0.1)',
         tension: 0.3,
@@ -1259,7 +1296,7 @@
 
       const config = {
         type: 'line',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1287,7 +1324,7 @@
 
       const datasets = [{
         label: 'Volume vs Distance',
-         points,
+        data: points,
         backgroundColor: 'rgba(52, 152, 219, 0.6)',
         borderColor: 'rgba(52, 152, 219, 0.8)',
         pointRadius: 4,
@@ -1296,7 +1333,7 @@
 
       const config = {
         type: 'scatter',
-         {
+        data: {
           datasets
         },
         options: {
@@ -1342,9 +1379,61 @@
       const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
       startDate.valueAsDate = yesterday;
       endDate.valueAsDate = today;
-      applyFilters();
     });
 
+    // Event listener untuk dropdown options
+    document.addEventListener('DOMContentLoaded', function() {
+      // Event listener untuk option dropdown
+      document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.addEventListener('click', function(e) {
+          if (e.target.tagName === 'OPTION') {
+            const dropdownId = this.id.replace('Menu', 'Dropdown');
+            const labelId = this.id.replace('Menu', 'Label');
+            const label = document.getElementById(labelId);
+            
+            // Jika memilih "Select All", hapus semua pilihan lainnya
+            if (e.target.value === 'all') {
+              Array.from(this.options).forEach(opt => {
+                opt.selected = (opt.value === 'all');
+              });
+              label.textContent = 'Select All';
+            } else {
+              // Hapus pilihan "Select All" jika memilih item lain
+              const allOption = this.querySelector('option[value="all"]');
+              if (allOption) allOption.selected = false;
+              
+              // Toggle pilihan item
+              e.target.selected = !e.target.selected;
+              
+              // Update label dengan jumlah item terpilih
+              const selectedCount = Array.from(this.selectedOptions).length;
+              label.textContent = selectedCount > 0 
+                ? `${selectedCount} selected` 
+                : 'Select All';
+            }
+            
+            // Terapkan filter setelah mengubah pilihan
+            applyFilters();
+          }
+        });
+      });
+      
+      // Event listener untuk menutup dropdown saat klik di luar
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dropdown')) {
+          document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.style.display = 'none';
+            const icon = menu.previousElementSibling.querySelector('i');
+            if (icon) {
+              icon.classList.remove('fa-chevron-up');
+              icon.classList.add('fa-chevron-down');
+            }
+          });
+        }
+      });
+    });
+
+    // Event listener untuk upload file
     excelFile.addEventListener('change', handleFileUpload);
   </script>
 </body>
