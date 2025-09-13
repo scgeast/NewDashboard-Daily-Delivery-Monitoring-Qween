@@ -1082,7 +1082,7 @@
 
       const datasets = [{
         label: title,
-         values,
+         values, // ✅ BENAR: gunakan 'data', bukan langsung nilai
         backgroundColor: backgroundColors,
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
@@ -1090,7 +1090,10 @@
 
       const config = {
         type: 'bar',
-         { labels, datasets },
+         {
+          labels,
+          datasets
+        },
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -1114,17 +1117,19 @@
       const labels = ['Avg Load'];
       const values = [parseFloat(value)];
 
+      const datasets = [{
+        label: title,
+         values,
+        backgroundColor: '#2ecc71',
+        borderColor: 'rgba(0,0,0,0.1)',
+        borderWidth: 1,
+      }];
+
       const config = {
         type: 'bar',
-         {
+        data: {
           labels,
-          datasets: [{
-            label: title,
-             values,
-            backgroundColor: '#2ecc71',
-            borderColor: 'rgba(0,0,0,0.1)',
-            borderWidth: 1,
-          }]
+          datasets
         },
         options: {
           responsive: true,
@@ -1155,20 +1160,22 @@
       const labels = data.map(d => d.date);
       const values = data.map(d => parseFloat(d.avg));
 
+      const datasets = [{
+        label: 'Avg Volume (m³)',
+        data: values,
+        borderColor: '#3498db',
+        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 8
+      }];
+
       const config = {
         type: 'line',
-         {
+        data: {
           labels,
-          datasets: [{
-            label: 'Avg Volume (m³)',
-             values,
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52, 152, 219, 0.1)',
-            tension: 0.3,
-            fill: true,
-            pointRadius: 4,
-            pointHoverRadius: 8
-          }]
+          datasets
         },
         options: {
           responsive: true,
@@ -1192,17 +1199,19 @@
       const ctx = document.getElementById(canvasId).getContext('2d');
       const points = data.map(p => ({ x: p.x, y: p.y }));
 
+      const datasets = [{
+        label: 'Volume vs Distance',
+         points,
+        backgroundColor: 'rgba(52, 152, 219, 0.6)',
+        borderColor: 'rgba(52, 152, 219, 0.8)',
+        pointRadius: 4,
+        pointHoverRadius: 8
+      }];
+
       const config = {
         type: 'scatter',
          {
-          datasets: [{
-            label: 'Volume vs Distance',
-             points,
-            backgroundColor: 'rgba(52, 152, 219, 0.6)',
-            borderColor: 'rgba(52, 152, 219, 0.8)',
-            pointRadius: 4,
-            pointHoverRadius: 8
-          }]
+          datasets
         },
         options: {
           responsive: true,
