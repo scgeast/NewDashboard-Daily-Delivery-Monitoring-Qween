@@ -13,428 +13,73 @@
   <!-- FAVICON IN-LINE SVG (MENGHILANGKAN ERROR 404) -->
   <link rel="icon" href="image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚚</text></svg>" type="image/svg+xml">
   <style>
-    :root {
-      --primary: #3498db;
-      --secondary: #2c3e50;
-      --success: #27ae60;
-      --warning: #f39c12;
-      --danger: #e74c3c;
-      --light: #ecf0f1;
-      --dark: #2c3e50;
-      --gray: #95a5a6;
-      --highlight-colors: (
-        #e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6,
-        #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b
-      );
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      display: flex;
-      background-color: #f5f7fa;
-      color: #333;
-    }
-    /* SIDEBAR */
-    #sidebar {
-      width: 280px;
-      background-color: var(--secondary);
-      color: white;
-      transition: all 0.3s ease;
-      overflow-y: auto;
-      height: 100vh;
-      position: fixed;
-      z-index: 100;
-    }
-    #sidebar.collapsed {
-      width: 60px;
-    }
-    /* Toggle Button - Transparan, hanya ikon */
-    #toggleSidebar {
-      position: absolute;
-      top: 10px;
-      right: -20px;
-      color: white;
-      background: transparent;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      z-index: 101;
-      outline: none;
-    }
-    /* Upload Section */
-    .upload-section {
-      padding: 15px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      text-align: center;
-      position: relative;
-    }
-    .upload-section input[type="file"] {
-      display: none;
-    }
-    .upload-btn {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      display: inline-block;
-      margin-bottom: 10px;
-    }
-    .upload-btn:hover {
-      background-color: #2980b9;
-    }
-    .upload-info {
-      font-size: 12px;
-      color: #bdc3c7;
-    }
-    /* Loading Spinner */
-    .loading-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      color: white;
-      border-radius: 8px;
-      z-index: 1000;
-      display: none;
-    }
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255,255,255,0.3);
-      border-top: 4px solid white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 10px;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .loading-text {
-      font-size: 16px;
-      font-weight: 500;
-    }
-    /* Error Message */
-    .error-message {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #e74c3c;
-      color: white;
-      padding: 15px 25px;
-      border-radius: 8px;
-      font-weight: bold;
-      z-index: 1001;
-      display: none;
-      animation: fadeInOut 3s ease-in-out;
-    }
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0; }
-      50% { opacity: 1; }
-    }
-    /* Filter Section */
-    .filter-section {
-      padding: 15px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .filter-section h4 {
-      margin-bottom: 10px;
-      font-size: 14px;
-      opacity: 0.9;
-    }
-    /* Custom Dropdown */
-    .custom-dropdown {
-      position: relative;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .dropdown-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      background-color: rgba(255,255,255,0.1);
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      color: white;
-    }
-    .dropdown-header i {
-      font-size: 14px;
-      opacity: 0.8;
-    }
-    .dropdown-menu {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: 100%;
-      background-color: rgba(255,255,255,0.9);
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 1000;
-    }
-    .dropdown-menu option {
-      padding: 8px 12px;
-      color: #333;
-      font-size: 14px;
-      background: white;
-      border: none;
-      cursor: pointer;
-    }
-    .dropdown-menu option:hover {
-      background-color: #f0f0f0;
-    }
-    .dropdown-menu option[selected] {
-      background-color: var(--primary);
-      color: white;
-    }
-    /* Data Label Toggle Switch */
-    .data-label-toggle {
-      display: flex;
-      align-items: center;
-      margin-top: 10px;
-      font-size: 14px;
-      gap: 10px;
-    }
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 24px;
-    }
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
-    }
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    .toggle-switch input:checked + .toggle-slider {
-      background-color: var(--primary);
-    }
-    .toggle-switch input:checked + .toggle-slider:before {
-      transform: translateX(26px);
-    }
-    /* MAIN CONTENT */
-    #main {
-      flex-grow: 1;
-      margin-left: 280px;
-      padding: 20px;
-      transition: margin-left 0.3s ease;
-    }
-    #main.collapsed {
-      margin-left: 60px;
-    }
-    /* DASHBOARD HEADER */
-    .dashboard-header-expanded {
-      display: flex;
-      flex-direction: column;
-      background-color: var(--secondary);
-      color: white;
-      padding: 25px 20px 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      position: relative;
-    }
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 8px;
-    }
-    .header-center {
-      flex: 1;
-      text-align: center;
-    }
-    .header-center h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-      line-height: 1.2;
-      letter-spacing: -0.5px;
-    }
-    .header-right {
-      flex-shrink: 0;
-      text-align: right;
-    }
-    .last-update {
-      font-size: 12px;
-      opacity: 0.9;
-      margin: 0;
-    }
-    .header-periode {
-      font-size: 14px;
-      opacity: 0.8;
-      padding: 6px 0;
-      border-top: 1px solid rgba(255,255,255,0.2);
-      text-align: center;
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .header-periode i {
-      color: rgba(255,255,255,0.7);
-      font-size: 16px;
-    }
-    /* KPI */
-    .kpi-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-bottom: 25px;
-    }
-    .kpi-card {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .kpi-card h3 {
-      font-size: 14px;
-      color: #7f8c8d;
-      margin-bottom: 5px;
-    }
-    .kpi-card p {
-      font-size: 24px;
-      font-weight: bold;
-      color: var(--dark);
-    }
-    /* TABS */
-    .tabs {
-      display: flex;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #ddd;
-    }
-    .tab {
-      padding: 12px 20px;
-      cursor: pointer;
-      background: #f5f5f5;
-      border: 1px solid #ddd;
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      margin-right: 5px;
-    }
-    .tab.active {
-      background: white;
-      font-weight: bold;
-      border-bottom: 1px solid white;
-      position: relative;
-      z-index: 1;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .chart-container {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    .chart-title {
-      font-size: 16px;
-      margin-bottom: 15px;
-      color: #2c3e50;
-    }
-    .highlight {
-      font-weight: bold;
-      color: #e74c3c;
-    }
-    /* FOOTER */
-    .footer {
-      text-align: center;
-      padding: 15px;
-      color: #7f8c8d;
-      font-size: 14px;
-      background-color: #f5f7fa;
-      border-top: 1px solid #eee;
-      margin-top: 20px;
-    }
-    /* RESPONSIVE */
+    /* [SEMUA CSS SEBELUMNYA — TIDAK DIUBAH] */
+    :root { --primary: #3498db; --secondary: #2c3e50; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; --light: #ecf0f1; --dark: #2c3e50; --gray: #95a5a6; --highlight-colors: (#e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6, #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b); }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { display: flex; background-color: #f5f7fa; color: #333; }
+    #sidebar { width: 280px; background-color: var(--secondary); color: white; transition: all 0.3s ease; overflow-y: auto; height: 100vh; position: fixed; z-index: 100; }
+    #sidebar.collapsed { width: 60px; }
+    #toggleSidebar { position: absolute; top: 10px; right: -20px; color: white; background: transparent; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 101; outline: none; }
+    .upload-section { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; position: relative; }
+    .upload-section input[type="file"] { display: none; }
+    .upload-btn { background-color: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; display: inline-block; margin-bottom: 10px; }
+    .upload-btn:hover { background-color: #2980b9; }
+    .upload-info { font-size: 12px; color: #bdc3c7; }
+    .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; border-radius: 8px; z-index: 1000; display: none; }
+    .loading-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-text { font-size: 16px; font-weight: 500; }
+    .error-message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #e74c3c; color: white; padding: 15px 25px; border-radius: 8px; font-weight: bold; z-index: 1001; display: none; animation: fadeInOut 3s ease-in-out; }
+    @keyframes fadeInOut { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+    .filter-section { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .filter-section h4 { margin-bottom: 10px; font-size: 14px; opacity: 0.9; }
+    .custom-dropdown { position: relative; width: 100%; margin-bottom: 10px; }
+    .dropdown-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; font-size: 14px; color: white; }
+    .dropdown-header i { font-size: 14px; opacity: 0.8; }
+    .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; }
+    .dropdown-menu option { padding: 8px 12px; color: #333; font-size: 14px; background: white; border: none; cursor: pointer; }
+    .dropdown-menu option:hover { background-color: #f0f0f0; }
+    .dropdown-menu option[selected] { background-color: var(--primary); color: white; }
+    .data-label-toggle { display: flex; align-items: center; margin-top: 10px; font-size: 14px; gap: 10px; }
+    .toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+    .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    .toggle-switch input:checked + .toggle-slider { background-color: var(--primary); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(26px); }
+    #main { flex-grow: 1; margin-left: 280px; padding: 20px; transition: margin-left 0.3s ease; }
+    #main.collapsed { margin-left: 60px; }
+    .dashboard-header-expanded { display: flex; flex-direction: column; background-color: var(--secondary); color: white; padding: 25px 20px 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px; }
+    .header-center { flex: 1; text-align: center; }
+    .header-center h1 { margin: 0; font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -0.5px; }
+    .header-right { flex-shrink: 0; text-align: right; }
+    .last-update { font-size: 12px; opacity: 0.9; margin: 0; }
+    .header-periode { font-size: 14px; opacity: 0.8; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.2); text-align: center; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .header-periode i { color: rgba(255,255,255,0.7); font-size: 16px; }
+    .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .kpi-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-align: center; }
+    .kpi-card h3 { font-size: 14px; color: #7f8c8d; margin-bottom: 5px; }
+    .kpi-card p { font-size: 24px; font-weight: bold; color: var(--dark); }
+    .tabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
+    .tab { padding: 12px 20px; cursor: pointer; background: #f5f5f5; border: 1px solid #ddd; border-bottom: none; border-radius: 8px 8px 0 0; margin-right: 5px; }
+    .tab.active { background: white; font-weight: bold; border-bottom: 1px solid white; position: relative; z-index: 1; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .chart-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .chart-title { font-size: 16px; margin-bottom: 15px; color: #2c3e50; }
+    .highlight { font-weight: bold; color: #e74c3c; }
+    .footer { text-align: center; padding: 15px; color: #7f8c8d; font-size: 14px; background-color: #f5f7fa; border-top: 1px solid #eee; margin-top: 20px; }
     @media (max-width: 768px) {
-      #sidebar {
-        width: 60px;
-      }
-      #main {
-        margin-left: 60px;
-      }
-      .header-top {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-      }
-      .header-center {
-        text-align: left;
-        margin-left: 10px;
-      }
-      .header-right {
-        margin-top: 4px;
-        text-align: left;
-      }
-      .dashboard-header-expanded {
-        padding: 20px 15px 10px;
-      }
-      .header-center h1 {
-        font-size: 22px;
-      }
-      .header-periode {
-        font-size: 13px;
-      }
-      .kpi-card p {
-        font-size: 20px;
-      }
+      #sidebar { width: 60px; }
+      #main { margin-left: 60px; }
+      .header-top { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .header-center { text-align: left; margin-left: 10px; }
+      .header-right { margin-top: 4px; text-align: left; }
+      .dashboard-header-expanded { padding: 20px 15px 10px; }
+      .header-center h1 { font-size: 22px; }
+      .header-periode { font-size: 13px; }
+      .kpi-card p { font-size: 20px; }
     }
   </style>
 </head>
@@ -794,75 +439,39 @@
             throw new Error("Tidak ada data dalam sheet.");
           }
 
-          // 🔍 DETEKSI JIKA BARIS PERTAMA ADALAH HEADER GABUNGAN DENGAN '|'
+          // 🔍 DETEKSI HEADER GABUNGAN DI BARIS PERTAMA — TOLERAN TERHADAP STRING & OBJEK
           const firstRow = jsonData[0];
           if (Array.isArray(firstRow) && firstRow.length === 1) {
             const cell = firstRow[0];
-            if (cell && cell.v !== undefined && cell.v !== null) {
-              const headerStr = String(cell.v).trim();
-              if (headerStr.includes('|')) {
-                const splitHeaders = headerStr.split('|').map(h => h.trim());
-                jsonData[0] = splitHeaders;
-              }
+            let headerStr = '';
+
+            // Handle jika cell adalah objek (dengan .v)
+            if (typeof cell === 'object' && cell.v !== undefined && cell.v !== null) {
+              headerStr = String(cell.v).trim();
+            }
+            // Handle jika cell adalah string langsung
+            else if (typeof cell === 'string') {
+              headerStr = cell.trim();
+            }
+
+            // Jika ada pipe, split jadi header terpisah
+            if (headerStr.includes('|')) {
+              const splitHeaders = headerStr.split('|').map(h => h.trim());
+              jsonData[0] = splitHeaders;
             }
           }
 
           // ⚡ DAFTAR KOLOM KRITIS — DIPERLUAS UNTUK SEMUA VARIASI
           const colMap = {
-            'DP No': [
-              'dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn',
-              'dp.no', 'dp no.', 'dp_no_', 'dp no ', 'dp_no ', 'dp-no ', 'dpno ',
-              'dp no.', 'dp_no.', 'dp-no.', 'dp no-', 'dp_no-'
-            ],
-            'QTY': [
-              'qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah',
-              'qty m3', 'volume m3', 'qty_m3', 'volume_m3', 'qte m3', 'qty. ', 'vol ',
-              'volume ', 'jmlh', 'jumlah ', 'qty(', 'qty)', 'qte(m3)', 'volume(m3)',
-              'qty(m3)', 'vol(m3)', 'qte m3 ', 'volume m3 '
-            ],
-            'Area': [
-              'area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'province',
-              'area ', 'wilayah ', 'region ', 'lokasi ', 'zona', 'provinsi', 'daerah',
-              'area.', 'area-', 'area_', 'area,', 'wilayah,', 'region,', 'lokasi,',
-              'area-', 'wilayah-', 'region-', 'lokasi-'
-            ],
-            'Plant Name': [
-              'plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location', 'site',
-              'plantname', 'plant name ', 'p_name_', 'plant_name_', 'p.name', 'p.name ',
-              'p-name ', 'p name', 'p name ', 'lokasi pabrik', 'nama pabrik', 'p.name-',
-              'p.name_', 'plant-', 'plant_', 'p name-', 'p name_'
-            ],
-            'Truck No': [
-              'truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id',
-              'truck no ', 'truck_no_', 'truckno ', 'trk_no_', 'truckid', 'truck id',
-              'no_truck', 'truck#', 'truck# ', 'truk', 'nomor truk', 'nopol', 'nopol ',
-              'trk no', 'trk no.', 'trk no-', 'truck no.', 'truck no-', 'truck_no.',
-              'truck_no-', 'truk no', 'truk no.'
-            ],
-            'Truck Type': [
-              'truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk',
-              'trucktype', 'type_truck', 'trk_type_', 'tipe truk', 'tipe_truk_', 'type truck',
-              'tipe', 'jenis truk', 'jenis_truk', 'truk type', 'truk_type', 'type-',
-              'type_', 'tipe-', 'tipe_', 'trk-type', 'trk_type'
-            ],
-            'Sales Man': [
-              'sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan',
-              'sales_man', 'sales-man', 'sales ', 'sales_', 'sales name', 'nama sales',
-              'sales rep', 'salesrep', 'salesperson ', 'salesman ', 'sales no', 'sales no.',
-              'sales-no', 'sales_no', 'salesman-', 'salesman_', 'penjualan-', 'penjualan_'
-            ],
-            'End Customer Name': [
-              'end customer name', 'customer', 'end_customer', 'client', 'pelanggan',
-              'cust_name', 'end_customer_name', 'customer_name', 'cust name', 'nama pelanggan',
-              'customer ', 'cust ', 'pelanggan ', 'client ', 'nama customer', 'nama client',
-              'cust-name', 'cust_name-', 'cust_name_', 'pelanggan-', 'pelanggan_'
-            ],
-            'Distance': [
-              'distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km', 'distance ',
-              'dist_', 'jarak_', 'km_', 'jarak (km)', 'distance (km)', 'jarak km',
-              'dist.', 'dist-', 'dist_', 'jarak.', 'jarak-', 'jarak_', 'km.',
-              'km-', 'distance.', 'distance-', 'distance_'
-            ]
+            'DP No': ['dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn', 'dp.no', 'dp no.', 'dp_no_', 'dp no ', 'dp_no ', 'dp-no ', 'dpno ', 'dp no.', 'dp_no.', 'dp-no.', 'dp no-', 'dp_no-'],
+            'QTY': ['qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah', 'qty m3', 'volume m3', 'qty_m3', 'volume_m3', 'qte m3', 'qty. ', 'vol ', 'volume ', 'jmlh', 'jumlah ', 'qty(', 'qty)', 'qte(m3)', 'volume(m3)', 'qty(m3)', 'vol(m3)', 'qte m3 ', 'volume m3 '],
+            'Area': ['area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'province', 'area ', 'wilayah ', 'region ', 'lokasi ', 'zona', 'provinsi', 'daerah', 'area.', 'area-', 'area_', 'area,', 'wilayah,', 'region,', 'lokasi,', 'area-', 'wilayah-', 'region-', 'lokasi-'],
+            'Plant Name': ['plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location', 'site', 'plantname', 'plant name ', 'p_name_', 'plant_name_', 'p.name', 'p.name ', 'p-name ', 'p name', 'p name ', 'lokasi pabrik', 'nama pabrik', 'p.name-', 'p.name_', 'plant-', 'plant_', 'p name-', 'p name_'],
+            'Truck No': ['truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id', 'truck no ', 'truck_no_', 'truckno ', 'trk_no_', 'truckid', 'truck id', 'no_truck', 'truck#', 'truck# ', 'truk', 'nomor truk', 'nopol', 'nopol ', 'trk no', 'trk no.', 'trk no-', 'truck no.', 'truck no-', 'truck_no.', 'truck_no-', 'truk no', 'truk no.'],
+            'Truck Type': ['truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk', 'trucktype', 'type_truck', 'trk_type_', 'tipe truk', 'tipe_truk_', 'type truck', 'tipe', 'jenis truk', 'jenis_truk', 'truk type', 'truk_type', 'type-', 'type_', 'tipe-', 'tipe_', 'trk-type', 'trk_type'],
+            'Sales Man': ['sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan', 'sales_man', 'sales-man', 'sales ', 'sales_', 'sales name', 'nama sales', 'sales rep', 'salesrep', 'salesperson ', 'salesman ', 'sales no', 'sales no.', 'sales-no', 'sales_no', 'salesman-', 'salesman_', 'penjualan-', 'penjualan_'],
+            'End Customer Name': ['end customer name', 'customer', 'end_customer', 'client', 'pelanggan', 'cust_name', 'end_customer_name', 'customer_name', 'cust name', 'nama pelanggan', 'customer ', 'cust ', 'pelanggan ', 'client ', 'nama customer', 'nama client', 'cust-name', 'cust_name-', 'cust_name_', 'pelanggan-', 'pelanggan_'],
+            'Distance': ['distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km', 'distance ', 'dist_', 'jarak_', 'km_', 'jarak (km)', 'distance (km)', 'jarak km', 'dist.', 'dist-', 'dist_', 'jarak.', 'jarak-', 'jarak_', 'km.', 'km-', 'distance.', 'distance-', 'distance_']
           };
 
           let headerRowIndex = -1;
@@ -876,16 +485,21 @@
             for (let j = 0; j < row.length; j++) {
               const cell = row[j];
 
-              // ✅ KUNCI UTAMA: HANYA BACA .v — IGNORE FORMAT BOLD/WARNA/SPASI
               if (cell === null || cell === undefined) continue;
-              const rawValue = cell.v; // ← Ini nilai aslinya, tanpa format!
-              if (rawValue === undefined || rawValue === null) continue;
 
-              const cleanCell = String(rawValue).trim().toLowerCase();
+              // ✅ PERBAIKAN KRITIS: BISA BACA OBJEK ATAU STRING LANGSUNG
+              let cellValue = '';
+              if (typeof cell === 'object' && cell.v !== undefined && cell.v !== null) {
+                cellValue = cell.v;
+              } else if (typeof cell === 'string') {
+                cellValue = cell;
+              }
+
+              const cleanCell = String(cellValue).trim().toLowerCase();
 
               // Cek apakah ada yang cocok dengan alias di colMap
               for (const key of Object.keys(colMap)) {
-                const aliases = colMap[key].map(normalizeKey); // normalizeKey() sudah ada
+                const aliases = colMap[key].map(normalizeKey);
                 if (aliases.includes(cleanCell)) {
                   hasValidHeader = true;
                   break;
@@ -909,10 +523,13 @@
             );
           }
 
-          // ✅ AMBIL HEADER ASLI — PAKAI .v JUGA
-          const headers = jsonData[headerRowIndex].map(h =>
-            h && h.v !== undefined ? String(h.v).trim() : ''
-          );
+          // ✅ AMBIL HEADER ASLI — PAKAI .v JUGA ATAU STRING LANGSUNG
+          const headers = jsonData[headerRowIndex].map(h => {
+            if (!h) return '';
+            if (typeof h === 'object' && h.v !== undefined) return String(h.v).trim();
+            if (typeof h === 'string') return h.trim();
+            return '';
+          });
 
           // ✅ BUAT MAPPING HEADER ASLI → STANDARD KEY
           const headerToStandard = {};
@@ -938,7 +555,7 @@
             );
           }
 
-          // ✅ EKSTRAK DATA — TETAP PAKAI .v
+          // ✅ EKSTRAK DATA — TETAP PAKAI .v ATAU STRING LANGSUNG
           rawData = jsonData.slice(headerRowIndex + 1).map(row => {
             if (!Array.isArray(row)) return {};
             const mappedRow = {};
@@ -951,9 +568,12 @@
                 }
               }
               const idx = headers.indexOf(foundHeader);
-              // ✅ Ambil nilai dari cell.v — bukan langsung dari array
               const cell = idx >= 0 && idx < row.length ? row[idx] : null;
-              mappedRow[key] = cell && cell.v !== undefined ? cell.v : null;
+              mappedRow[key] = cell ? (
+                typeof cell === 'object' && cell.v !== undefined ? cell.v :
+                typeof cell === 'string' ? cell :
+                null
+              ) : null;
             });
             return mappedRow;
           }).filter(row =>
