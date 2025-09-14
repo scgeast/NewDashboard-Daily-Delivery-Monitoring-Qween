@@ -1,1292 +1,1261 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Summary Daily Delivery - Paste Mode</title>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Font Awesome for Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <!-- FAVICON IN-LINE SVG -->
-  <link rel="icon" href="image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚚</text></svg>" type="image/svg+xml">
-  <style>
-    :root {
-      --primary: #3498db;
-      --secondary: #2c3e50;
-      --success: #27ae60;
-      --warning: #f39c12;
-      --danger: #e74c3c;
-      --light: #ecf0f1;
-      --dark: #2c3e50;
-      --gray: #95a5a6;
-      --highlight-colors: (
-        #e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6,
-        #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b
-      );
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      display: flex;
-      background-color: #f5f7fa;
-      color: #333;
-    }
-    /* SIDEBAR */
-    #sidebar {
-      width: 280px;
-      background-color: var(--secondary);
-      color: white;
-      transition: all 0.3s ease;
-      overflow-y: auto;
-      height: 100vh;
-      position: fixed;
-      z-index: 100;
-    }
-    #sidebar.collapsed {
-      width: 60px;
-    }
-    /* Toggle Button */
-    #toggleSidebar {
-      position: absolute;
-      top: 10px;
-      right: -20px;
-      color: white;
-      background: transparent;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      z-index: 101;
-      outline: none;
-    }
-    /* MAIN CONTENT */
-    #main {
-      flex-grow: 1;
-      margin-left: 280px;
-      padding: 20px;
-      transition: margin-left 0.3s ease;
-    }
-    #main.collapsed {
-      margin-left: 60px;
-    }
-    /* TABS */
-    .tabs {
-      display: flex;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #ddd;
-    }
-    .tab {
-      padding: 12px 20px;
-      cursor: pointer;
-      background: #f5f5f5;
-      border: 1px solid #ddd;
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      margin-right: 5px;
-    }
-    .tab.active {
-      background: white;
-      font-weight: bold;
-      border-bottom: 1px solid white;
-      position: relative;
-      z-index: 1;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    /* INPUT TABLE */
-    .input-table-container {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      overflow-x: auto;
-    }
-    .input-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    .input-table th,
-    .input-table td {
-      border: 1px solid #ddd;
-      padding: 8px 10px;
-      text-align: left;
-      font-size: 14px;
-      min-width: 100px;
-      white-space: nowrap;
-    }
-    .input-table th {
-      background-color: #f0f0f0;
-      font-weight: bold;
-      color: #333;
-    }
-    .input-table td {
-      background-color: #fff;
-      cursor: pointer;
-    }
-    .input-table td:focus {
-      outline: 2px solid #3498db;
-      background-color: #f8f9ff;
-    }
-    .input-table tr:nth-child(even) {
-      background-color: #fafafa;
-    }
-    .input-table tr:hover {
-      background-color: #f1f1f1;
-    }
-    /* Instructions */
-    .instructions {
-      background-color: #e8f4fd;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      font-size: 14px;
-      color: #2c3e50;
-      border-left: 4px solid #3498db;
-    }
-    /* FILTER SECTION */
-    .filter-section {
-      padding: 15px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .filter-section h4 {
-      margin-bottom: 10px;
-      font-size: 14px;
-      opacity: 0.9;
-    }
-    .custom-dropdown {
-      position: relative;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .dropdown-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      background-color: rgba(255,255,255,0.1);
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      color: white;
-    }
-    .dropdown-header i {
-      font-size: 14px;
-      opacity: 0.8;
-    }
-    .dropdown-menu {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: 100%;
-      background-color: rgba(255,255,255,0.9);
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 1000;
-    }
-    .dropdown-menu option {
-      padding: 8px 12px;
-      color: #333;
-      font-size: 14px;
-      background: white;
-      border: none;
-      cursor: pointer;
-    }
-    .dropdown-menu option:hover {
-      background-color: #f0f0f0;
-    }
-    .dropdown-menu option[selected] {
-      background-color: var(--primary);
-      color: white;
-    }
-    /* DATA LABEL TOGGLE */
-    .data-label-toggle {
-      display: flex;
-      align-items: center;
-      margin-top: 10px;
-      font-size: 14px;
-      gap: 10px;
-    }
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 24px;
-    }
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
-    }
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    .toggle-switch input:checked + .toggle-slider {
-      background-color: var(--primary);
-    }
-    .toggle-switch input:checked + .toggle-slider:before {
-      transform: translateX(26px);
-    }
-    /* DASHBOARD HEADER */
-    .dashboard-header-expanded {
-      display: flex;
-      flex-direction: column;
-      background-color: var(--secondary);
-      color: white;
-      padding: 25px 20px 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      position: relative;
-    }
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 8px;
-    }
-    .header-center {
-      flex: 1;
-      text-align: center;
-    }
-    .header-center h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-      line-height: 1.2;
-      letter-spacing: -0.5px;
-    }
-    .header-right {
-      flex-shrink: 0;
-      text-align: right;
-    }
-    .last-update {
-      font-size: 12px;
-      opacity: 0.9;
-      margin: 0;
-    }
-    .header-periode {
-      font-size: 14px;
-      opacity: 0.8;
-      padding: 6px 0;
-      border-top: 1px solid rgba(255,255,255,0.2);
-      text-align: center;
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .header-periode i {
-      color: rgba(255,255,255,0.7);
-      font-size: 16px;
-    }
-    /* KPI */
-    .kpi-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-bottom: 25px;
-    }
-    .kpi-card {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .kpi-card h3 {
-      font-size: 14px;
-      color: #7f8c8d;
-      margin-bottom: 5px;
-    }
-    .kpi-card p {
-      font-size: 24px;
-      font-weight: bold;
-      color: var(--dark);
-    }
-    /* CHART CONTAINER */
-    .chart-container {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    .chart-title {
-      font-size: 16px;
-      margin-bottom: 15px;
-      color: #2c3e50;
-    }
-    .highlight {
-      font-weight: bold;
-      color: #e74c3c;
-    }
-    /* FOOTER */
-    .footer {
-      text-align: center;
-      padding: 15px;
-      color: #7f8c8d;
-      font-size: 14px;
-      background-color: #f5f7fa;
-      border-top: 1px solid #eee;
-      margin-top: 20px;
-    }
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      #sidebar {
-        width: 60px;
-      }
-      #main {
-        margin-left: 60px;
-      }
-      .header-top {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-      }
-      .header-center {
-        text-align: left;
-        margin-left: 10px;
-      }
-      .header-right {
-        margin-top: 4px;
-        text-align: left;
-      }
-      .dashboard-header-expanded {
-        padding: 20px 15px 10px;
-      }
-      .header-center h1 {
-        font-size: 22px;
-      }
-      .header-periode {
-        font-size: 13px;
-      }
-      .kpi-card p {
-        font-size: 20px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Summary Daily Delivery - Paste Mode</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- FAVICON IN-LINE SVG -->
+    <link rel="icon" href="image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚚</text></svg>" type="image/svg+xml">
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --highlight-colors: (#e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6, #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        /* SIDEBAR */
+        #sidebar {
+            width: 280px;
+            background-color: var(--secondary);
+            color: white;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+            height: 100vh;
+            position: fixed;
+            z-index: 100;
+        }
+
+        #sidebar.collapsed {
+            width: 60px;
+        }
+
+        /* Toggle Button */
+        #toggleSidebar {
+            position: absolute;
+            top: 10px;
+            right: -20px;
+            color: white;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 101;
+            outline: none;
+        }
+
+        /* MAIN CONTENT */
+        #main {
+            flex-grow: 1;
+            margin-left: 280px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        #main.collapsed {
+            margin-left: 60px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            margin-right: 5px;
+        }
+
+        .tab.active {
+            background: white;
+            font-weight: bold;
+            border-bottom: 1px solid white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* INPUT TABLE */
+        .input-table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .input-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .input-table th,
+        .input-table td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 14px;
+            min-width: 100px;
+            white-space: nowrap;
+        }
+
+        .input-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-table td {
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        .input-table td:focus {
+            outline: 2px solid #3498db;
+            background-color: #f8f9ff;
+        }
+
+        .input-table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .input-table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Instructions */
+        .instructions {
+            background-color: #e8f4fd;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #2c3e50;
+            border-left: 4px solid #3498db;
+        }
+
+        /* FILTER SECTION */
+        .filter-section {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .filter-section h4 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+        }
+
+        .dropdown-header i {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255,255,255,0.9);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .dropdown-menu option {
+            padding: 8px 12px;
+            color: #333;
+            font-size: 14px;
+            background: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .dropdown-menu option:hover {
+            background-color: #f0f0f0;
+        }
+
+        .dropdown-menu option[selected] {
+            background-color: #e0e0e0;
+        }
+
+        /* DASHBOARD HEADER */
+        .dashboard-header-expanded {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--secondary);
+            color: white;
+            padding: 25px 20px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .header-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-center h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        .header-right {
+            flex-shrink: 0;
+            text-align: right;
+        }
+
+        .last-update {
+            font-size: 12px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .header-periode {
+            font-size: 14px;
+            opacity: 0.8;
+            padding: 6px 0;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .header-periode i {
+            color: rgba(255,255,255,0.7);
+            font-size: 16px;
+        }
+
+        /* KPI */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .kpi-card h3 {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .kpi-card p {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        /* CHART CONTAINER */
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        /* DATA LABEL TOGGLE */
+        .data-label-toggle {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 14px;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #7f8c8d;
+            font-size: 14px;
+            background-color: #f5f7fa;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-  <!-- SIDEBAR -->
-  <div id="sidebar">
-    <button class="toggle-btn" id="toggleSidebar">></button>
-    <div class="filter-section">
-      <h4>Tanggal</h4>
-      <input type="date" id="startDate" />
-      <input type="date" id="endDate" />
-      <h4>Area</h4>
-      <div class="custom-dropdown" id="areaDropdown">
-        <div class="dropdown-header" onclick="toggleDropdown('areaDropdown')">
-          <span id="areaLabel">Select All</span>
-          <i class="fas fa-chevron-down"></i>
-        </div>
-        <div class="dropdown-menu" id="areaMenu">
-          <option value="all" selected>Select All</option>
-        </div>
-      </div>
-      <h4>Pabrik</h4>
-      <div class="custom-dropdown" id="plantDropdown">
-        <div class="dropdown-header" onclick="toggleDropdown('plantDropdown')">
-          <span id="plantLabel">Select All</span>
-          <i class="fas fa-chevron-down"></i>
-        </div>
-        <div class="dropdown-menu" id="plantMenu">
-          <option value="all" selected>Select All</option>
-        </div>
-      </div>
-      <h4>Tipe Truk</h4>
-      <div class="custom-dropdown" id="truckTypeDropdown">
-        <div class="dropdown-header" onclick="toggleDropdown('truckTypeDropdown')">
-          <span id="truckTypeLabel">Select All</span>
-          <i class="fas fa-chevron-down"></i>
-        </div>
-        <div class="dropdown-menu" id="truckTypeMenu">
-          <option value="all" selected>Select All</option>
-        </div>
-      </div>
-    </div>
-    <div class="data-label-toggle">
-      <label class="toggle-switch">
-        <input type="checkbox" id="dataLabelToggle" checked>
-        <span class="toggle-slider"></span>
-      </label>
-      <span>Data Labels On</span>
-    </div>
-  </div>
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <button class="toggle-btn" id="toggleSidebar">></button>
+        <div class="filter-section">
+            <h4>Tanggal</h4>
+            <input type="date" id="startDate" />
+            <input type="date" id="endDate" />
 
-  <!-- MAIN CONTENT -->
-  <div id="main">
-    <!-- DASHBOARD HEADER -->
-    <div class="dashboard-header-expanded">
-      <div class="header-top">
-        <div class="header-center">
-          <h1 id="dashboardTitle">Summary Daily Delivery...Area (All)</h1>
+            <h4>Area</h4>
+            <div class="custom-dropdown" id="areaDropdown">
+                <div class="dropdown-header" onclick="toggleDropdown('areaDropdown')">
+                    <span id="areaLabel">Select All</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="areaMenu">
+                    <option value="all" selected>Select All</option>
+                </div>
+            </div>
+
+            <h4>Pabrik</h4>
+            <div class="custom-dropdown" id="plantDropdown">
+                <div class="dropdown-header" onclick="toggleDropdown('plantDropdown')">
+                    <span id="plantLabel">Select All</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="plantMenu">
+                    <option value="all" selected>Select All</option>
+                </div>
+            </div>
+
+            <h4>Tipe Truk</h4>
+            <div class="custom-dropdown" id="truckTypeDropdown">
+                <div class="dropdown-header" onclick="toggleDropdown('truckTypeDropdown')">
+                    <span id="truckTypeLabel">Select All</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="truckTypeMenu">
+                    <option value="all" selected>Select All</option>
+                </div>
+            </div>
         </div>
-        <div class="header-right">
-          <div class="last-update" id="lastUpdate">Last Update: --</div>
+        <div class="data-label-toggle">
+            <label class="toggle-switch">
+                <input type="checkbox" id="dataLabelToggle" checked>
+                <span class="toggle-slider"></span>
+            </label>
+            <span>Data Labels On</span>
         </div>
-      </div>
-      <div class="header-periode">
-        <i class="fas fa-calendar-alt"></i>
-        <span id="periodeText">Periode: --</span>
-      </div>
     </div>
 
-    <!-- TABS -->
-    <div class="tabs">
-      <div class="tab active" data-tab="input">INPUT DATA (PASTE FROM EXCEL)</div>
-      <div class="tab" data-tab="output">DASHBOARD ANALYSIS</div>
+    <!-- MAIN CONTENT -->
+    <div id="main">
+        <!-- DASHBOARD HEADER -->
+        <div class="dashboard-header-expanded">
+            <div class="header-top">
+                <div class="header-center">
+                    <h1 id="dashboardTitle">Summary Daily Delivery...Area (All)</h1>
+                </div>
+                <div class="header-right">
+                    <div class="last-update" id="lastUpdate">Last Update: --</div>
+                </div>
+            </div>
+            <div class="header-periode">
+                <i class="fas fa-calendar-alt"></i>
+                <span id="periodeText">Periode: --</span>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <div class="tab active" data-tab="input">INPUT DATA (PASTE FROM EXCEL)</div>
+            <div class="tab" data-tab="output">DASHBOARD ANALYSIS</div>
+        </div>
+
+        <!-- TAB CONTENT -->
+        <div id="tabInput" class="tab-content active">
+            <div class="instructions">
+                <strong>Cara Penggunaan:</strong><br>
+                1. Salin data dari Excel Anda (termasuk header atau tidak).<br>
+                2. Klik di dalam tabel → tekan <kbd>Ctrl+V</kbd> → semua data akan terisi otomatis.<br>
+                3. Edit sel mana pun jika perlu.<br>
+                4. Tab "DASHBOARD ANALYSIS" akan otomatis muncul dan data langsung diolah.
+            </div>
+            <div class="input-table-container">
+                <table class="input-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>DP No</th>
+                            <th>QTY</th>
+                            <th>Area</th>
+                            <th>Plant Name</th>
+                            <th>Truck No</th>
+                            <th>Truck Type</th>
+                            <th>Sales Man</th>
+                            <th>End Customer Name</th>
+                            <th>Distance</th>
+                            <th>DP Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 5 baris kosong awal -->
+                        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                        <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tabOutput" class="tab-content">
+            <!-- KPI -->
+            <div class="kpi-container">
+                <div class="kpi-card"><h3>Total Area</h3><p id="kpiArea">0</p></div>
+                <div class="kpi-card"><h3>Total Pabrik</h3><p id="kpiPlant">0</p></div>
+                <div class="kpi-card"><h3>Total Volume (m³)</h3><p id="kpiVolume">0</p></div>
+                <div class="kpi-card"><h3>Avg Volume (m³)</h3><p id="kpiAvgVolume">0</p></div>
+                <div class="kpi-card"><h3>Total Truk</h3><p id="kpiTruck">0</p></div>
+                <div class="kpi-card"><h3>Avg Load/Truck (m³)</h3><p id="kpiAvgLoadTruck">0</p></div>
+            </div>
+
+            <!-- CHARTS -->
+            <div class="chart-container">
+                <h3 class="chart-title">A. Delivery</h3>
+                <div id="volumeByArea" class="chart-container" style="display:none;">
+                    <h4 class="chart-title">A1. Volume by Area</h4>
+                    <canvas id="chartVolumeByArea"></canvas>
+                </div>
+                <div id="volumeByPlant" class="chart-container">
+                    <h4 class="chart-title">A2. Volume by Plant</h4>
+                    <canvas id="chartVolumeByPlant"></canvas>
+                </div>
+                <div id="avgVolumeByPlant" class="chart-container">
+                    <h4 class="chart-title">A3. Avg Volume by Plant</h4>
+                    <canvas id="chartAvgVolumeByPlant"></canvas>
+                </div>
+                <div id="avgVolumePerDay" class="chart-container">
+                    <h4 class="chart-title">A4. Avg Volume per Day</h4>
+                    <canvas id="chartAvgVolumePerDay"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">B. Utilization Truck</h3>
+                <div id="volumePerTruck" class="chart-container">
+                    <h4 class="chart-title">B1. Volume per Truck</h4>
+                    <canvas id="chartVolumePerTruck"></canvas>
+                </div>
+                <div id="totalTripPerTruck" class="chart-container">
+                    <h4 class="chart-title">B2. Total Trip per Truck</h4>
+                    <canvas id="chartTotalTripPerTruck"></canvas>
+                </div>
+                <div id="avgLoadPerTruck" class="chart-container">
+                    <h4 class="chart-title">B3. Avg Load per Truck</h4>
+                    <canvas id="chartAvgLoadPerTruck"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">C. Distance</h3>
+                <div id="avgDistancePerPlant" class="chart-container">
+                    <h4 class="chart-title">C1. Avg Distance per Plant</h4>
+                    <canvas id="chartAvgDistancePerPlant"></canvas>
+                </div>
+                <div id="trendVolumeByDistance" class="chart-container">
+                    <h4 class="chart-title">C2. Trend Volume by Distance</h4>
+                    <canvas id="chartTrendVolumeByDistance"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">A. Sales</h3>
+                <div class="chart-container">
+                    <h4 class="chart-title">A. Volume per Sales</h4>
+                    <canvas id="chartVolumePerSales"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">B. Customer</h3>
+                <div class="chart-container">
+                    <h4 class="chart-title">B. Volume per End Customer</h4>
+                    <canvas id="chartVolumePerCustomer"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">Summary Daily Delivery And Sales by L=23-51Xe.</div>
     </div>
 
-    <!-- TAB CONTENT -->
-    <div id="tabInput" class="tab-content active">
-      <div class="instructions">
-        <strong>Cara Penggunaan:</strong><br>
-        1. Salin data dari Excel Anda (termasuk header atau tidak).<br>
-        2. Klik di dalam tabel → tekan <kbd>Ctrl+V</kbd> → semua data akan terisi otomatis.<br>
-        3. Edit sel mana pun jika perlu.<br>
-        4. Klik tab "DASHBOARD ANALYSIS" untuk melihat hasil.
-      </div>
+    <script>
+        // Global Variables
+        let rawData = [];
+        let filteredData = [];
+        let charts = {};
+        let dataLabelsEnabled = true;
 
-      <div class="input-table-container">
-        <table class="input-table" id="dataTable">
-          <thead>
-            <tr>
-              <th>DP No</th>
-              <th>QTY</th>
-              <th>Area</th>
-              <th>Plant Name</th>
-              <th>Truck No</th>
-              <th>Truck Type</th>
-              <th>Sales Man</th>
-              <th>End Customer Name</th>
-              <th>Distance</th>
-              <th>Date</th>
-              <th>Truck ID</th>
-              <th>Delivery Note</th>
-              <th>Volume</th>
-              <th>Project Code</th>
-              <th>Client</th>
-              <th>Contractor</th>
-              <th>Status</th>
-              <th>Site</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- 5 baris kosong awal -->
-            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        // Colors for highlighting (Top 10)
+        const highlightColors = [
+            '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
+            '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
+        ];
 
-    <div id="tabOutput" class="tab-content">
-      <!-- KPI -->
-      <div class="kpi-container">
-        <div class="kpi-card">
-          <h3>Total Area</h3>
-          <p id="kpiArea">0</p>
-        </div>
-        <div class="kpi-card">
-          <h3>Total Pabrik</h3>
-          <p id="kpiPlant">0</p>
-        </div>
-        <div class="kpi-card">
-          <h3>Total Volume (m³)</h3>
-          <p id="kpiVolume">0</p>
-        </div>
-        <div class="kpi-card">
-          <h3>Avg Volume (m³)</h3>
-          <p id="kpiAvgVolume">0</p>
-        </div>
-        <div class="kpi-card">
-          <h3>Total Truk</h3>
-          <p id="kpiTruck">0</p>
-        </div>
-        <div class="kpi-card">
-          <h3>Avg Load/Truck (m³)</h3>
-          <p id="kpiAvgLoadTruck">0</p>
-        </div>
-      </div>
+        // Normalisasi string
+        function normalizeKey(str) {
+            return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
 
-      <!-- CHARTS -->
-      <div class="chart-container">
-        <h3 class="chart-title">A. Delivery</h3>
-        <div id="volumeByArea" class="chart-container" style="display:none;">
-          <h4 class="chart-title">A1. Volume by Area</h4>
-          <canvas id="chartVolumeByArea"></canvas>
-        </div>
-        <div id="volumeByPlant" class="chart-container">
-          <h4 class="chart-title">A2. Volume by Plant</h4>
-          <canvas id="chartVolumeByPlant"></canvas>
-        </div>
-        <div id="avgVolumeByPlant" class="chart-container">
-          <h4 class="chart-title">A3. Avg Volume by Plant</h4>
-          <canvas id="chartAvgVolumeByPlant"></canvas>
-        </div>
-        <div id="avgVolumePerDay" class="chart-container">
-          <h4 class="chart-title">A4. Avg Volume per Day</h4>
-          <canvas id="chartAvgVolumePerDay"></canvas>
-        </div>
-      </div>
+        // Normalisasi area
+        function normalizeArea(area) {
+            if (!area) return area;
+            const map = {
+                'east': 'East Java',
+                'west indonesia 1': 'West Java',
+                'west indonesia 2': 'West Java',
+                'west indonesia 3': 'West Java',
+                'east indonesia': 'East Java',
+                'jakarta special capital region': 'Jakarta',
+                'lampung': 'Lampung',
+                'banten': 'Banten',
+                'jawa timur': 'East Java',
+                'jawa tengah': 'Central Java',
+                'sumatera': 'Sumatra',
+                'kalimantan': 'Kalimantan',
+                'sulawesi': 'Sulawesi',
+                'nusa tenggara': 'Nusa Tenggara',
+                'papua': 'Papua',
+                'jawa': 'Java',
+                'jakarta raya': 'Jakarta',
+                'jabodetabek': 'Jakarta',
+                'jabar': 'West Java',
+                'jatim': 'East Java',
+                'jateng': 'Central Java',
+                'sumut': 'Sumatra',
+                'sumsel': 'Sumatra',
+                'kalbar': 'Kalimantan',
+                'kaltim': 'Kalimantan',
+                'sulsel': 'Sulawesi',
+                'sultra': 'Sulawesi',
+                'ntt': 'Nusa Tenggara',
+                'ntb': 'Nusa Tenggara',
+                'papua barat': 'Papua',
+                'papua tengah': 'Papua',
+                'east java': 'East Java',
+                'west java': 'West Java',
+                'central java': 'Central Java'
+            };
+            const clean = area.toString().toLowerCase().trim();
+            return map[clean] || area;
+        }
 
-      <div class="chart-container">
-        <h3 class="chart-title">B. Utilization Truck</h3>
-        <div id="volumePerTruck" class="chart-container">
-          <h4 class="chart-title">B1. Volume per Truck</h4>
-          <canvas id="chartVolumePerTruck"></canvas>
-        </div>
-        <div id="totalTripPerTruck" class="chart-container">
-          <h4 class="chart-title">B2. Total Trip per Truck</h4>
-          <canvas id="chartTotalTripPerTruck"></canvas>
-        </div>
-        <div id="avgLoadPerTruck" class="chart-container">
-          <h4 class="chart-title">B3. Avg Load per Truck</h4>
-          <canvas id="chartAvgLoadPerTruck"></canvas>
-        </div>
-      </div>
+        // DOM Elements
+        let sidebar, main, toggleBtn, startDate, endDate, dataLabelToggle;
+        let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolume, kpiTruck, kpiAvgLoadTruck, lastUpdate;
+        let dataTableBody;
 
-      <div class="chart-container">
-        <h3 class="chart-title">C. Distance</h3>
-        <div id="avgDistancePerPlant" class="chart-container">
-          <h4 class="chart-title">C1. Avg Distance per Plant</h4>
-          <canvas id="chartAvgDistancePerPlant"></canvas>
-        </div>
-        <div id="trendVolumeByDistance" class="chart-container">
-          <h4 class="chart-title">C2. Trend Volume by Distance</h4>
-          <canvas id="chartTrendVolumeByDistance"></canvas>
-        </div>
-      </div>
+        document.addEventListener('DOMContentLoaded', () => {
+            sidebar = document.getElementById('sidebar');
+            main = document.getElementById('main');
+            toggleBtn = document.getElementById('toggleSidebar');
+            startDate = document.getElementById('startDate');
+            endDate = document.getElementById('endDate');
+            dataLabelToggle = document.getElementById('dataLabelToggle');
+            dashboardTitle = document.getElementById('dashboardTitle');
+            periodeText = document.getElementById('periodeText');
+            kpiArea = document.getElementById('kpiArea');
+            kpiPlant = document.getElementById('kpiPlant');
+            kpiVolume = document.getElementById('kpiVolume');
+            kpiAvgVolume = document.getElementById('kpiAvgVolume');
+            kpiTruck = document.getElementById('kpiTruck');
+            kpiAvgLoadTruck = document.getElementById('kpiAvgLoadTruck');
+            lastUpdate = document.getElementById('lastUpdate');
+            dataTableBody = document.querySelector('#dataTable tbody');
 
-      <div class="chart-container">
-        <h3 class="chart-title">A. Sales</h3>
-        <div class="chart-container">
-          <h4 class="chart-title">A. Volume per Sales</h4>
-          <canvas id="chartVolumePerSales"></canvas>
-        </div>
-      </div>
+            // Toggle Sidebar
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                main.classList.toggle('collapsed');
+                toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
+            });
 
-      <div class="chart-container">
-        <h3 class="chart-title">B. Customer</h3>
-        <div class="chart-container">
-          <h4 class="chart-title">B. Volume per End Customer</h4>
-          <canvas id="chartVolumePerCustomer"></canvas>
-        </div>
-      </div>
-    </div>
+            // Tab Switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
+                    if (tabId === 'output') applyFilters(); // Auto-process saat pindah ke output
+                });
+            });
 
-    <!-- FOOTER -->
-    <div class="footer">
-      Summary Daily Delivery And Sales by L=23-51Xe.
-    </div>
-  </div>
+            // Event listeners untuk filter
+            [startDate, endDate].forEach(el => {
+                el.addEventListener('change', applyFilters);
+            });
 
-  <script>
-    // Global Variables
-    let rawData = [];
-    let filteredData = [];
-    let charts = {};
-    let dataLabelsEnabled = true;
+            dataLabelToggle.addEventListener('change', () => {
+                dataLabelsEnabled = dataLabelToggle.checked;
+                updateCharts();
+            });
 
-    // Colors for highlighting (Top 10)
-    const highlightColors = [
-      '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
-      '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
-    ];
+            // Inisialisasi tanggal
+            window.addEventListener('load', () => {
+                const today = new Date();
+                const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+                startDate.valueAsDate = yesterday;
+                endDate.valueAsDate = today;
+                applyFilters();
+            });
 
-    // Normalisasi string
-    function normalizeKey(str) {
-      return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
-    }
+            // Handle paste dari Excel
+            dataTableBody.addEventListener('paste', handlePaste);
 
-    // Normalisasi area
-    function normalizeArea(area) {
-      if (!area) return area;
-      const map = {
-        'east': 'East Java',
-        'west indonesia 1': 'West Java',
-        'west indonesia 2': 'West Java',
-        'west indonesia 3': 'West Java',
-        'east indonesia': 'East Java',
-        'jakarta special capital region': 'Jakarta',
-        'lampung': 'Lampung',
-        'banten': 'Banten',
-        'jawa timur': 'East Java',
-        'jawa tengah': 'Central Java',
-        'sumatera': 'Sumatra',
-        'kalimantan': 'Kalimantan',
-        'sulawesi': 'Sulawesi',
-        'nusa tenggara': 'Nusa Tenggara',
-        'papua': 'Papua',
-        'jawa': 'Java',
-        'jakarta raya': 'Jakarta',
-        'jabodetabek': 'Jakarta',
-        'jabar': 'West Java',
-        'jatim': 'East Java',
-        'jateng': 'Central Java',
-        'sumut': 'Sumatra',
-        'sumsel': 'Sumatra',
-        'kalbar': 'Kalimantan',
-        'kaltim': 'Kalimantan',
-        'sulsel': 'Sulawesi',
-        'sultra': 'Sulawesi',
-        'ntt': 'Nusa Tenggara',
-        'ntb': 'Nusa Tenggara',
-        'papua barat': 'Papua',
-        'papua tengah': 'Papua',
-        'east java': 'East Java',
-        'west java': 'West Java',
-        'central java': 'Central Java'
-      };
-      const clean = area.toString().toLowerCase().trim();
-      return map[clean] || area;
-    }
+            // Handle click pada sel untuk edit
+            dataTableBody.addEventListener('click', (e) => {
+                const cell = e.target.closest('td');
+                if (!cell) return;
+                const row = cell.parentElement;
+                const colIndex = Array.from(row.children).indexOf(cell);
 
-    // DOM Elements
-    let sidebar, main, toggleBtn, startDate, endDate, dataLabelToggle;
-    let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolume, kpiTruck, kpiAvgLoadTruck, lastUpdate;
-    let dataTableBody;
+                // Buat input teks
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = cell.textContent.trim();
+                input.style.width = '100%';
+                input.style.border = 'none';
+                input.style.outline = 'none';
+                input.style.padding = '2px';
+                input.style.fontSize = '14px';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      sidebar = document.getElementById('sidebar');
-      main = document.getElementById('main');
-      toggleBtn = document.getElementById('toggleSidebar');
-      startDate = document.getElementById('startDate');
-      endDate = document.getElementById('endDate');
-      dataLabelToggle = document.getElementById('dataLabelToggle');
-      dashboardTitle = document.getElementById('dashboardTitle');
-      periodeText = document.getElementById('periodeText');
-      kpiArea = document.getElementById('kpiArea');
-      kpiPlant = document.getElementById('kpiPlant');
-      kpiVolume = document.getElementById('kpiVolume');
-      kpiAvgVolume = document.getElementById('kpiAvgVolume');
-      kpiTruck = document.getElementById('kpiTruck');
-      kpiAvgLoadTruck = document.getElementById('kpiAvgLoadTruck');
-      lastUpdate = document.getElementById('lastUpdate');
-      dataTableBody = document.querySelector('#dataTable tbody');
+                cell.innerHTML = '';
+                cell.appendChild(input);
+                input.focus();
 
-      // Toggle Sidebar
-      toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-        main.classList.toggle('collapsed');
-        toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
-      });
-
-      // Tab Switching
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-          tab.classList.add('active');
-          const tabId = tab.getAttribute('data-tab');
-          document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
-          if (tabId === 'output') applyFilters(); // Auto-process saat pindah ke output
+                // Simpan saat enter atau blur
+                input.addEventListener('blur', saveCell);
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        saveCell();
+                    }
+                });
+            });
         });
-      });
 
-      // Event listeners untuk filter
-      [startDate, endDate].forEach(el => {
-        el.addEventListener('change', applyFilters);
-      });
-      dataLabelToggle.addEventListener('change', () => {
-        dataLabelsEnabled = dataLabelToggle.checked;
-        updateCharts();
-      });
+        function handlePaste(e) {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text');
+            const rows = pastedData.split('\n');
 
-      // Inisialisasi tanggal
-      window.addEventListener('load', () => {
-        const today = new Date();
-        const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-        startDate.valueAsDate = yesterday;
-        endDate.valueAsDate = today;
-        applyFilters();
-      });
+            // Ambil header jika ada (opsional)
+            const firstRow = rows[0].split('\t');
+            const isHeader = firstRow.length >= 10 && !isNaN(firstRow[0]); // Hanya 10 kolom penting
+            let startRow = isHeader ? 1 : 0;
 
-      // Handle paste dari Excel
-      dataTableBody.addEventListener('paste', handlePaste);
+            // Header yang diharapkan (sesuai Tes3.xlsx)
+            const headers = [
+                'DP No', 'QTY', 'Area', 'Plant Name', 'Truck No',
+                'Truck Type', 'Sales Man', 'End Customer Name', 'Distance', 'DP Date'
+            ];
 
-      // Handle click pada sel untuk edit
-      dataTableBody.addEventListener('click', (e) => {
-        const cell = e.target.closest('td');
-        if (!cell) return;
-        const row = cell.parentElement;
-        const colIndex = Array.from(row.children).indexOf(cell);
-        
-        // Buat input teks
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = cell.textContent.trim();
-        input.style.width = '100%';
-        input.style.border = 'none';
-        input.style.outline = 'none';
-        input.style.padding = '2px';
-        input.style.fontSize = '14px';
-        
-        cell.innerHTML = '';
-        cell.appendChild(input);
-        input.focus();
+            // Pastikan kita punya cukup baris
+            const totalRowsNeeded = rows.length - startRow;
+            const currentRows = dataTableBody.children.length;
 
-        // Simpan saat enter atau blur
-        input.addEventListener('blur', saveCell);
-        input.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-            saveCell();
-          }
-        });
-      });
-    });
-
-    function handlePaste(e) {
-      e.preventDefault();
-      const pastedData = e.clipboardData.getData('text');
-      const rows = pastedData.split('\n');
-      
-      // Ambil header jika ada (opsional)
-      const firstRow = rows[0].split('\t');
-      const isHeader = firstRow.length >= 18 && !isNaN(firstRow[0]);
-      
-      let startRow = isHeader ? 1 : 0;
-      const headers = [
-        'DP No', 'QTY', 'Area', 'Plant Name', 'Truck No', 'Truck Type', 
-        'Sales Man', 'End Customer Name', 'Distance', 'Date', 'Truck ID', 
-        'Delivery Note', 'Volume', 'Project Code', 'Client', 'Contractor', 
-        'Status', 'Site'
-      ];
-      
-      // Pastikan kita punya cukup baris
-      const totalRowsNeeded = rows.length - startRow;
-      const currentRows = dataTableBody.children.length;
-      
-      // Tambahkan baris kosong jika kurang
-      while (dataTableBody.children.length < totalRowsNeeded + 5) {
-        const tr = document.createElement('tr');
-        for (let i = 0; i < 18; i++) {
-          const td = document.createElement('td');
-          tr.appendChild(td);
-        }
-        dataTableBody.appendChild(tr);
-      }
-      
-      // Isi data dari paste
-      let rowIndex = 0;
-      rows.slice(startRow).forEach(rowStr => {
-        if (rowStr.trim() === '') return; // Lewati baris kosong
-        
-        const cells = rowStr.split('\t');
-        const targetRow = dataTableBody.children[rowIndex];
-        
-        for (let colIndex = 0; colIndex < 18; colIndex++) {
-          const cell = cells[colIndex];
-          const td = targetRow.children[colIndex];
-          td.textContent = cell ? cell.trim() : '';
-        }
-        
-        rowIndex++;
-      });
-      
-      // Konversi data ke array untuk proses
-      convertTableToData();
-    }
-
-    function saveCell() {
-      const input = this;
-      const cell = input.parentElement;
-      cell.textContent = input.value.trim();
-      convertTableToData();
-    }
-
-    function convertTableToData() {
-      rawData = [];
-      const rows = Array.from(dataTableBody.children);
-      
-      rows.forEach(row => {
-        const cells = Array.from(row.children);
-        if (cells.some(cell => cell.textContent.trim() !== '')) { // Hanya proses jika ada data di salah satu sel
-          const rowData = {
-            'DP No': cells[0].textContent.trim(),
-            'QTY': cells[1].textContent.trim(),
-            'Area': cells[2].textContent.trim(),
-            'Plant Name': cells[3].textContent.trim(),
-            'Truck No': cells[4].textContent.trim(),
-            'Truck Type': cells[5].textContent.trim(),
-            'Sales Man': cells[6].textContent.trim(),
-            'End Customer Name': cells[7].textContent.trim(),
-            'Distance': cells[8].textContent.trim(),
-            'Date': cells[9].textContent.trim(),
-            'Truck ID': cells[10].textContent.trim(),
-            'Delivery Note': cells[11].textContent.trim(),
-            'Volume': cells[12].textContent.trim(),
-            'Project Code': cells[13].textContent.trim(),
-            'Client': cells[14].textContent.trim(),
-            'Contractor': cells[15].textContent.trim(),
-            'Status': cells[16].textContent.trim(),
-            'Site': cells[17].textContent.trim()
-          };
-
-          // Validasi minimal: DP No dan QTY harus ada
-          if (rowData['DP No'] && rowData['QTY']) {
-            rawData.push(rowData);
-          }
-        }
-      });
-
-      // Normalisasi data
-      rawData = rawData.map(row => ({
-        ...row,
-        'QTY': parseFloat(row['QTY']) || 0,
-        'Distance': parseFloat(row['Distance']) || 0,
-        'Area': normalizeArea(row['Area']),
-        'Date': extractDateFromRow(row)
-      })).filter(row =>
-        row['DP No'] !== null &&
-        row['QTY'] !== null &&
-        row['Area'] !== null &&
-        row['Plant Name'] !== null &&
-        row['Truck No'] !== null &&
-        row['Truck Type'] !== null &&
-        row['Sales Man'] !== null &&
-        row['End Customer Name'] !== null &&
-        row['Distance'] !== null
-      );
-
-      // Jika sedang di tab output, update chart
-      if (document.querySelector('.tab[data-tab="output"]').classList.contains('active')) {
-        applyFilters();
-      }
-    }
-
-    function extractDateFromRow(row) {
-      const dateCols = ['date', 'delivery date', 'delivery_date', 'tanggal', 'dp date'];
-      for (let col in row) {
-        if (dateCols.some(d => col.toLowerCase().includes(d))) {
-          const val = row[col];
-          if (typeof val === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}/.test(val)) {
-            const [day, month, year] = val.split('/');
-            return new Date(year, month - 1, day);
-          } else if (val instanceof Date) {
-            return val;
-          } else if (typeof val === 'string' && /^\d{1,2}\s+\w+\s+\d{4}/.test(val)) {
-            // Contoh: "8 Sep 2025"
-            const parts = val.split(/\s+/);
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const month = months.indexOf(parts[1]);
-            return new Date(parts[2], month, parts[0]);
-          }
-        }
-      }
-      return new Date();
-    }
-
-    function updateFilters() {
-      const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
-      const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
-      const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
-
-      clearDropdown('areaMenu');
-      clearDropdown('plantMenu');
-      clearDropdown('truckTypeMenu');
-
-      addOption('areaMenu', "Select All", "all");
-      areas.forEach(a => addOption('areaMenu', a, a));
-
-      addOption('plantMenu', "Select All", "all");
-      plants.forEach(p => addOption('plantMenu', p, p));
-
-      addOption('truckTypeMenu', "Select All", "all");
-      truckTypes.forEach(t => addOption('truckTypeMenu', t, t));
-    }
-
-    function clearDropdown(menuId) {
-      const menu = document.getElementById(menuId);
-      while (menu.children.length > 0) {
-        menu.removeChild(menu.firstChild);
-      }
-    }
-
-    function addOption(menuId, text, value) {
-      const menu = document.getElementById(menuId);
-      const option = document.createElement('option');
-      option.text = text;
-      option.value = value;
-      menu.appendChild(option);
-    }
-
-    document.addEventListener('click', function(e) {
-      const option = e.target.closest('.dropdown-menu option');
-      if (!option) return;
-      const menu = option.closest('.dropdown-menu');
-      const dropdown = menu.parentElement;
-      const label = dropdown.querySelector('.dropdown-header span');
-      
-      menu.querySelectorAll('option').forEach(opt => opt.removeAttribute('selected'));
-      option.setAttribute('selected', '');
-      
-      if (option.value === 'all') {
-        label.textContent = 'Select All';
-      } else {
-        label.textContent = option.textContent;
-      }
-      applyFilters();
-    });
-
-    function toggleDropdown(id) {
-      const dropdown = document.getElementById(id);
-      const menu = dropdown.querySelector('.dropdown-menu');
-      const icon = dropdown.querySelector('.dropdown-header i');
-      const label = dropdown.querySelector('.dropdown-header span');
-      
-      if (menu.style.display === 'block') {
-        menu.style.display = 'none';
-        icon.classList.remove('fa-chevron-up');
-        icon.classList.add('fa-chevron-down');
-      } else {
-        menu.style.display = 'block';
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-up');
-      }
-    }
-
-    function applyFilters() {
-      let filtered = [...rawData];
-
-      const start = startDate.value ? new Date(startDate.value) : null;
-      const end = endDate.value ? new Date(endDate.value) : null;
-      if (start || end) {
-        filtered = filtered.filter(row => {
-          const rowDate = row.Date;
-          if (!rowDate) return false;
-          if (start && rowDate < start) return false;
-          if (end && rowDate > end) return false;
-          return true;
-        });
-      }
-
-      const areaMenu = document.getElementById('areaMenu');
-      const selectedAreaOptions = areaMenu.querySelectorAll('option[selected]');
-      const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
-      if (!selectedAreas.includes('all')) {
-        filtered = filtered.filter(row => selectedAreas.includes(row.Area));
-      }
-
-      const plantMenu = document.getElementById('plantMenu');
-      const selectedPlantOptions = plantMenu.querySelectorAll('option[selected]');
-      const selectedPlants = Array.from(selectedPlantOptions).map(o => o.value);
-      if (!selectedPlants.includes('all')) {
-        filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
-      }
-
-      const truckTypeMenu = document.getElementById('truckTypeMenu');
-      const selectedTruckTypeOptions = truckTypeMenu.querySelectorAll('option[selected]');
-      const selectedTruckTypes = Array.from(selectedTruckTypeOptions).map(o => o.value);
-      if (!selectedTruckTypes.includes('all')) {
-        filtered = filtered.filter(row => selectedTruckTypes.includes(row['Truck Type']));
-      }
-
-      filteredData = filtered;
-      updateKPIs();
-      updateDashboardTitle();
-      updatePeriodeText();
-      updateCharts();
-      lastUpdate.textContent = `Last Update: ${new Date().toLocaleString()}`;
-    }
-
-    function updateKPIs() {
-      const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
-      const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
-      const totalVolume = filteredData.reduce((sum, r) => sum + r.QTY, 0);
-      const avgVolume = totalVolume > 0 ? (totalVolume / filteredData.length).toFixed(2) : 0;
-      const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].length;
-      const avgLoadPerTruck = totalTruck > 0 ? (totalVolume / totalTruck).toFixed(2) : 0;
-
-      kpiArea.textContent = totalArea;
-      kpiPlant.textContent = totalPlant;
-      kpiVolume.textContent = totalVolume.toFixed(2);
-      kpiAvgVolume.textContent = avgVolume;
-      kpiTruck.textContent = totalTruck;
-      kpiAvgLoadTruck.textContent = avgLoadPerTruck;
-    }
-
-    function updateDashboardTitle() {
-      const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.textContent);
-      const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
-      dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
-    }
-
-    function updatePeriodeText() {
-      const start = startDate.value ? new Date(startDate.value).toLocaleDateString('id-ID') : '--';
-      const end = endDate.value ? new Date(endDate.value).toLocaleDateString('id-ID') : '--';
-      periodeText.textContent = `Periode: ${start} - ${end}`;
-    }
-
-    function updateCharts() {
-      destroyAllCharts();
-      if (!filteredData.length) return;
-
-      const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.value);
-      const showVolumeByArea = areaFilterSelected.includes('all');
-      document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
-
-      if (showVolumeByArea) {
-        createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
-      }
-
-      createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
-      createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
-      createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
-      createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
-      createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
-
-      const totalVol = filteredData.reduce((s, r) => s + r.QTY, 0);
-      const totalTrucks = [...new Set(filteredData.map(r => r['Truck No']))].length;
-      const avgLoad = totalTrucks > 0 ? totalVol / totalTrucks : 0;
-      createSingleValueBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', avgLoad.toFixed(2), 'm³');
-
-      createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
-      createScatterChart('chartTrendVolumeByDistance', 'Trend Volume by Distance', filteredData.map(r => ({ x: r.Distance, y: r.QTY })));
-      createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
-      createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
-    }
-
-    function getGroupedData(groupBy, metric, isAvg = false) {
-      const map = new Map();
-      filteredData.forEach(row => {
-        const key = row[groupBy];
-        if (!key) return;
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push(parseFloat(row[metric]) || 0);
-      });
-      return Array.from(map.entries()).map(([key, values]) => ({
-        label: key,
-        value: isAvg ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : values.reduce((a,b)=>a+b,0)
-      })).sort((a,b) => b.value - a.value).slice(0, 10);
-    }
-
-    function getTripCountByTruck() {
-      const tripMap = new Map();
-      filteredData.forEach(row => {
-        const key = `${row['Truck No']} - ${row['DP No']}`;
-        const truckNo = row['Truck No'];
-        if (!tripMap.has(truckNo)) tripMap.set(truckNo, new Set());
-        tripMap.get(truckNo).add(key);
-      });
-      return Array.from(tripMap.entries()).map(([truck, trips]) => ({
-        label: truck,
-        value: trips.size
-      })).sort((a,b) => b.value - a.value).slice(0, 10);
-    }
-
-    function getDailyAvgVolume() {
-      const dailyMap = new Map();
-      filteredData.forEach(row => {
-        const dateStr = row.Date.toISOString().split('T')[0];
-        if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, { sum: 0, count: 0 });
-        dailyMap.get(dateStr).sum += row.QTY;
-        dailyMap.get(dateStr).count += 1;
-      });
-      return Array.from(dailyMap.entries())
-        .map(([date, { sum, count }]) => ({
-          date,
-          avg: (sum / count).toFixed(2)
-        }))
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
-    }
-
-    function destroyAllCharts() {
-      Object.values(charts).forEach(chart => chart.destroy());
-      charts = {};
-    }
-
-    function createBarChart(canvasId, title, data, enableHighlight = false) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      const labels = data.map(d => d.label);
-      const values = data.map(d => d.value);
-      const backgroundColors = enableHighlight
-        ? labels.map((_, i) => highlightColors[i % highlightColors.length])
-        : Array(labels.length).fill('#3498db');
-      const datasets = [{
-        label: title,
-        data: values,
-        backgroundColor: backgroundColors,
-        borderColor: 'rgba(0,0,0,0.1)',
-        borderWidth: 1,
-      }];
-      const config = {
-        type: 'bar',
-        data: {
-          labels,
-          datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: dataLabelsEnabled },
-            title: { display: true, text: title, font: { size: 16 } },
-          },
-          scales: {
-            y: { beginAtZero: true, ticks: { color: '#555' } },
-            x: { ticks: { color: '#555', maxRotation: 45, minRotation: 0 } }
-          }
-        }
-      };
-      charts[canvasId] = new Chart(ctx, config);
-    }
-
-    function createSingleValueBarChart(canvasId, title, value, unit) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      const labels = ['Avg Load'];
-      const values = [parseFloat(value)];
-      const datasets = [{
-        label: title,
-        data: values,
-        backgroundColor: '#2ecc71',
-        borderColor: 'rgba(0,0,0,0.1)',
-        borderWidth: 1,
-      }];
-      const config = {
-        type: 'bar',
-        data: {
-          labels,
-          datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: dataLabelsEnabled },
-            title: { display: true, text: title, font: { size: 16 } },
-            datalabels: {
-              display: dataLabelsEnabled,
-              formatter: (value) => `${value} ${unit}`,
-              color: '#000',
-              font: { weight: 'bold' }
+            // Tambahkan baris kosong jika kurang
+            while (dataTableBody.children.length < totalRowsNeeded + 5) {
+                const tr = document.createElement('tr');
+                for (let i = 0; i < 10; i++) { // Hanya 10 kolom
+                    const td = document.createElement('td');
+                    tr.appendChild(td);
+                }
+                dataTableBody.appendChild(tr);
             }
-          },
-          scales: {
-            y: { display: false, beginAtZero: true },
-            x: { display: false }
-          }
-        }
-      };
-      charts[canvasId] = new Chart(ctx, config);
-    }
 
-    function createLineChart(canvasId, title, data) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      const labels = data.map(d => d.date);
-      const values = data.map(d => parseFloat(d.avg));
-      const datasets = [{
-        label: 'Avg Volume (m³)',
-        data: values,
-        borderColor: '#3498db',
-        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-        tension: 0.3,
-        fill: true,
-        pointRadius: 4,
-        pointHoverRadius: 8
-      }];
-      const config = {
-        type: 'line',
-        data: {
-          labels,
-          datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: dataLabelsEnabled },
-            title: { display: true, text: title, font: { size: 16 } },
-          },
-          scales: {
-            y: { beginAtZero: true, ticks: { color: '#555' } },
-            x: { ticks: { color: '#555', maxRotation: 45 } }
-          }
-        }
-      };
-      charts[canvasId] = new Chart(ctx, config);
-    }
+            // Isi data dari paste
+            let rowIndex = 0;
+            rows.slice(startRow).forEach(rowStr => {
+                if (rowStr.trim() === '') return; // Lewati baris kosong
+                const cells = rowStr.split('\t');
+                const targetRow = dataTableBody.children[rowIndex];
+                for (let colIndex = 0; colIndex < 10; colIndex++) { // Hanya 10 kolom
+                    const cell = cells[colIndex];
+                    const td = targetRow.children[colIndex];
+                    td.textContent = cell ? cell.trim() : '';
+                }
+                rowIndex++;
+            });
 
-    function createScatterChart(canvasId, title, data) {
-      const ctx = document.getElementById(canvasId).getContext('2d');
-      const points = data.map(p => ({ x: p.x, y: p.y }));
-      const datasets = [{
-        label: 'Volume vs Distance',
-        data: points,
-        backgroundColor: 'rgba(52, 152, 219, 0.6)',
-        borderColor: 'rgba(52, 152, 219, 0.8)',
-        pointRadius: 4,
-        pointHoverRadius: 8
-      }];
-      const config = {
-        type: 'scatter',
-        data: {
-          datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: dataLabelsEnabled },
-            title: { display: true, text: title, font: { size: 16 } },
-          },
-          scales: {
-            x: { title: { display: true, text: 'Distance (km)' }, ticks: { color: '#555' } },
-            y: { title: { display: true, text: 'Volume (m³)' }, beginAtZero: true, ticks: { color: '#555' } }
-          }
+            // Konversi data ke array untuk proses
+            convertTableToData();
+
+            // Otomatis switch ke tab Dashboard
+            document.querySelector('.tab[data-tab="output"]').click();
         }
-      };
-      charts[canvasId] = new Chart(ctx, config);
-    }
-  </script>
+
+        function saveCell() {
+            const input = this;
+            const cell = input.parentElement;
+            cell.textContent = input.value.trim();
+            convertTableToData();
+        }
+
+        function convertTableToData() {
+            rawData = [];
+            const rows = Array.from(dataTableBody.children);
+            rows.forEach(row => {
+                const cells = Array.from(row.children);
+                if (cells.some(cell => cell.textContent.trim() !== '')) {
+                    const rowData = {
+                        'DP No': cells[0].textContent.trim(),
+                        'QTY': cells[1].textContent.trim(),
+                        'Area': cells[2].textContent.trim(),
+                        'Plant Name': cells[3].textContent.trim(),
+                        'Truck No': cells[4].textContent.trim(),
+                        'Truck Type': cells[5].textContent.trim(),
+                        'Sales Man': cells[6].textContent.trim(),
+                        'End Customer Name': cells[7].textContent.trim(),
+                        'Distance': cells[8].textContent.trim(),
+                        'DP Date': cells[9].textContent.trim()
+                    };
+
+                    // Validasi minimal: DP No dan QTY harus ada
+                    if (rowData['DP No'] && rowData['QTY']) {
+                        rawData.push(rowData);
+                    }
+                }
+            });
+
+            // Normalisasi data
+            rawData = rawData.map(row => ({
+                ...row,
+                'QTY': parseFloat(row['QTY']) || 0,
+                'Distance': parseFloat(row['Distance']) || 0,
+                'Area': normalizeArea(row['Area']),
+                'DP Date': extractDateFromRow(row)
+            })).filter(row =>
+                row['DP No'] !== null &&
+                row['QTY'] !== null &&
+                row['Area'] !== null &&
+                row['Plant Name'] !== null &&
+                row['Truck No'] !== null &&
+                row['Truck Type'] !== null &&
+                row['Sales Man'] !== null &&
+                row['End Customer Name'] !== null &&
+                row['Distance'] !== null &&
+                row['DP Date'] !== null
+            );
+
+            // Update filter dropdown
+            updateFilters();
+
+            // Jika sedang di tab output, update chart
+            if (document.querySelector('.tab[data-tab="output"]').classList.contains('active')) {
+                applyFilters();
+            }
+        }
+
+        function extractDateFromRow(row) {
+            const dateCols = ['dp date', 'date', 'delivery date', 'delivery_date', 'tanggal'];
+            for (let col in row) {
+                if (dateCols.some(d => col.toLowerCase().includes(d))) {
+                    const val = row[col];
+                    if (typeof val === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}/.test(val)) {
+                        const [day, month, year] = val.split('/');
+                        return new Date(year, month - 1, day);
+                    } else if (val instanceof Date) {
+                        return val;
+                    } else if (typeof val === 'string' && /^\d{1,2}\s+\w+\s+\d{4}/.test(val)) {
+                        // Contoh: "8 Sep 2025"
+                        const parts = val.split(/\s+/);
+                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const month = months.indexOf(parts[1]);
+                        return new Date(parts[2], month, parts[0]);
+                    }
+                }
+            }
+            return new Date();
+        }
+
+        function updateFilters() {
+            const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
+            const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
+            const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
+
+            clearDropdown('areaMenu');
+            clearDropdown('plantMenu');
+            clearDropdown('truckTypeMenu');
+
+            addOption('areaMenu', "Select All", "all");
+            areas.forEach(a => addOption('areaMenu', a, a));
+
+            addOption('plantMenu', "Select All", "all");
+            plants.forEach(p => addOption('plantMenu', p, p));
+
+            addOption('truckTypeMenu', "Select All", "all");
+            truckTypes.forEach(t => addOption('truckTypeMenu', t, t));
+        }
+
+        function clearDropdown(menuId) {
+            const menu = document.getElementById(menuId);
+            while (menu.children.length > 0) {
+                menu.removeChild(menu.firstChild);
+            }
+        }
+
+        function addOption(menuId, text, value) {
+            const menu = document.getElementById(menuId);
+            const option = document.createElement('option');
+            option.text = text;
+            option.value = value;
+            menu.appendChild(option);
+        }
+
+        document.addEventListener('click', function(e) {
+            const option = e.target.closest('.dropdown-menu option');
+            if (!option) return;
+            const menu = option.closest('.dropdown-menu');
+            const dropdown = menu.parentElement;
+            const label = dropdown.querySelector('.dropdown-header span');
+            menu.querySelectorAll('option').forEach(opt => opt.removeAttribute('selected'));
+            option.setAttribute('selected', '');
+            if (option.value === 'all') {
+                label.textContent = 'Select All';
+            } else {
+                label.textContent = option.textContent;
+            }
+            applyFilters();
+        });
+
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            const menu = dropdown.querySelector('.dropdown-menu');
+            const icon = dropdown.querySelector('.dropdown-header i');
+            const label = dropdown.querySelector('.dropdown-header span');
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                menu.style.display = 'block';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            }
+        }
+
+        function applyFilters() {
+            let filtered = [...rawData];
+            const start = startDate.value ? new Date(startDate.value) : null;
+            const end = endDate.value ? new Date(endDate.value) : null;
+
+            if (start || end) {
+                filtered = filtered.filter(row => {
+                    const rowDate = row['DP Date'];
+                    if (!rowDate) return false;
+                    if (start && rowDate < start) return false;
+                    if (end && rowDate > end) return false;
+                    return true;
+                });
+            }
+
+            const areaMenu = document.getElementById('areaMenu');
+            const selectedAreaOptions = areaMenu.querySelectorAll('option[selected]');
+            const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
+            if (!selectedAreas.includes('all')) {
+                filtered = filtered.filter(row => selectedAreas.includes(row.Area));
+            }
+
+            const plantMenu = document.getElementById('plantMenu');
+            const selectedPlantOptions = plantMenu.querySelectorAll('option[selected]');
+            const selectedPlants = Array.from(selectedPlantOptions).map(o => o.value);
+            if (!selectedPlants.includes('all')) {
+                filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
+            }
+
+            const truckTypeMenu = document.getElementById('truckTypeMenu');
+            const selectedTruckTypeOptions = truckTypeMenu.querySelectorAll('option[selected]');
+            const selectedTruckTypes = Array.from(selectedTruckTypeOptions).map(o => o.value);
+            if (!selectedTruckTypes.includes('all')) {
+                filtered = filtered.filter(row => selectedTruckTypes.includes(row['Truck Type']));
+            }
+
+            filteredData = filtered;
+            updateKPIs();
+            updateDashboardTitle();
+            updatePeriodeText();
+            updateCharts();
+            lastUpdate.textContent = `Last Update: ${new Date().toLocaleString()}`;
+        }
+
+        function updateKPIs() {
+            const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
+            const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
+            const totalVolume = filteredData.reduce((sum, r) => sum + r.QTY, 0);
+            const avgVolume = totalVolume > 0 ? (totalVolume / filteredData.length).toFixed(2) : 0;
+            const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].length;
+            const avgLoadPerTruck = totalTruck > 0 ? (totalVolume / totalTruck).toFixed(2) : 0;
+
+            kpiArea.textContent = totalArea;
+            kpiPlant.textContent = totalPlant;
+            kpiVolume.textContent = totalVolume.toFixed(2);
+            kpiAvgVolume.textContent = avgVolume;
+            kpiTruck.textContent = totalTruck;
+            kpiAvgLoadTruck.textContent = avgLoadPerTruck;
+        }
+
+        function updateDashboardTitle() {
+            const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.textContent);
+            const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
+            dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
+        }
+
+        function updatePeriodeText() {
+            const start = startDate.value ? new Date(startDate.value).toLocaleDateString('id-ID') : '--';
+            const end = endDate.value ? new Date(endDate.value).toLocaleDateString('id-ID') : '--';
+            periodeText.textContent = `Periode: ${start} - ${end}`;
+        }
+
+        function updateCharts() {
+            destroyAllCharts();
+            if (!filteredData.length) return;
+
+            const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.value);
+            const showVolumeByArea = areaFilterSelected.includes('all');
+            document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
+
+            if (showVolumeByArea) {
+                createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
+            }
+
+            createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
+            createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
+            createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
+            createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
+            createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
+            createSingleValueBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', (filteredData.reduce((s, r) => s + r.QTY, 0) / [...new Set(filteredData.map(r => r['Truck No']))].length).toFixed(2), 'm³');
+            createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
+            createScatterChart('chartTrendVolumeByDistance', 'Trend Volume by Distance', filteredData.map(r => ({ x: r.Distance, y: r.QTY })));
+            createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
+            createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
+        }
+
+        function getGroupedData(groupBy, metric, isAvg = false) {
+            const map = new Map();
+            filteredData.forEach(row => {
+                const key = row[groupBy];
+                if (!key) return;
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(parseFloat(row[metric]) || 0);
+            });
+            return Array.from(map.entries()).map(([key, values]) => ({
+                label: key,
+                value: isAvg ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : values.reduce((a,b)=>a+b,0)
+            })).sort((a,b) => b.value - a.value).slice(0, 10);
+        }
+
+        function getTripCountByTruck() {
+            const tripMap = new Map();
+            filteredData.forEach(row => {
+                const truckNo = row['Truck No'];
+                const dpNo = row['DP No'];
+                const key = `${truckNo}-${dpNo}`;
+                if (!tripMap.has(truckNo)) tripMap.set(truckNo, new Set());
+                tripMap.get(truckNo).add(key);
+            });
+            return Array.from(tripMap.entries()).map(([truck, trips]) => ({
+                label: truck,
+                value: trips.size
+            })).sort((a,b) => b.value - a.value).slice(0, 10);
+        }
+
+        function getDailyAvgVolume() {
+            const dailyMap = new Map();
+            filteredData.forEach(row => {
+                const dateStr = row['DP Date'].toISOString().split('T')[0];
+                if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, { sum: 0, count: 0 });
+                dailyMap.get(dateStr).sum += row.QTY;
+                dailyMap.get(dateStr).count += 1;
+            });
+            return Array.from(dailyMap.entries())
+                .map(([date, { sum, count }]) => ({ date, avg: (sum / count).toFixed(2) }))
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+        }
+
+        function destroyAllCharts() {
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+        }
+
+        function createBarChart(canvasId, title, data, enableHighlight = false) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const labels = data.map(d => d.label);
+            const values = data.map(d => d.value);
+            const backgroundColors = enableHighlight ?
+                labels.map((_, i) => highlightColors[i % highlightColors.length]) :
+                Array(labels.length).fill('#3498db');
+
+            const datasets = [{
+                label: title,
+                data: values,
+                backgroundColor: backgroundColors,
+                borderColor: 'rgba(0,0,0,0.1)',
+                borderWidth: 1,
+            }];
+
+            const config = {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: dataLabelsEnabled },
+                        title: { display: true, text: title, font: { size: 16 } },
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#555' } },
+                        x: { ticks: { color: '#555', maxRotation: 45, minRotation: 0 } }
+                    }
+                }
+            };
+            charts[canvasId] = new Chart(ctx, config);
+        }
+
+        function createLineChart(canvasId, title, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const labels = data.map(d => d.date);
+            const values = data.map(d => parseFloat(d.avg));
+            const datasets = [{
+                label: 'Avg Volume (m³)',
+                data: values,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 8
+            }];
+
+            const config = {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: dataLabelsEnabled },
+                        title: { display: true, text: title, font: { size: 16 } },
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#555' } },
+                        x: { ticks: { color: '#555', maxRotation: 45 } }
+                    }
+                }
+            };
+            charts[canvasId] = new Chart(ctx, config);
+        }
+
+        function createScatterChart(canvasId, title, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const points = data.map(p => ({ x: p.x, y: p.y }));
+            const datasets = [{
+                label: 'Volume vs Distance',
+                data: points,
+                backgroundColor: 'rgba(52, 152, 219, 0.6)',
+                borderColor: 'rgba(52, 152, 219, 0.8)',
+                pointRadius: 4,
+                pointHoverRadius: 8
+            }];
+
+            const config = {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: dataLabelsEnabled },
+                        title: { display: true, text: title, font: { size: 16 } },
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Distance (km)' }, ticks: { color: '#555' } },
+                        y: { title: { display: true, text: 'Volume (m³)' }, beginAtZero: true, ticks: { color: '#555' } }
+                    }
+                }
+            };
+            charts[canvasId] = new Chart(ctx, config);
+        }
+
+        function createSingleValueBarChart(canvasId, title, value, unit) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const labels = ['Avg Load'];
+            const values = [parseFloat(value)];
+            const datasets = [{
+                label: title,
+                data: values,
+                backgroundColor: '#2ecc71',
+                borderColor: 'rgba(0,0,0,0.1)',
+                borderWidth: 1,
+            }];
+
+            const config = {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: dataLabelsEnabled },
+                        title: { display: true, text: title, font: { size: 16 } },
+                        datalabels: {
+                            display: dataLabelsEnabled,
+                            formatter: (value) => `${value} ${unit}`,
+                            color: '#000',
+                            font: { weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        y: { display: false, beginAtZero: true },
+                        x: { display: false }
+                    }
+                }
+            };
+            charts[canvasId] = new Chart(ctx, config);
+        }
+    </script>
 </body>
 </html>
