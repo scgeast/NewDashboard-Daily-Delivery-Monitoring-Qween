@@ -129,12 +129,12 @@
       text-align: left;
       font-size: 14px;
       min-width: 100px;
+      white-space: nowrap;
     }
     .input-table th {
       background-color: #f0f0f0;
       font-weight: bold;
       color: #333;
-      white-space: nowrap;
     }
     .input-table td {
       background-color: #fff;
@@ -483,9 +483,9 @@
     <div id="tabInput" class="tab-content active">
       <div class="instructions">
         <strong>Cara Penggunaan:</strong><br>
-        1. Salin data dari Excel Anda (termasuk header).<br>
-        2. Tempelkan di tabel di bawah ini.<br>
-        3. Edit jika ada kesalahan.<br>
+        1. Salin data dari Excel Anda (termasuk header atau tidak).<br>
+        2. Klik di dalam tabel → tekan <kbd>Ctrl+V</kbd> → semua data akan terisi otomatis.<br>
+        3. Edit sel mana pun jika perlu.<br>
         4. Klik tab "DASHBOARD ANALYSIS" untuk melihat hasil.
       </div>
 
@@ -493,28 +493,33 @@
         <table class="input-table" id="dataTable">
           <thead>
             <tr>
-              <th>1819</th>
-              <th>0090149914</th>
-              <th>8 Sep 2025</th>
-              <th>16:01:00</th>
-              <th>Active</th>
-              <th>J4BC</th>
-              <th></th>
-              <th>KEBON NANAS 2</th>
-              <th>045RCC2B00</th>
-              <th>Concrete Early Str-3 Days with strength FS 45</th>
-              <th>RC</th>
-              <th>A</th>
-              <th>S</th>
-              <th>203D</th>
-              <th>A101</th>
-              <th>0</th>
-              <th>0</th>
-              <th>7</th>
+              <th>DP No</th>
+              <th>QTY</th>
+              <th>Area</th>
+              <th>Plant Name</th>
+              <th>Truck No</th>
+              <th>Truck Type</th>
+              <th>Sales Man</th>
+              <th>End Customer Name</th>
+              <th>Distance</th>
+              <th>Date</th>
+              <th>Truck ID</th>
+              <th>Delivery Note</th>
+              <th>Volume</th>
+              <th>Project Code</th>
+              <th>Client</th>
+              <th>Contractor</th>
+              <th>Status</th>
+              <th>Site</th>
             </tr>
           </thead>
           <tbody>
-            <!-- Data akan diisi secara dinamis -->
+            <!-- 5 baris kosong awal -->
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
           </tbody>
         </table>
       </div>
@@ -685,7 +690,6 @@
     // DOM Elements
     let sidebar, main, toggleBtn, startDate, endDate, dataLabelToggle;
     let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolume, kpiTruck, kpiAvgLoadTruck, lastUpdate;
-    let loadingOverlay, errorMessage;
     let dataTableBody;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -782,10 +786,10 @@
       const pastedData = e.clipboardData.getData('text');
       const rows = pastedData.split('\n');
       
-      // Ambil header jika ada
+      // Ambil header jika ada (opsional)
       const firstRow = rows[0].split('\t');
       const isHeader = firstRow.length >= 18 && !isNaN(firstRow[0]);
-
+      
       let startRow = isHeader ? 1 : 0;
       const headers = [
         'DP No', 'QTY', 'Area', 'Plant Name', 'Truck No', 'Truck Type', 
@@ -794,24 +798,37 @@
         'Status', 'Site'
       ];
       
-      // Hapus semua baris kecuali yang baru
-      while (dataTableBody.firstChild) {
-        dataTableBody.removeChild(dataTableBody.firstChild);
-      }
-
-      rows.slice(startRow).forEach(rowStr => {
-        const cells = rowStr.split('\t');
-        if (cells.length < 18) return; // Lewati baris tidak lengkap
-
+      // Pastikan kita punya cukup baris
+      const totalRowsNeeded = rows.length - startRow;
+      const currentRows = dataTableBody.children.length;
+      
+      // Tambahkan baris kosong jika kurang
+      while (dataTableBody.children.length < totalRowsNeeded + 5) {
         const tr = document.createElement('tr');
         for (let i = 0; i < 18; i++) {
           const td = document.createElement('td');
-          td.textContent = i < cells.length ? cells[i] : '';
           tr.appendChild(td);
         }
         dataTableBody.appendChild(tr);
+      }
+      
+      // Isi data dari paste
+      let rowIndex = 0;
+      rows.slice(startRow).forEach(rowStr => {
+        if (rowStr.trim() === '') return; // Lewati baris kosong
+        
+        const cells = rowStr.split('\t');
+        const targetRow = dataTableBody.children[rowIndex];
+        
+        for (let colIndex = 0; colIndex < 18; colIndex++) {
+          const cell = cells[colIndex];
+          const td = targetRow.children[colIndex];
+          td.textContent = cell ? cell.trim() : '';
+        }
+        
+        rowIndex++;
       });
-
+      
       // Konversi data ke array untuk proses
       convertTableToData();
     }
@@ -829,24 +846,32 @@
       
       rows.forEach(row => {
         const cells = Array.from(row.children);
-        if (cells.length < 18) return;
+        if (cells.some(cell => cell.textContent.trim() !== '')) { // Hanya proses jika ada data di salah satu sel
+          const rowData = {
+            'DP No': cells[0].textContent.trim(),
+            'QTY': cells[1].textContent.trim(),
+            'Area': cells[2].textContent.trim(),
+            'Plant Name': cells[3].textContent.trim(),
+            'Truck No': cells[4].textContent.trim(),
+            'Truck Type': cells[5].textContent.trim(),
+            'Sales Man': cells[6].textContent.trim(),
+            'End Customer Name': cells[7].textContent.trim(),
+            'Distance': cells[8].textContent.trim(),
+            'Date': cells[9].textContent.trim(),
+            'Truck ID': cells[10].textContent.trim(),
+            'Delivery Note': cells[11].textContent.trim(),
+            'Volume': cells[12].textContent.trim(),
+            'Project Code': cells[13].textContent.trim(),
+            'Client': cells[14].textContent.trim(),
+            'Contractor': cells[15].textContent.trim(),
+            'Status': cells[16].textContent.trim(),
+            'Site': cells[17].textContent.trim()
+          };
 
-        const rowData = {
-          'DP No': cells[0].textContent.trim(),
-          'QTY': cells[17].textContent.trim(), // QTY di kolom ke-18 (index 17)
-          'Area': cells[7].textContent.trim(),
-          'Plant Name': cells[15].textContent.trim(),
-          'Truck No': cells[10].textContent.trim(),
-          'Truck Type': cells[11].textContent.trim(),
-          'Sales Man': cells[12].textContent.trim(),
-          'End Customer Name': cells[14].textContent.trim(),
-          'Distance': cells[16].textContent.trim(),
-          'Date': cells[2].textContent.trim()
-        };
-
-        // Validasi minimal
-        if (rowData['DP No'] && rowData['QTY']) {
-          rawData.push(rowData);
+          // Validasi minimal: DP No dan QTY harus ada
+          if (rowData['DP No'] && rowData['QTY']) {
+            rawData.push(rowData);
+          }
         }
       });
 
