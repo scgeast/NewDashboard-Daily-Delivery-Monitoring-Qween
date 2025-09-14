@@ -32,6 +32,7 @@
             background-color: #f5f7fa;
             color: #333;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         /* SIDEBAR */
         #sidebar {
@@ -39,14 +40,19 @@
             background-color: var(--secondary);
             color: white;
             transition: all 0.3s ease;
-            overflow-y: auto;
             height: 100vh;
             position: fixed;
             z-index: 100;
+            display: flex;
+            flex-direction: column;
         }
         #sidebar.collapsed {
             width: 60px;
-            overflow: visible;
+        }
+        .sidebar-content {
+            overflow-y: auto;
+            flex: 1;
+            padding-bottom: 20px;
         }
         /* Toggle Button */
         #toggleSidebar {
@@ -257,6 +263,7 @@
         .header-center {
             flex: 1;
             text-align: center;
+            overflow: hidden;
         }
         .header-center h1 {
             margin: 0;
@@ -264,6 +271,9 @@
             font-weight: 700;
             line-height: 1.2;
             letter-spacing: -0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .header-right {
             flex-shrink: 0;
@@ -474,67 +484,77 @@
         #sidebar.collapsed #toggleSidebar {
             right: -15px;
         }
+        /* Hide scrollbar for sidebar */
+        .sidebar-content::-webkit-scrollbar {
+            display: none;
+        }
+        .sidebar-content {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body>
     <!-- SIDEBAR -->
     <div id="sidebar">
-        <button class="toggle-btn" id="toggleSidebar"><<</button>
-        <div class="upload-section">
-            <input type="file" id="excelFile" accept=".xlsx,.xls" />
-            <button class="upload-btn" onclick="document.getElementById('excelFile').click()">
-                <i class="fas fa-upload"></i> Upload Excel
-            </button>
-            <div class="upload-info">Min: 2KB | Max: 30MB</div>
-            <!-- Loading Overlay -->
-            <div class="loading-overlay" id="loadingOverlay">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">Memproses data...</div>
+        <div class="sidebar-content">
+            <button class="toggle-btn" id="toggleSidebar"><<</button>
+            <div class="upload-section">
+                <input type="file" id="excelFile" accept=".xlsx,.xls" />
+                <button class="upload-btn" onclick="document.getElementById('excelFile').click()">
+                    <i class="fas fa-upload"></i> Upload Excel
+                </button>
+                <div class="upload-info">Min: 2KB | Max: 30MB</div>
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Memproses data...</div>
+                </div>
+                <!-- Failure Message -->
+                <div class="error-message" id="errorMessage">Gagal! File tidak valid atau tidak lengkap.</div>
             </div>
-            <!-- Failure Message -->
-            <div class="error-message" id="errorMessage">Gagal! File tidak valid atau tidak lengkap.</div>
-        </div>
-        <div class="filter-section">
-            <h4>Tanggal</h4>
-            <input type="date" id="startDate" />
-            <input type="date" id="endDate" />
-            <h4>Area</h4>
-            <div class="custom-dropdown" id="areaDropdown">
-                <div class="dropdown-header" onclick="toggleDropdown('areaDropdown')">
-                    <span id="areaLabel">Select All</span>
-                    <i class="fas fa-chevron-down"></i>
+            <div class="filter-section">
+                <h4>Tanggal</h4>
+                <input type="date" id="startDate" />
+                <input type="date" id="endDate" />
+                <h4>Area</h4>
+                <div class="custom-dropdown" id="areaDropdown">
+                    <div class="dropdown-header" onclick="toggleDropdown('areaDropdown')">
+                        <span id="areaLabel">Select All</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="dropdown-menu" id="areaMenu">
+                        <option value="all" class="selected">Select All</option>
+                    </div>
                 </div>
-                <div class="dropdown-menu" id="areaMenu">
-                    <option value="all" class="selected">Select All</option>
+                <h4>Plant</h4>
+                <div class="custom-dropdown" id="plantDropdown">
+                    <div class="dropdown-header" onclick="toggleDropdown('plantDropdown')">
+                        <span id="plantLabel">Select All</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="dropdown-menu" id="plantMenu">
+                        <option value="all" class="selected">Select All</option>
+                    </div>
                 </div>
-            </div>
-            <h4>Pabrik</h4>
-            <div class="custom-dropdown" id="plantDropdown">
-                <div class="dropdown-header" onclick="toggleDropdown('plantDropdown')">
-                    <span id="plantLabel">Select All</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="dropdown-menu" id="plantMenu">
-                    <option value="all" class="selected">Select All</option>
-                </div>
-            </div>
-            <h4>Tipe Truk</h4>
-            <div class="custom-dropdown" id="truckTypeDropdown">
-                <div class="dropdown-header" onclick="toggleDropdown('truckTypeDropdown')">
-                    <span id="truckTypeLabel">Select All</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="dropdown-menu" id="truckTypeMenu">
-                    <option value="all" class="selected">Select All</option>
+                <h4>Type Truck</h4>
+                <div class="custom-dropdown" id="truckTypeDropdown">
+                    <div class="dropdown-header" onclick="toggleDropdown('truckTypeDropdown')">
+                        <span id="truckTypeLabel">Select All</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="dropdown-menu" id="truckTypeMenu">
+                        <option value="all" class="selected">Select All</option>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="data-label-toggle">
-            <label class="toggle-switch">
-                <input type="checkbox" id="dataLabelToggle" checked>
-                <span class="toggle-slider"></span>
-            </label>
-            <span>Data Labels On</span>
+            <div class="data-label-toggle">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="dataLabelToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span>Data Labels On</span>
+            </div>
         </div>
     </div>
     <!-- MAIN CONTENT -->
@@ -558,7 +578,7 @@
         <!-- KPI -->
         <div class="kpi-container">
             <div class="kpi-card"><h3>Total Area</h3><p id="kpiArea">0</p></div>
-            <div class="kpi-card"><h3>Total Pabrik</h3><p id="kpiPlant">0</p></div>
+            <div class="kpi-card"><h3>Total Plant</h3><p id="kpiPlant">0</p></div>
             <div class="kpi-card"><h3>Total Volume (m³)</h3><p id="kpiVolume">0</p></div>
             <div class="kpi-card"><h3>Avg Volume (m³)</h3><p id="kpiAvgVolume">0</p></div>
             <div class="kpi-card"><h3>Total Truk</h3><p id="kpiTruck">0</p></div>
@@ -586,7 +606,7 @@
                         <canvas id="chartVolumeByArea"></canvas>
                     </div>
                 </div>
-                <div id="volumeByPlant" class="chart-container">
+                <div id="volumeByPlant" class="chart-container" style="display:none;">
                     <h4 class="chart-title"><i class="fas fa-industry"></i> A2. Volume by Plant</h4>
                     <div class="chart-canvas-container">
                         <canvas id="chartVolumeByPlant"></canvas>
@@ -1041,12 +1061,44 @@
                 label.textContent = option.textContent;
             }
             
+            // Update plant filter based on selected area
+            if (dropdown.id === 'areaDropdown') {
+                updatePlantFilter();
+            }
+            
             menu.classList.remove('show');
             icon.classList.remove('fa-chevron-up');
             icon.classList.add('fa-chevron-down');
             
             applyFilters();
         });
+        
+        function updatePlantFilter() {
+            const areaMenu = document.getElementById('areaMenu');
+            const selectedAreaOptions = areaMenu.querySelectorAll('option.selected');
+            const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
+            
+            // Clear plant dropdown
+            clearDropdown('plantMenu');
+            
+            if (selectedAreas.includes('all')) {
+                // Show all plants
+                const allPlants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
+                addOption('plantMenu', "Select All", "all", true);
+                allPlants.forEach(p => addOption('plantMenu', p, p));
+            } else {
+                // Show plants only from selected areas
+                const filteredPlants = [...new Set(
+                    rawData
+                        .filter(row => selectedAreas.includes(row.Area))
+                        .map(r => r['Plant Name'])
+                        .filter(p => p)
+                )].sort();
+                
+                addOption('plantMenu', "Select All", "all", true);
+                filteredPlants.forEach(p => addOption('plantMenu', p, p));
+            }
+        }
         
         function toggleDropdown(id) {
             const dropdown = document.getElementById(id);
@@ -1167,13 +1219,15 @@
             const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option.selected')).map(o => o.value);
             const showVolumeByArea = areaFilterSelected.includes('all');
             
+            // Show/hide charts based on area filter
             document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
+            document.getElementById('volumeByPlant').style.display = showVolumeByArea ? 'block' : 'none';
             
             if (showVolumeByArea) {
                 createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
+                createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
             }
             
-            createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
             createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
             createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
             createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
@@ -1211,7 +1265,7 @@
                 value: isAvg ? 
                     (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : 
                     values.reduce((a,b)=>a+b,0)
-            })).sort((a,b) => b.value - a.value).slice(0, 10);
+            })).sort((a,b) => b.value - a.value);
         }
         
         function getTripCountByTruck() {
@@ -1228,7 +1282,7 @@
             return Array.from(tripMap.entries()).map(([truck, trips]) => ({
                 label: truck,
                 value: trips.size
-            })).sort((a,b) => b.value - a.value).slice(0, 10);
+            })).sort((a,b) => b.value - a.value);
         }
         
         function getDailyAvgVolume() {
@@ -1252,9 +1306,16 @@
             const labels = data.map(d => d.label);
             const values = data.map(d => parseFloat(d.value));
             
-            const backgroundColors = enableHighlight ?
-                labels.map((_, i) => highlightColors[i % highlightColors.length]) :
-                Array(labels.length).fill('#3498db');
+            // Create gradient colors
+            const backgroundColors = labels.map((_, i) => {
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, enableHighlight ? 
+                    highlightColors[i % highlightColors.length] : '#3498db');
+                gradient.addColorStop(1, enableHighlight ? 
+                    highlightColors[i % highlightColors.length].replace(')', ', 0.7)').replace('rgb', 'rgba') : 
+                    'rgba(52, 152, 219, 0.7)');
+                return gradient;
+            });
             
             const datasets = [{
                 label: title,
@@ -1262,6 +1323,7 @@
                 backgroundColor: backgroundColors,
                 borderColor: 'rgba(0,0,0,0.1)',
                 borderWidth: 1,
+                borderRadius: 4,
             }];
             
             const config = {
@@ -1299,11 +1361,16 @@
             const labels = data.map(d => d.date);
             const values = data.map(d => parseFloat(d.avg));
             
+            // Create gradient for line chart
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(52, 152, 219, 0.8)');
+            gradient.addColorStop(1, 'rgba(52, 152, 219, 0.1)');
+            
             const datasets = [{
                 label: 'Avg Volume (m³)',
                 data: values,
                 borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                backgroundColor: gradient,
                 tension: 0.3,
                 fill: true,
                 pointRadius: 4,
@@ -1385,12 +1452,18 @@
             const labels = ['Avg Load'];
             const values = [parseFloat(value)];
             
+            // Create gradient for single value bar
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(46, 204, 113, 0.8)');
+            gradient.addColorStop(1, 'rgba(46, 204, 113, 0.4)');
+            
             const datasets = [{
                 label: title,
                 data: values,
-                backgroundColor: '#2ecc71',
+                backgroundColor: gradient,
                 borderColor: 'rgba(0,0,0,0.1)',
                 borderWidth: 1,
+                borderRadius: 4,
             }];
             
             const config = {
