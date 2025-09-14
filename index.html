@@ -22,20 +22,17 @@
             --gray: #95a5a6;
             --highlight-colors: (#e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6, #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b);
         }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
         body {
             display: flex;
             background-color: #f5f7fa;
             color: #333;
         }
-
         /* SIDEBAR */
         #sidebar {
             width: 280px;
@@ -47,11 +44,9 @@
             position: fixed;
             z-index: 100;
         }
-
         #sidebar.collapsed {
             width: 60px;
         }
-
         /* Toggle Button */
         #toggleSidebar {
             position: absolute;
@@ -72,7 +67,6 @@
             z-index: 101;
             outline: none;
         }
-
         /* MAIN CONTENT */
         #main {
             flex-grow: 1;
@@ -80,11 +74,9 @@
             padding: 20px;
             transition: margin-left 0.3s ease;
         }
-
         #main.collapsed {
             margin-left: 60px;
         }
-
         /* UPLOAD SECTION */
         .upload-section {
             padding: 15px;
@@ -92,11 +84,9 @@
             text-align: center;
             position: relative;
         }
-
         .upload-section input[type="file"] {
             display: none;
         }
-
         .upload-btn {
             background-color: var(--primary);
             color: white;
@@ -108,16 +98,13 @@
             display: inline-block;
             margin-bottom: 10px;
         }
-
         .upload-btn:hover {
             background-color: #2980b9;
         }
-
         .upload-info {
             font-size: 12px;
             color: #bdc3c7;
         }
-
         /* Loading Overlay */
         .loading-overlay {
             position: absolute;
@@ -135,7 +122,6 @@
             z-index: 1000;
             display: none;
         }
-
         .loading-spinner {
             width: 40px;
             height: 40px;
@@ -145,17 +131,14 @@
             animation: spin 1s linear infinite;
             margin-bottom: 10px;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
         .loading-text {
             font-size: 16px;
             font-weight: 500;
         }
-
         /* Error Message */
         .error-message {
             position: absolute;
@@ -171,30 +154,25 @@
             display: none;
             animation: fadeInOut 3s ease-in-out;
         }
-
         @keyframes fadeInOut {
             0%, 100% { opacity: 0; }
             50% { opacity: 1; }
         }
-
         /* FILTER SECTION */
         .filter-section {
             padding: 15px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-
         .filter-section h4 {
             margin-bottom: 10px;
             font-size: 14px;
             opacity: 0.9;
         }
-
         .custom-dropdown {
             position: relative;
             width: 100%;
             margin-bottom: 10px;
         }
-
         .dropdown-header {
             display: flex;
             justify-content: space-between;
@@ -206,12 +184,10 @@
             font-size: 14px;
             color: white;
         }
-
         .dropdown-header i {
             font-size: 14px;
             opacity: 0.8;
         }
-
         .dropdown-menu {
             display: none;
             position: absolute;
@@ -225,7 +201,6 @@
             overflow-y: auto;
             z-index: 1000;
         }
-
         .dropdown-menu option {
             padding: 8px 12px;
             color: #333;
@@ -234,16 +209,13 @@
             border: none;
             cursor: pointer;
         }
-
         .dropdown-menu option:hover {
             background-color: #f0f0f0;
         }
-
         .dropdown-menu option[selected] {
             background-color: var(--primary);
             color: white;
         }
-
         /* DASHBOARD HEADER */
         .dashboard-header-expanded {
             display: flex;
@@ -256,7 +228,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             position: relative;
         }
-
         .header-top {
             display: flex;
             justify-content: space-between;
@@ -264,12 +235,10 @@
             width: 100%;
             margin-bottom: 8px;
         }
-
         .header-center {
             flex: 1;
             text-align: center;
         }
-
         .header-center h1 {
             margin: 0;
             font-size: 28px;
@@ -277,18 +246,15 @@
             line-height: 1.2;
             letter-spacing: -0.5px;
         }
-
         .header-right {
             flex-shrink: 0;
             text-align: right;
         }
-
         .last-update {
             font-size: 12px;
             opacity: 0.9;
             margin: 0;
         }
-
         .header-periode {
             font-size: 14px;
             opacity: 0.8;
@@ -301,12 +267,10 @@
             justify-content: center;
             gap: 8px;
         }
-
         .header-periode i {
             color: rgba(255,255,255,0.7);
             font-size: 16px;
         }
-
         /* KPI */
         .kpi-container {
             display: grid;
@@ -314,7 +278,6 @@
             gap: 15px;
             margin-bottom: 25px;
         }
-
         .kpi-card {
             background: white;
             padding: 15px;
@@ -322,19 +285,16 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             text-align: center;
         }
-
         .kpi-card h3 {
             font-size: 14px;
             color: #7f8c8d;
             margin-bottom: 5px;
         }
-
         .kpi-card p {
             font-size: 24px;
             font-weight: bold;
             color: var(--dark);
         }
-
         /* CHART CONTAINER */
         .chart-container {
             background: white;
@@ -344,13 +304,11 @@
             margin-bottom: 20px;
             overflow-x: auto;
         }
-
         .chart-title {
             font-size: 16px;
             margin-bottom: 15px;
             color: #2c3e50;
         }
-
         /* DATA LABEL TOGGLE */
         .data-label-toggle {
             display: flex;
@@ -359,20 +317,17 @@
             font-size: 14px;
             gap: 10px;
         }
-
         .toggle-switch {
             position: relative;
             display: inline-block;
             width: 50px;
             height: 24px;
         }
-
         .toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
         .toggle-slider {
             position: absolute;
             cursor: pointer;
@@ -384,7 +339,6 @@
             transition: .4s;
             border-radius: 34px;
         }
-
         .toggle-slider:before {
             position: absolute;
             content: "";
@@ -396,15 +350,12 @@
             transition: .4s;
             border-radius: 50%;
         }
-
         .toggle-switch input:checked + .toggle-slider {
             background-color: var(--primary);
         }
-
         .toggle-switch input:checked + .toggle-slider:before {
             transform: translateX(26px);
         }
-
         /* FOOTER */
         .footer {
             text-align: center;
@@ -415,7 +366,6 @@
             border-top: 1px solid #eee;
             margin-top: 20px;
         }
-
         /* RESPONSIVE */
         @media (max-width: 768px) {
             #sidebar {
@@ -434,7 +384,6 @@
     <!-- SIDEBAR -->
     <div id="sidebar">
         <button class="toggle-btn" id="toggleSidebar">></button>
-
         <div class="upload-section">
             <input type="file" id="excelFile" accept=".xlsx,.xls" />
             <button class="upload-btn" onclick="document.getElementById('excelFile').click()">Upload Excel</button>
@@ -447,12 +396,10 @@
             <!-- Failure Message -->
             <div class="error-message" id="errorMessage">Gagal! File tidak valid atau tidak lengkap.</div>
         </div>
-
         <div class="filter-section">
             <h4>Tanggal</h4>
             <input type="date" id="startDate" />
             <input type="date" id="endDate" />
-
             <h4>Area</h4>
             <div class="custom-dropdown" id="areaDropdown">
                 <div class="dropdown-header" onclick="toggleDropdown('areaDropdown')">
@@ -463,7 +410,6 @@
                     <option value="all" selected>Select All</option>
                 </div>
             </div>
-
             <h4>Pabrik</h4>
             <div class="custom-dropdown" id="plantDropdown">
                 <div class="dropdown-header" onclick="toggleDropdown('plantDropdown')">
@@ -474,7 +420,6 @@
                     <option value="all" selected>Select All</option>
                 </div>
             </div>
-
             <h4>Tipe Truk</h4>
             <div class="custom-dropdown" id="truckTypeDropdown">
                 <div class="dropdown-header" onclick="toggleDropdown('truckTypeDropdown')">
@@ -486,7 +431,6 @@
                 </div>
             </div>
         </div>
-
         <div class="data-label-toggle">
             <label class="toggle-switch">
                 <input type="checkbox" id="dataLabelToggle" checked>
@@ -495,7 +439,6 @@
             <span>Data Labels On</span>
         </div>
     </div>
-
     <!-- MAIN CONTENT -->
     <div id="main">
         <!-- DASHBOARD HEADER -->
@@ -513,7 +456,6 @@
                 <span id="periodeText">Periode: --</span>
             </div>
         </div>
-
         <!-- KPI -->
         <div class="kpi-container">
             <div class="kpi-card"><h3>Total Area</h3><p id="kpiArea">0</p></div>
@@ -523,7 +465,6 @@
             <div class="kpi-card"><h3>Total Truk</h3><p id="kpiTruck">0</p></div>
             <div class="kpi-card"><h3>Avg Load/Truck (m³)</h3><p id="kpiAvgLoadTruck">0</p></div>
         </div>
-
         <!-- CHARTS -->
         <div class="chart-container">
             <h3 class="chart-title">A. Delivery</h3>
@@ -544,7 +485,6 @@
                 <canvas id="chartAvgVolumePerDay"></canvas>
             </div>
         </div>
-
         <div class="chart-container">
             <h3 class="chart-title">B. Utilization Truck</h3>
             <div id="volumePerTruck" class="chart-container">
@@ -560,7 +500,6 @@
                 <canvas id="chartAvgLoadPerTruck"></canvas>
             </div>
         </div>
-
         <div class="chart-container">
             <h3 class="chart-title">C. Distance</h3>
             <div id="avgDistancePerPlant" class="chart-container">
@@ -572,7 +511,6 @@
                 <canvas id="chartTrendVolumeByDistance"></canvas>
             </div>
         </div>
-
         <div class="chart-container">
             <h3 class="chart-title">A. Sales</h3>
             <div class="chart-container">
@@ -580,7 +518,6 @@
                 <canvas id="chartVolumePerSales"></canvas>
             </div>
         </div>
-
         <div class="chart-container">
             <h3 class="chart-title">B. Customer</h3>
             <div class="chart-container">
@@ -588,34 +525,29 @@
                 <canvas id="chartVolumePerCustomer"></canvas>
             </div>
         </div>
-
         <!-- FOOTER -->
         <div class="footer">Summary Daily Delivery And Sales by L=23-51Xe.</div>
     </div>
-
     <script>
         // Global Variables
         let rawData = [];
         let filteredData = [];
         let charts = {};
         let dataLabelsEnabled = true;
-
         // Colors for highlighting (Top 10)
         const highlightColors = [
             '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
             '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
         ];
-
         // Normalisasi string: hapus semua non-alphanumeric, ubah ke lowercase, hilangkan spasi berlebih
         function normalizeKey(str) {
             if (!str) return '';
             return String(str)
                 .toLowerCase()
                 .trim()
-                .replace(/[^\w\s]/g, '')  // Hapus simbol seperti ., /, -, _
+                .replace(/[^\w\s]/g, '')  // Hapus simbol
                 .replace(/\s+/g, ' ');     // Ganti spasi berlebih jadi satu spasi
         }
-
         // Normalisasi area (untuk menangani variasi nama)
         function normalizeArea(area) {
             if (!area) return area;
@@ -658,12 +590,34 @@
             const clean = area.toString().toLowerCase().trim();
             return map[clean] || area;
         }
-
+        // Fungsi untuk parsing tanggal Excel
+        function parseExcelDate(dateValue) {
+            if (!dateValue) return new Date();
+            if (typeof dateValue === 'string') {
+                // Coba parsing format tanggal yang mungkin
+                const parsedDate = new Date(dateValue);
+                if (!isNaN(parsedDate.getTime())) {
+                    return parsedDate;
+                }
+                // Coba format Indonesia: dd/mm/yyyy
+                const parts = dateValue.split('/');
+                if (parts.length === 3) {
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+            }
+            if (typeof dateValue === 'number') {
+                // Excel serial date (hari sejak 1 Jan 1900)
+                return new Date(Math.round((dateValue - 25569) * 86400 * 1000));
+            }
+            if (dateValue instanceof Date) {
+                return dateValue;
+            }
+            return new Date();
+        }
         // DOM Elements
         let sidebar, main, toggleBtn, excelFile, startDate, endDate, dataLabelToggle;
         let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolume, kpiTruck, kpiAvgLoadTruck, lastUpdate;
         let loadingOverlay, errorMessage;
-
         document.addEventListener('DOMContentLoaded', () => {
             sidebar = document.getElementById('sidebar');
             main = document.getElementById('main');
@@ -683,32 +637,26 @@
             lastUpdate = document.getElementById('lastUpdate');
             loadingOverlay = document.getElementById('loadingOverlay');
             errorMessage = document.getElementById('errorMessage');
-
             if (!sidebar || !toggleBtn) {
                 console.error("DOM elements not found!");
                 return;
             }
-
             // Toggle Sidebar
             toggleBtn.addEventListener('click', () => {
                 sidebar.classList.toggle('collapsed');
                 main.classList.toggle('collapsed');
                 toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
             });
-
             // Handle File Upload
             excelFile.addEventListener('change', handleFileUpload);
-
             // Filter Event Listeners
             [startDate, endDate].forEach(el => {
                 el.addEventListener('change', applyFilters);
             });
-
             dataLabelToggle.addEventListener('change', () => {
                 dataLabelsEnabled = dataLabelToggle.checked;
                 updateCharts();
             });
-
             // Initialize on load
             window.addEventListener('load', () => {
                 const today = new Date();
@@ -718,11 +666,9 @@
                 applyFilters();
             });
         });
-
         function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
-
             const fileSizeMB = file.size / (1024 * 1024);
             if (fileSizeMB < 0.002) {
                 alert("File terlalu kecil! Minimal 2KB.");
@@ -732,7 +678,6 @@
                 alert("File terlalu besar! Maksimal 30MB.");
                 return;
             }
-
             const ext = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
             if (!ext) {
                 loadingOverlay.style.display = 'none';
@@ -743,166 +688,101 @@
                 }, 8000);
                 return;
             }
-
             loadingOverlay.style.display = 'flex';
             errorMessage.style.display = 'none';
-
             const reader = new FileReader();
             reader.onload = function (event) {
                 try {
                     const data = new Uint8Array(event.target.result);
                     const workbook = XLSX.read(data, {
                         type: 'array',
-                        bookSheets: true,
-                        cellNF: false,
-                        cellText: false,
-                        cellDates: true
+                        cellDates: true,
+                        dateNF: 'yyyy-mm-dd'
                     });
-
                     if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
                         throw new Error("Tidak ditemukan sheet dalam file.");
                     }
-
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
-                    if (!worksheet || Object.keys(worksheet).length === 0) {
-                        throw new Error(`Sheet "${firstSheetName}" kosong.`);
-                    }
-
-                    // PARSE SEMUA BARIS SEBAGAI ARRAY 2D
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-                        header: 1,
-                        defval: null,
-                        blankrows: false
-                    });
-
-                    if (!Array.isArray(jsonData) || jsonData.length === 0) {
+                    // Konversi ke JSON dengan header
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    if (!Array.isArray(jsonData) || jsonData.length < 2) {
                         throw new Error("Tidak ada data dalam sheet.");
                     }
-
-                    // 🔍 DETEKSI HEADER: CARI BARIS YANG BERISI NAMA KOLOM YANG VALID
-                    // Daftar kolom inti yang dibutuhkan
-                    const requiredColumns = [
-                        'DP No', 'QTY', 'Area', 'Plant Name', 'Truck No',
-                        'Truck Type', 'Sales Man', 'End Customer Name', 'Distance', 'DP Date'
-                    ];
-
-                    // Daftar alias untuk setiap kolom (termasuk variasi penulisan umum)
-                    const colMap = {
-                        'DP No': ['dp no', 'dp_no', 'dpno', 'delivery note', 'dn', 'no dp'],
-                        'QTY': ['qty', 'quantity', 'volume', 'qte', 'jumlah', 'qty m3', 'volume m3', 'kubik', 'm3'],
-                        'Area': ['area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'province'],
-                        'Plant Name': ['plant name', 'plant', 'plant_name', 'p_name', 'location', 'site', 'plantname', 'nama pabrik'],
-                        'Truck No': ['truck no', 'truck_number', 'truckno', 'trk_no', 'vehicle_id', 'truck no ', 'truck_no_', 'truckid', 'nomor truk'],
-                        'Truck Type': ['truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk', 'trucktype', 'tipe truk'],
-                        'Sales Man': ['sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan', 'sales_man', 'sales-man', 'nama sales'],
-                        'End Customer Name': ['end customer name', 'customer', 'end_customer', 'client', 'pelanggan', 'cust_name', 'end_customer_name', 'customer_name', 'nama pelanggan'],
-                        'Distance': ['distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km', 'jarak (km)', 'jarak km'],
-                        'DP Date': ['dp date', 'delivery date', 'delivery_date', 'tanggal', 'date', 'dp_date', 'tgl dp', 'tgl']
+                    // Ambil header dari baris pertama
+                    const headers = jsonData[0].map(h => h ? String(h).trim() : '');
+                    // Mapping kolom berdasarkan file contoh Anda
+                    const columnMapping = {
+                        'DP No': ['DP No', 'No'],
+                        'QTY': ['QTY'],
+                        'Area': ['Area'],
+                        'Plant Name': ['Plant Name'],
+                        'Truck No': ['Truck No'],
+                        'Truck Type': ['Truck Type'],
+                        'Sales Man': ['Sales Man'],
+                        'End Customer Name': ['End Customer Name'],
+                        'Distance': ['Distance'],
+                        'DP Date': ['DP Date']
                     };
-
-                    let headerRowIndex = -1;
-                    let matchedHeaders = {};
-
-                    // Cek setiap baris hingga 15 baris pertama
-                    for (let i = 0; i < Math.min(15, jsonData.length); i++) {
-                        const row = jsonData[i];
-                        if (!Array.isArray(row)) continue;
-
-                        let foundCount = 0;
-                        const rowHeaders = row.map(cell => cell !== null ? String(cell).trim() : '');
-
-                        // Untuk tiap kolom penting, cek apakah ada yang cocok di baris ini
-                        for (const [standardKey, aliases] of Object.entries(colMap)) {
-                            if (matchedHeaders[standardKey]) continue; // Sudah ditemukan
-
-                            for (const alias of aliases) {
-                                for (const header of rowHeaders) {
-                                    const normalizedHeader = normalizeKey(header);
-                                    const normalizedAlias = normalizeKey(alias);
-
-                                    // Cocokkan jika match persis atau substring
-                                    if (normalizedHeader.includes(normalizedAlias) || normalizedAlias.includes(normalizedHeader)) {
-                                        matchedHeaders[standardKey] = rowHeaders.indexOf(header);
-                                        foundCount++;
-                                        break;
-                                    }
-                                }
-                                if (matchedHeaders[standardKey]) break;
+                    // Cari indeks untuk setiap kolom yang diperlukan
+                    const columnIndices = {};
+                    let missingColumns = [];
+                    for (const [standardKey, possibleNames] of Object.entries(columnMapping)) {
+                        let found = false;
+                        for (const name of possibleNames) {
+                            const index = headers.findIndex(h => 
+                                normalizeKey(h) === normalizeKey(name));
+                            if (index !== -1) {
+                                columnIndices[standardKey] = index;
+                                found = true;
+                                break;
                             }
                         }
-
-                        // Jika minimal 8 dari 10 kolom ditemukan → anggap ini header
-                        if (Object.keys(matchedHeaders).length >= 8) {
-                            headerRowIndex = i;
-                            break;
+                        if (!found) {
+                            missingColumns.push(standardKey);
                         }
                     }
-
-                    if (Object.keys(matchedHeaders).length < 8) {
-                        throw new Error(
-                            "Gagal! Tidak cukup kolom ditemukan.\n" +
-                            "Pastikan file Anda memiliki minimal 8 dari 10 kolom berikut:\n" +
-                            "- DP No\n- QTY\n- Area\n- Plant Name\n- Truck No\n- Truck Type\n- Sales Man\n- End Customer Name\n- Distance\n- DP Date"
-                        );
+                    if (missingColumns.length > 0) {
+                        throw new Error(`Kolom berikut tidak ditemukan: ${missingColumns.join(', ')}`);
                     }
-
-                    // Ambil header dari baris yang ditemukan
-                    const headers = jsonData[headerRowIndex].map(h => h ? String(h).trim() : '');
-                    const headerToStandard = {};
-
-                    for (const [standardKey, colIndex] of Object.entries(matchedHeaders)) {
-                        headerToStandard[headers[colIndex]] = standardKey;
-                    }
-
-                    // Ambil data dari baris setelah header
-                    rawData = jsonData.slice(headerRowIndex + 1).map(row => {
-                        if (!Array.isArray(row)) return {};
+                    // Proses data
+                    rawData = jsonData.slice(1).map(row => {
+                        if (!Array.isArray(row)) return null;
                         const mappedRow = {};
-                        requiredColumns.forEach(key => {
-                            const originalHeader = Object.keys(headerToStandard).find(h => headerToStandard[h] === key);
-                            const idx = headers.indexOf(originalHeader);
-                            mappedRow[key] = idx >= 0 && idx < row.length ? row[idx] : null;
-                        });
+                        for (const [key, index] of Object.entries(columnIndices)) {
+                            mappedRow[key] = index < row.length ? row[index] : null;
+                        }
+                        // Validasi baris
+                        if (!mappedRow['DP No'] || !mappedRow['QTY']) {
+                            return null;
+                        }
                         return mappedRow;
-                    }).filter(row =>
-                        row['DP No'] !== null &&
-                        row['QTY'] !== null &&
-                        row['Area'] !== null &&
-                        row['Plant Name'] !== null &&
-                        row['Truck No'] !== null &&
-                        row['Truck Type'] !== null &&
-                        row['Sales Man'] !== null &&
-                        row['End Customer Name'] !== null &&
-                        row['Distance'] !== null &&
-                        row['DP Date'] !== null
-                    ).map(row => ({
-                        ...row,
-                        'QTY': parseFloat(String(row['QTY']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
-                        'Distance': parseFloat(String(row['Distance']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
-                        'Area': normalizeArea(row['Area']),
-                        'DP Date': extractDateFromRow(row)
-                    }));
-
+                    }).filter(row => row !== null).map(row => {
+                        // Transformasi data
+                        return {
+                            ...row,
+                            'QTY': parseFloat(String(row['QTY']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
+                            'Distance': parseFloat(String(row['Distance']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
+                            'Area': normalizeArea(row['Area']),
+                            'DP Date': parseExcelDate(row['DP Date'])
+                        };
+                    });
                     if (rawData.length === 0) {
-                        throw new Error("Semua baris gagal divalidasi. Periksa apakah data Anda lengkap dan benar.");
+                        throw new Error("Tidak ada data yang valid setelah pemrosesan.");
                     }
-
                     updateFilters();
                     applyFilters();
                     loadingOverlay.style.display = 'none';
-
                 } catch (err) {
                     console.error("Error reading Excel:", err);
                     loadingOverlay.style.display = 'none';
-                    errorMessage.textContent = "Gagal! " + (err.message || "File tidak bisa dibaca. Pastikan formatnya .xlsx dan header sesuai.");
+                    errorMessage.textContent = "Gagal! " + (err.message || "File tidak bisa dibaca.");
                     errorMessage.style.display = 'block';
                     setTimeout(() => {
                         errorMessage.style.display = 'none';
                     }, 8000);
                 }
             };
-
             reader.onerror = function () {
                 loadingOverlay.style.display = 'none';
                 errorMessage.textContent = "Gagal! Gagal membaca file. Coba gunakan file lain.";
@@ -911,67 +791,28 @@
                     errorMessage.style.display = 'none';
                 }, 8000);
             };
-
             reader.readAsArrayBuffer(file);
         }
-
-        function extractDateFromRow(row) {
-            const dateCols = ['dp date', 'delivery date', 'delivery_date', 'tanggal', 'date', 'dp_date'];
-            for (let col in row) {
-                if (dateCols.some(d => normalizeKey(col).includes(normalizeKey(d)))) {
-                    const val = row[col];
-                    if (typeof val === 'string') {
-                        // Format: 8 Sep 2025
-                        if (/^\d{1,2}\s+\w+\s+\d{4}$/.test(val.trim())) {
-                            const parts = val.trim().split(/\s+/);
-                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                            const month = months.indexOf(parts[1]);
-                            return new Date(parts[2], month, parts[0]);
-                        }
-                        // Format: 13/09/2025 or 13-09-2025
-                        if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(val.trim())) {
-                            const [day, month, year] = val.trim().split(/[\/\-]/);
-                            return new Date(year, month - 1, day);
-                        }
-                    }
-                    if (val instanceof Date) {
-                        return val;
-                    }
-                    if (typeof val === 'number') {
-                        // Excel serial date → JS Date
-                        return new Date(Math.round((val - 25569) * 86400 * 1000));
-                    }
-                }
-            }
-            return new Date();
-        }
-
         function updateFilters() {
             const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
             const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
             const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
-
             clearDropdown('areaMenu');
             clearDropdown('plantMenu');
             clearDropdown('truckTypeMenu');
-
             addOption('areaMenu', "Select All", "all");
             areas.forEach(a => addOption('areaMenu', a, a));
-
             addOption('plantMenu', "Select All", "all");
             plants.forEach(p => addOption('plantMenu', p, p));
-
             addOption('truckTypeMenu', "Select All", "all");
             truckTypes.forEach(t => addOption('truckTypeMenu', t, t));
         }
-
         function clearDropdown(menuId) {
             const menu = document.getElementById(menuId);
             while (menu.children.length > 0) {
                 menu.removeChild(menu.firstChild);
             }
         }
-
         function addOption(menuId, text, value) {
             const menu = document.getElementById(menuId);
             const option = document.createElement('option');
@@ -979,26 +820,21 @@
             option.value = value;
             menu.appendChild(option);
         }
-
         document.addEventListener('click', function(e) {
             const option = e.target.closest('.dropdown-menu option');
             if (!option) return;
             const menu = option.closest('.dropdown-menu');
             const dropdown = menu.parentElement;
             const label = dropdown.querySelector('.dropdown-header span');
-
             menu.querySelectorAll('option').forEach(opt => opt.removeAttribute('selected'));
             option.setAttribute('selected', '');
-
             if (option.value === 'all') {
                 label.textContent = 'Select All';
             } else {
                 label.textContent = option.textContent;
             }
-
             applyFilters();
         });
-
         function toggleDropdown(id) {
             const dropdown = document.getElementById(id);
             const menu = dropdown.querySelector('.dropdown-menu');
@@ -1014,12 +850,10 @@
                 icon.classList.add('fa-chevron-up');
             }
         }
-
         function applyFilters() {
             let filtered = [...rawData];
             const start = startDate.value ? new Date(startDate.value) : null;
             const end = endDate.value ? new Date(endDate.value) : null;
-
             if (start || end) {
                 filtered = filtered.filter(row => {
                     const rowDate = row['DP Date'];
@@ -1029,28 +863,24 @@
                     return true;
                 });
             }
-
             const areaMenu = document.getElementById('areaMenu');
             const selectedAreaOptions = areaMenu.querySelectorAll('option[selected]');
             const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
             if (!selectedAreas.includes('all')) {
                 filtered = filtered.filter(row => selectedAreas.includes(row.Area));
             }
-
             const plantMenu = document.getElementById('plantMenu');
             const selectedPlantOptions = plantMenu.querySelectorAll('option[selected]');
             const selectedPlants = Array.from(selectedPlantOptions).map(o => o.value);
             if (!selectedPlants.includes('all')) {
                 filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
             }
-
             const truckTypeMenu = document.getElementById('truckTypeMenu');
             const selectedTruckTypeOptions = truckTypeMenu.querySelectorAll('option[selected]');
             const selectedTruckTypes = Array.from(selectedTruckTypeOptions).map(o => o.value);
             if (!selectedTruckTypes.includes('all')) {
                 filtered = filtered.filter(row => selectedTruckTypes.includes(row['Truck Type']));
             }
-
             filteredData = filtered;
             updateKPIs();
             updateDashboardTitle();
@@ -1058,7 +888,6 @@
             updateCharts();
             lastUpdate.textContent = `Last Update: ${new Date().toLocaleString()}`;
         }
-
         function updateKPIs() {
             const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
             const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
@@ -1066,7 +895,6 @@
             const avgVolume = totalVolume > 0 ? (totalVolume / filteredData.length).toFixed(2) : 0;
             const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].length;
             const avgLoadPerTruck = totalTruck > 0 ? (totalVolume / totalTruck).toFixed(2) : 0;
-
             kpiArea.textContent = totalArea;
             kpiPlant.textContent = totalPlant;
             kpiVolume.textContent = totalVolume.toFixed(2);
@@ -1074,31 +902,25 @@
             kpiTruck.textContent = totalTruck;
             kpiAvgLoadTruck.textContent = avgLoadPerTruck;
         }
-
         function updateDashboardTitle() {
             const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.textContent);
             const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
             dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
         }
-
         function updatePeriodeText() {
             const start = startDate.value ? new Date(startDate.value).toLocaleDateString('id-ID') : '--';
             const end = endDate.value ? new Date(endDate.value).toLocaleDateString('id-ID') : '--';
             periodeText.textContent = `Periode: ${start} - ${end}`;
         }
-
         function updateCharts() {
             destroyAllCharts();
             if (!filteredData.length) return;
-
             const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.value);
             const showVolumeByArea = areaFilterSelected.includes('all');
             document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
-
             if (showVolumeByArea) {
                 createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
             }
-
             createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
             createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
             createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
@@ -1113,12 +935,10 @@
             createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
             createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
         }
-
         function destroyAllCharts() {
             Object.values(charts).forEach(chart => chart.destroy());
             charts = {};
         }
-
         function getGroupedData(groupBy, metric, isAvg = false) {
             const map = new Map();
             filteredData.forEach(row => {
@@ -1132,7 +952,6 @@
                 value: isAvg ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : values.reduce((a,b)=>a+b,0)
             })).sort((a,b) => b.value - a.value).slice(0, 10);
         }
-
         function getTripCountByTruck() {
             const tripMap = new Map();
             filteredData.forEach(row => {
@@ -1146,7 +965,6 @@
                 value: trips.size
             })).sort((a,b) => b.value - a.value).slice(0, 10);
         }
-
         function getDailyAvgVolume() {
             const dailyMap = new Map();
             filteredData.forEach(row => {
@@ -1159,7 +977,6 @@
                 .map(([date, { sum, count }]) => ({ date, avg: (sum / count).toFixed(2) }))
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
         }
-
         function createBarChart(canvasId, title, data, enableHighlight = false) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const labels = data.map(d => d.label);
@@ -1167,7 +984,6 @@
             const backgroundColors = enableHighlight ?
                 labels.map((_, i) => highlightColors[i % highlightColors.length]) :
                 Array(labels.length).fill('#3498db');
-
             const datasets = [{
                 label: title,
                 data: values,
@@ -1175,7 +991,6 @@
                 borderColor: 'rgba(0,0,0,0.1)',
                 borderWidth: 1,
             }];
-
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
@@ -1195,7 +1010,6 @@
             };
             charts[canvasId] = new Chart(ctx, config);
         }
-
         function createLineChart(canvasId, title, data) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const labels = data.map(d => d.date);
@@ -1210,7 +1024,6 @@
                 pointRadius: 4,
                 pointHoverRadius: 8
             }];
-
             const config = {
                 type: 'line',
                 data: { labels, datasets },
@@ -1230,7 +1043,6 @@
             };
             charts[canvasId] = new Chart(ctx, config);
         }
-
         function createScatterChart(canvasId, title, data) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const points = data.map(p => ({ x: p.x, y: p.y }));
@@ -1242,7 +1054,6 @@
                 pointRadius: 4,
                 pointHoverRadius: 8
             }];
-
             const config = {
                 type: 'scatter',
                 data: { datasets },
@@ -1262,7 +1073,6 @@
             };
             charts[canvasId] = new Chart(ctx, config);
         }
-
         function createSingleValueBarChart(canvasId, title, value, unit) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const labels = ['Avg Load'];
@@ -1274,7 +1084,6 @@
                 borderColor: 'rgba(0,0,0,0.1)',
                 borderWidth: 1,
             }];
-
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
