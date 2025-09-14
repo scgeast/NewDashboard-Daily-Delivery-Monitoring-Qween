@@ -772,16 +772,12 @@
             cellDates: true
           });
 
-          // ✅ PERBAIKAN KRITIS: Pastikan ada sheet, dan ambil sheet pertama yang ADA
           if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
             throw new Error("Tidak ditemukan sheet dalam file.");
           }
 
-          // Ambil NAMA sheet pertama (bisa apa saja: '096_Daily_DP_Detail_Report', 'Data', 'Sheet1')
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-
-          // Pastikan worksheet tidak kosong
           if (!worksheet || Object.keys(worksheet).length === 0) {
             throw new Error(`Sheet "${firstSheetName}" kosong.`);
           }
@@ -799,11 +795,14 @@
 
           // 🔍 DETEKSI JIKA BARIS PERTAMA ADALAH HEADER GABUNGAN DENGAN '|'
           const firstRow = jsonData[0];
-          if (Array.isArray(firstRow) && firstRow.length === 1 && typeof firstRow[0] === 'string') {
-            const headerStr = firstRow[0];
-            if (headerStr.includes('|')) {
-              const splitHeaders = headerStr.split('|').map(h => h.trim());
-              jsonData[0] = splitHeaders;
+          if (Array.isArray(firstRow) && firstRow.length === 1) {
+            const cell = firstRow[0];
+            if (cell && cell.v !== undefined && cell.v !== null) {
+              const headerStr = String(cell.v).trim();
+              if (headerStr.includes('|')) {
+                const splitHeaders = headerStr.split('|').map(h => h.trim());
+                jsonData[0] = splitHeaders;
+              }
             }
           }
 
@@ -821,53 +820,35 @@
           };
 
           let headerRowIndex = -1;
-          let headers = [];
 
           // Cari header di semua baris (bukan hanya baris pertama)
           for (let i = 0; i < jsonData.length; i++) {
             const row = jsonData[i];
             if (!Array.isArray(row)) continue;
 
-            // Normalisasi semua nilai dalam baris
-            const normalizedRow = row.map(cell => 
-              cell !== null && cell !== undefined ? String(cell).trim().toLowerCase() : ''
-            );
+            let hasValidHeader = false;
+            for (let j = 0; j < row.length; j++) {
+              const cell = row[j];
+              if (cell === null || cell === undefined) continue;
 
-            // Hitung berapa banyak kolom wajib yang ditemukan di baris ini
-            let foundCount = 0;
-            for (const key of Object.keys(colMap)) {
-              const aliases = colMap[key].map(normalizeKey);
-              if (normalizedRow.some(cell => aliases.includes(cell))) {
-                foundCount++;
+              // ✅ PERBAIKAN KRITIS: Gunakan cell.v untuk nilai asli
+              const cleanCell = (cell.v !== undefined && cell.v !== null)
+                ? String(cell.v).trim().toLowerCase()
+                : '';
+
+              for (const key of Object.keys(colMap)) {
+                const aliases = colMap[key].map(normalizeKey);
+                if (aliases.includes(cleanCell)) {
+                  hasValidHeader = true;
+                  break;
+                }
               }
+              if (hasValidHeader) break;
             }
 
-            // Jika minimal 5 dari 9 kolom penting ditemukan, kita anggap ini header
-            if (foundCount >= 5) {
+            if (hasValidHeader) {
               headerRowIndex = i;
-              headers = row.map(h => h !== null && h !== undefined ? String(h).trim() : '');
               break;
-            }
-          }
-
-          if (headerRowIndex === -1) {
-            // Coba cari lagi dengan logika lebih fleksibel: cek apakah ada satu baris yang memiliki banyak string mirip
-            for (let i = 0; i < Math.min(10, jsonData.length); i++) {
-              const row = jsonData[i];
-              if (!Array.isArray(row)) continue;
-              const textRow = row.filter(cell => cell && typeof cell === 'string').join(' ').toLowerCase();
-              const requiredWords = [
-                'dp', 'qty', 'volume', 'area', 'plant', 'truck', 'sales', 'customer', 'distance'
-              ];
-              let matchCount = 0;
-              requiredWords.forEach(word => {
-                if (textRow.includes(word)) matchCount++;
-              });
-              if (matchCount >= 5) {
-                headerRowIndex = i;
-                headers = row.map(h => h !== null && h !== undefined ? String(h).trim() : '');
-                break;
-              }
             }
           }
 
@@ -878,6 +859,11 @@
               "Periksa ejaan, spasi, atau gunakan format standar."
             );
           }
+
+          // Ambil header dari baris yang ditemukan — PAKAI .v!
+          const headers = jsonData[headerRowIndex].map(h =>
+            h && h.v !== undefined ? String(h.v).trim() : ''
+          );
 
           // Buat mapping header asli → standard key
           const headerToStandard = {};
@@ -1304,7 +1290,7 @@
       }];
       const config = {
         type: 'scatter',
-        data: {
+         {
           datasets
         },
         options: {
