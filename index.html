@@ -142,7 +142,7 @@
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+           100% { transform: rotate(360deg); }
         }
         .loading-text {
             font-size: 16px;
@@ -356,10 +356,12 @@
         }
         .tab-btn:hover {
             color: var(--primary);
+            background-color: rgba(52, 152, 219, 0.1);
         }
         .tab-btn.active {
             color: var(--primary);
             border-bottom-color: var(--primary);
+            background-color: rgba(52, 152, 219, 0.2);
         }
         .tab-btn i {
             font-size: 16px;
@@ -407,6 +409,7 @@
             display: inline-block;
             width: 50px;
             height: 24px;
+            margin-right: 10px;
         }
         .toggle-switch input {
             opacity: 0;
@@ -491,6 +494,14 @@
         .sidebar-content {
             -ms-overflow-style: none;
             scrollbar-width: none;
+        }
+        /* Highlight style */
+        .highlight {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -612,7 +623,7 @@
                         <canvas id="chartVolumeByPlant"></canvas>
                     </div>
                 </div>
-                <div id="avgVolumeByPlant" class="chart-container">
+                <div id="avgVolumeByPlant" class="chart-container" style="display:none;">
                     <h4 class="chart-title"><i class="fas fa-chart-bar"></i> A3. Avg Volume by Plant</h4>
                     <div class="chart-canvas-container">
                         <canvas id="chartAvgVolumeByPlant"></canvas>
@@ -652,7 +663,7 @@
             <!-- C. Distance -->
             <div class="chart-container">
                 <h3 class="chart-title"><i class="fas fa-road"></i> C. Distance</h3>
-                <div id="avgDistancePerPlant" class="chart-container">
+                <div id="avgDistancePerPlant" class="chart-container" style="display:none;">
                     <h4 class="chart-title"><i class="fas fa-map-marked-alt"></i> C1. Avg Distance per Plant</h4>
                     <div class="chart-canvas-container">
                         <canvas id="chartAvgDistancePerPlant"></canvas>
@@ -701,10 +712,10 @@
         let charts = {};
         let dataLabelsEnabled = true;
         
-        // Colors for highlighting (Top 10)
+        // Colors for highlighting (Top 10) - Orange to Purple gradient
         const highlightColors = [
-            '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
-            '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
+            '#FF6B6B', '#FF9E6B', '#FFB46B', '#FFCA6B', '#FFDF6B',
+            '#C56BFF', '#A46BFF', '#836BFF', '#6B7AFF', '#6B9BFF'
         ];
         
         // Normalisasi string: hapus semua non-alphanumeric, ubah ke lowercase, hilangkan spasi berlebih
@@ -1217,18 +1228,21 @@
             if (!filteredData.length) return;
             
             const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option.selected')).map(o => o.value);
-            const showVolumeByArea = areaFilterSelected.includes('all');
+            const showAreaCharts = areaFilterSelected.includes('all');
             
             // Show/hide charts based on area filter
-            document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
-            document.getElementById('volumeByPlant').style.display = showVolumeByArea ? 'block' : 'none';
+            document.getElementById('volumeByArea').style.display = showAreaCharts ? 'block' : 'none';
+            document.getElementById('volumeByPlant').style.display = showAreaCharts ? 'block' : 'none';
+            document.getElementById('avgVolumeByPlant').style.display = showAreaCharts ? 'block' : 'none';
+            document.getElementById('avgDistancePerPlant').style.display = showAreaCharts ? 'block' : 'none';
             
-            if (showVolumeByArea) {
+            if (showAreaCharts) {
                 createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
                 createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
+                createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
+                createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
             }
             
-            createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
             createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
             createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
             createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
@@ -1238,7 +1252,6 @@
             const avgLoad = totalTrucks > 0 ? totalVol / totalTrucks : 0;
             
             createSingleValueBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', avgLoad.toFixed(2), 'm³');
-            createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
             createScatterChart('chartTrendVolumeByDistance', 'Trend Volume by Distance', filteredData.map(r => ({ x: r.Distance, y: r.QTY })));
             createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
             createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
@@ -1303,17 +1316,24 @@
         
         function createBarChart(canvasId, title, data, enableHighlight = false) {
             const ctx = document.getElementById(canvasId).getContext('2d');
-            const labels = data.map(d => d.label);
-            const values = data.map(d => parseFloat(d.value));
+            
+            // Sort data by value descending and take top 10 for highlighting
+            const sortedData = [...data].sort((a, b) => b.value - a.value);
+            const displayData = enableHighlight ? sortedData.slice(0, 10) : sortedData;
+            
+            const labels = displayData.map(d => d.label);
+            const values = displayData.map(d => parseFloat(d.value));
             
             // Create gradient colors
             const backgroundColors = labels.map((_, i) => {
                 const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, enableHighlight ? 
-                    highlightColors[i % highlightColors.length] : '#3498db');
-                gradient.addColorStop(1, enableHighlight ? 
-                    highlightColors[i % highlightColors.length].replace(')', ', 0.7)').replace('rgb', 'rgba') : 
-                    'rgba(52, 152, 219, 0.7)');
+                if (enableHighlight) {
+                    gradient.addColorStop(0, highlightColors[i % highlightColors.length]);
+                    gradient.addColorStop(1, highlightColors[i % highlightColors.length].replace(')', ', 0.7)').replace('rgb', 'rgba'));
+                } else {
+                    gradient.addColorStop(0, '#3498db');
+                    gradient.addColorStop(1, 'rgba(52, 152, 219, 0.7)');
+                }
                 return gradient;
             });
             
@@ -1346,7 +1366,12 @@
                             ticks: { 
                                 color: '#555', 
                                 maxRotation: 45, 
-                                minRotation: 0 
+                                minRotation: 0,
+                                callback: function(value) {
+                                    return this.getLabelForValue(value).length > 20 ? 
+                                        this.getLabelForValue(value).substring(0, 20) + '...' : 
+                                        this.getLabelForValue(value);
+                                }
                             } 
                         }
                     }
