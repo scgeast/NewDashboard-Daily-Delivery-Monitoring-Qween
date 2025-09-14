@@ -606,9 +606,14 @@
             '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
         ];
 
-        // Helper: Normalize string to alphanumeric only
+        // Normalisasi string: hapus semua non-alphanumeric, ubah ke lowercase, hilangkan spasi berlebih
         function normalizeKey(str) {
-            return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (!str) return '';
+            return String(str)
+                .toLowerCase()
+                .trim()
+                .replace(/[^\w\s]/g, '')  // Hapus simbol seperti ., /, -, _
+                .replace(/\s+/g, ' ');     // Ganti spasi berlebih jadi satu spasi
         }
 
         // Normalisasi area (untuk menangani variasi nama)
@@ -776,57 +781,69 @@
                     }
 
                     // 🔍 DETEKSI HEADER: CARI BARIS YANG BERISI NAMA KOLOM YANG VALID
+                    // Daftar kolom inti yang dibutuhkan
+                    const requiredColumns = [
+                        'DP No', 'QTY', 'Area', 'Plant Name', 'Truck No',
+                        'Truck Type', 'Sales Man', 'End Customer Name', 'Distance', 'DP Date'
+                    ];
+
+                    // Daftar alias untuk setiap kolom (termasuk variasi penulisan umum)
                     const colMap = {
-                        'DP No': ['dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn'],
-                        'QTY': ['qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah', 'qty m3', 'volume m3'],
+                        'DP No': ['dp no', 'dp_no', 'dpno', 'delivery note', 'dn', 'no dp'],
+                        'QTY': ['qty', 'quantity', 'volume', 'qte', 'jumlah', 'qty m3', 'volume m3', 'kubik', 'm3'],
                         'Area': ['area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'province'],
-                        'Plant Name': ['plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location', 'site', 'plantname'],
-                        'Truck No': ['truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id', 'truck no ', 'truck_no_', 'truckno ', 'trk_no_', 'truckid'],
-                        'Truck Type': ['truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk', 'trucktype', 'type_truck', 'trk_type_', 'tipe truk'],
-                        'Sales Man': ['sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan', 'sales_man', 'sales-man', 'sales ', 'sales_'],
-                        'End Customer Name': ['end customer name', 'customer', 'end_customer', 'client', 'pelanggan', 'cust_name', 'end_customer_name', 'customer_name', 'cust name'],
-                        'Distance': ['distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km', 'distance ', 'dist_', 'jarak_', 'km_'],
-                        'DP Date': ['dp date', 'delivery date', 'delivery_date', 'tanggal', 'date', 'dp_date']
+                        'Plant Name': ['plant name', 'plant', 'plant_name', 'p_name', 'location', 'site', 'plantname', 'nama pabrik'],
+                        'Truck No': ['truck no', 'truck_number', 'truckno', 'trk_no', 'vehicle_id', 'truck no ', 'truck_no_', 'truckid', 'nomor truk'],
+                        'Truck Type': ['truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk', 'trucktype', 'tipe truk'],
+                        'Sales Man': ['sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan', 'sales_man', 'sales-man', 'nama sales'],
+                        'End Customer Name': ['end customer name', 'customer', 'end_customer', 'client', 'pelanggan', 'cust_name', 'end_customer_name', 'customer_name', 'nama pelanggan'],
+                        'Distance': ['distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km', 'jarak (km)', 'jarak km'],
+                        'DP Date': ['dp date', 'delivery date', 'delivery_date', 'tanggal', 'date', 'dp_date', 'tgl dp', 'tgl']
                     };
 
                     let headerRowIndex = -1;
-                    let foundHeader = false;
+                    let matchedHeaders = {};
 
-                    // Cek maksimal 10 baris pertama untuk menemukan header
-                    for (let i = 0; i < Math.min(10, jsonData.length); i++) {
+                    // Cek setiap baris hingga 15 baris pertama
+                    for (let i = 0; i < Math.min(15, jsonData.length); i++) {
                         const row = jsonData[i];
                         if (!Array.isArray(row)) continue;
 
-                        let matchedCount = 0;
-                        let validHeaders = [];
+                        let foundCount = 0;
+                        const rowHeaders = row.map(cell => cell !== null ? String(cell).trim() : '');
 
-                        for (let j = 0; j < row.length; j++) {
-                            const cell = row[j];
-                            if (cell === null || cell === undefined) continue;
-                            const cleanCell = String(cell).trim().toLowerCase();
-                            for (const key of Object.keys(colMap)) {
-                                const aliases = colMap[key].map(normalizeKey);
-                                if (aliases.includes(cleanCell)) {
-                                    matchedCount++;
-                                    validHeaders.push(key);
-                                    break;
+                        // Untuk tiap kolom penting, cek apakah ada yang cocok di baris ini
+                        for (const [standardKey, aliases] of Object.entries(colMap)) {
+                            if (matchedHeaders[standardKey]) continue; // Sudah ditemukan
+
+                            for (const alias of aliases) {
+                                for (const header of rowHeaders) {
+                                    const normalizedHeader = normalizeKey(header);
+                                    const normalizedAlias = normalizeKey(alias);
+
+                                    // Cocokkan jika match persis atau substring
+                                    if (normalizedHeader.includes(normalizedAlias) || normalizedAlias.includes(normalizedHeader)) {
+                                        matchedHeaders[standardKey] = rowHeaders.indexOf(header);
+                                        foundCount++;
+                                        break;
+                                    }
                                 }
+                                if (matchedHeaders[standardKey]) break;
                             }
                         }
 
-                        // Jika ditemukan minimal 5 kolom penting, anggap ini header
-                        if (matchedCount >= 5 && row.length >= 10) {
+                        // Jika minimal 8 dari 10 kolom ditemukan → anggap ini header
+                        if (Object.keys(matchedHeaders).length >= 8) {
                             headerRowIndex = i;
-                            foundHeader = true;
                             break;
                         }
                     }
 
-                    if (!foundHeader) {
+                    if (Object.keys(matchedHeaders).length < 8) {
                         throw new Error(
-                            "Gagal! Tidak ditemukan header kolom yang valid.\n" +
-                            "Pastikan file Anda memiliki salah satu kolom berikut:\n" +
-                            "DP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance, DP Date"
+                            "Gagal! Tidak cukup kolom ditemukan.\n" +
+                            "Pastikan file Anda memiliki minimal 8 dari 10 kolom berikut:\n" +
+                            "- DP No\n- QTY\n- Area\n- Plant Name\n- Truck No\n- Truck Type\n- Sales Man\n- End Customer Name\n- Distance\n- DP Date"
                         );
                     }
 
@@ -834,41 +851,17 @@
                     const headers = jsonData[headerRowIndex].map(h => h ? String(h).trim() : '');
                     const headerToStandard = {};
 
-                    let foundAny = false;
-                    for (let j = 0; j < headers.length; j++) {
-                        const header = headers[j];
-                        if (!header) continue;
-                        const cleanHeader = normalizeKey(header);
-                        for (const [standardKey, aliases] of Object.entries(colMap)) {
-                            const normalizedAliases = aliases.map(normalizeKey);
-                            if (normalizedAliases.includes(cleanHeader)) {
-                                headerToStandard[header] = standardKey;
-                                foundAny = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!foundAny) {
-                        throw new Error(
-                            "Gagal! Tidak ditemukan kolom wajib. Pastikan file Anda memiliki salah satu dari:\n" +
-                            "DP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance, DP Date"
-                        );
+                    for (const [standardKey, colIndex] of Object.entries(matchedHeaders)) {
+                        headerToStandard[headers[colIndex]] = standardKey;
                     }
 
                     // Ambil data dari baris setelah header
                     rawData = jsonData.slice(headerRowIndex + 1).map(row => {
                         if (!Array.isArray(row)) return {};
                         const mappedRow = {};
-                        Object.keys(colMap).forEach(key => {
-                            let foundHeader = null;
-                            for (const [originalHeader, stdKey] of Object.entries(headerToStandard)) {
-                                if (stdKey === key) {
-                                    foundHeader = originalHeader;
-                                    break;
-                                }
-                            }
-                            const idx = headers.indexOf(foundHeader);
+                        requiredColumns.forEach(key => {
+                            const originalHeader = Object.keys(headerToStandard).find(h => headerToStandard[h] === key);
+                            const idx = headers.indexOf(originalHeader);
                             mappedRow[key] = idx >= 0 && idx < row.length ? row[idx] : null;
                         });
                         return mappedRow;
@@ -885,8 +878,8 @@
                         row['DP Date'] !== null
                     ).map(row => ({
                         ...row,
-                        'QTY': parseFloat(row['QTY']) || 0,
-                        'Distance': parseFloat(row['Distance']) || 0,
+                        'QTY': parseFloat(String(row['QTY']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
+                        'Distance': parseFloat(String(row['Distance']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
                         'Area': normalizeArea(row['Area']),
                         'DP Date': extractDateFromRow(row)
                     }));
@@ -902,7 +895,7 @@
                 } catch (err) {
                     console.error("Error reading Excel:", err);
                     loadingOverlay.style.display = 'none';
-                    errorMessage.textContent = "Gagal! " + (err.message || "File tidak bisa dibaca. Coba simpan ulang sebagai .xlsx.");
+                    errorMessage.textContent = "Gagal! " + (err.message || "File tidak bisa dibaca. Pastikan formatnya .xlsx dan header sesuai.");
                     errorMessage.style.display = 'block';
                     setTimeout(() => {
                         errorMessage.style.display = 'none';
@@ -923,16 +916,28 @@
         }
 
         function extractDateFromRow(row) {
-            const dateCols = ['dp date', 'delivery date', 'delivery_date', 'tanggal', 'date'];
+            const dateCols = ['dp date', 'delivery date', 'delivery_date', 'tanggal', 'date', 'dp_date'];
             for (let col in row) {
-                if (dateCols.some(d => col.toLowerCase().includes(d))) {
+                if (dateCols.some(d => normalizeKey(col).includes(normalizeKey(d)))) {
                     const val = row[col];
-                    if (typeof val === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}/.test(val)) {
-                        const [day, month, year] = val.split('/');
-                        return new Date(year, month - 1, day);
-                    } else if (val instanceof Date) {
+                    if (typeof val === 'string') {
+                        // Format: 8 Sep 2025
+                        if (/^\d{1,2}\s+\w+\s+\d{4}$/.test(val.trim())) {
+                            const parts = val.trim().split(/\s+/);
+                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            const month = months.indexOf(parts[1]);
+                            return new Date(parts[2], month, parts[0]);
+                        }
+                        // Format: 13/09/2025 or 13-09-2025
+                        if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(val.trim())) {
+                            const [day, month, year] = val.trim().split(/[\/\-]/);
+                            return new Date(year, month - 1, day);
+                        }
+                    }
+                    if (val instanceof Date) {
                         return val;
-                    } else if (typeof val === 'number') {
+                    }
+                    if (typeof val === 'number') {
                         // Excel serial date → JS Date
                         return new Date(Math.round((val - 25569) * 86400 * 1000));
                     }
