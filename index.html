@@ -20,7 +20,6 @@
             --light: #ecf0f1;
             --dark: #2c3e50;
             --gray: #95a5a6;
-            --highlight-colors: (#e74c3c, #3498db, #2ecc71, #f39c12, #9b59b6, #1abc9c, #d35400, #2c3e50, #e67e22, #c0392b);
         }
         * {
             margin: 0;
@@ -32,6 +31,7 @@
             display: flex;
             background-color: #f5f7fa;
             color: #333;
+            min-height: 100vh;
         }
         /* SIDEBAR */
         #sidebar {
@@ -46,6 +46,7 @@
         }
         #sidebar.collapsed {
             width: 60px;
+            overflow: visible;
         }
         /* Toggle Button */
         #toggleSidebar {
@@ -53,7 +54,7 @@
             top: 10px;
             right: -20px;
             color: white;
-            background: transparent;
+            background: var(--secondary);
             border: none;
             border-radius: 50%;
             width: 40px;
@@ -95,7 +96,9 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 10px;
         }
         .upload-btn:hover {
@@ -168,6 +171,15 @@
             font-size: 14px;
             opacity: 0.9;
         }
+        .filter-section input[type="date"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
         .custom-dropdown {
             position: relative;
             width: 100%;
@@ -187,6 +199,7 @@
         .dropdown-header i {
             font-size: 14px;
             opacity: 0.8;
+            transition: transform 0.3s ease;
         }
         .dropdown-menu {
             display: none;
@@ -194,12 +207,15 @@
             top: 100%;
             left: 0;
             width: 100%;
-            background-color: rgba(255,255,255,0.9);
+            background-color: white;
             border: 1px solid #ddd;
             border-radius: 4px;
             max-height: 200px;
             overflow-y: auto;
             z-index: 1000;
+        }
+        .dropdown-menu.show {
+            display: block;
         }
         .dropdown-menu option {
             padding: 8px 12px;
@@ -208,11 +224,14 @@
             background: white;
             border: none;
             cursor: pointer;
+            display: block;
+            width: 100%;
+            text-align: left;
         }
         .dropdown-menu option:hover {
             background-color: #f0f0f0;
         }
-        .dropdown-menu option[selected] {
+        .dropdown-menu option.selected {
             background-color: var(--primary);
             color: white;
         }
@@ -220,7 +239,7 @@
         .dashboard-header-expanded {
             display: flex;
             flex-direction: column;
-            background-color: var(--secondary);
+            background: linear-gradient(135deg, var(--secondary), #1a2530);
             color: white;
             padding: 25px 20px 15px;
             border-radius: 8px;
@@ -284,6 +303,11 @@
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .kpi-card h3 {
             font-size: 14px;
@@ -294,6 +318,48 @@
             font-size: 24px;
             font-weight: bold;
             color: var(--dark);
+        }
+        /* TAB NAVIGATION */
+        .tab-container {
+            display: flex;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding: 0 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            scroll-behavior: smooth;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            margin-right: 5px;
+            border: none;
+            background-color: transparent;
+            color: #555;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-btn i {
+            font-size: 16px;
+        }
+        .tab-content {
+            width: 100%;
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
         /* CHART CONTAINER */
         .chart-container {
@@ -308,6 +374,14 @@
             font-size: 16px;
             margin-bottom: 15px;
             color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-canvas-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
         }
         /* DATA LABEL TOGGLE */
         .data-label-toggle {
@@ -316,6 +390,7 @@
             margin-top: 10px;
             font-size: 14px;
             gap: 10px;
+            padding: 0 15px 15px;
         }
         .toggle-switch {
             position: relative;
@@ -360,13 +435,35 @@
         .footer {
             text-align: center;
             padding: 15px;
-            color: #7f8c8d;
+            color: var(--gray);
             font-size: 14px;
             background-color: #f5f7fa;
             border-top: 1px solid #eee;
             margin-top: 20px;
         }
+        /* EXPORT BUTTON */
+        .export-btn {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .export-btn:hover {
+            background-color: #219652;
+        }
         /* RESPONSIVE */
+        @media (max-width: 992px) {
+            .kpi-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
         @media (max-width: 768px) {
             #sidebar {
                 width: 60px;
@@ -377,16 +474,34 @@
             .header-center h1 {
                 font-size: 20px;
             }
+            .tab-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            .kpi-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Sidebar collapsed state */
+        #sidebar.collapsed .upload-section,
+        #sidebar.collapsed .filter-section,
+        #sidebar.collapsed .data-label-toggle {
+            display: none;
+        }
+        #sidebar.collapsed #toggleSidebar {
+            right: -15px;
         }
     </style>
 </head>
 <body>
     <!-- SIDEBAR -->
     <div id="sidebar">
-        <button class="toggle-btn" id="toggleSidebar">></button>
+        <button class="toggle-btn" id="toggleSidebar"><<</button>
         <div class="upload-section">
             <input type="file" id="excelFile" accept=".xlsx,.xls" />
-            <button class="upload-btn" onclick="document.getElementById('excelFile').click()">Upload Excel</button>
+            <button class="upload-btn" onclick="document.getElementById('excelFile').click()">
+                <i class="fas fa-upload"></i> Upload Excel
+            </button>
             <div class="upload-info">Min: 2KB | Max: 30MB</div>
             <!-- Loading Overlay -->
             <div class="loading-overlay" id="loadingOverlay">
@@ -407,7 +522,7 @@
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="dropdown-menu" id="areaMenu">
-                    <option value="all" selected>Select All</option>
+                    <option value="all" class="selected">Select All</option>
                 </div>
             </div>
             <h4>Pabrik</h4>
@@ -417,7 +532,7 @@
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="dropdown-menu" id="plantMenu">
-                    <option value="all" selected>Select All</option>
+                    <option value="all" class="selected">Select All</option>
                 </div>
             </div>
             <h4>Tipe Truk</h4>
@@ -427,9 +542,12 @@
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="dropdown-menu" id="truckTypeMenu">
-                    <option value="all" selected>Select All</option>
+                    <option value="all" class="selected">Select All</option>
                 </div>
             </div>
+            <button class="export-btn" onclick="exportFilteredData()">
+                <i class="fas fa-download"></i> Ekspor Data
+            </button>
         </div>
         <div class="data-label-toggle">
             <label class="toggle-switch">
@@ -456,6 +574,7 @@
                 <span id="periodeText">Periode: --</span>
             </div>
         </div>
+
         <!-- KPI -->
         <div class="kpi-container">
             <div class="kpi-card"><h3>Total Area</h3><p id="kpiArea">0</p></div>
@@ -465,66 +584,113 @@
             <div class="kpi-card"><h3>Total Truk</h3><p id="kpiTruck">0</p></div>
             <div class="kpi-card"><h3>Avg Load/Truck (m³)</h3><p id="kpiAvgLoadTruck">0</p></div>
         </div>
-        <!-- CHARTS -->
-        <div class="chart-container">
-            <h3 class="chart-title">A. Delivery</h3>
-            <div id="volumeByArea" class="chart-container" style="display:none;">
-                <h4 class="chart-title">A1. Volume by Area</h4>
-                <canvas id="chartVolumeByArea"></canvas>
-            </div>
-            <div id="volumeByPlant" class="chart-container">
-                <h4 class="chart-title">A2. Volume by Plant</h4>
-                <canvas id="chartVolumeByPlant"></canvas>
-            </div>
-            <div id="avgVolumeByPlant" class="chart-container">
-                <h4 class="chart-title">A3. Avg Volume by Plant</h4>
-                <canvas id="chartAvgVolumeByPlant"></canvas>
-            </div>
-            <div id="avgVolumePerDay" class="chart-container">
-                <h4 class="chart-title">A4. Avg Volume per Day</h4>
-                <canvas id="chartAvgVolumePerDay"></canvas>
-            </div>
+
+        <!-- TAB NAVIGATION -->
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('logistic')">
+                <i class="fas fa-truck"></i> LOGISTIC
+            </button>
+            <button class="tab-btn" onclick="switchTab('sales')">
+                <i class="fas fa-chart-line"></i> SALES AND CUSTOMER PERFORMANCE
+            </button>
         </div>
-        <div class="chart-container">
-            <h3 class="chart-title">B. Utilization Truck</h3>
-            <div id="volumePerTruck" class="chart-container">
-                <h4 class="chart-title">B1. Volume per Truck</h4>
-                <canvas id="chartVolumePerTruck"></canvas>
-            </div>
-            <div id="totalTripPerTruck" class="chart-container">
-                <h4 class="chart-title">B2. Total Trip per Truck</h4>
-                <canvas id="chartTotalTripPerTruck"></canvas>
-            </div>
-            <div id="avgLoadPerTruck" class="chart-container">
-                <h4 class="chart-title">B3. Avg Load per Truck</h4>
-                <canvas id="chartAvgLoadPerTruck"></canvas>
-            </div>
-        </div>
-        <div class="chart-container">
-            <h3 class="chart-title">C. Distance</h3>
-            <div id="avgDistancePerPlant" class="chart-container">
-                <h4 class="chart-title">C1. Avg Distance per Plant</h4>
-                <canvas id="chartAvgDistancePerPlant"></canvas>
-            </div>
-            <div id="trendVolumeByDistance" class="chart-container">
-                <h4 class="chart-title">C2. Trend Volume by Distance</h4>
-                <canvas id="chartTrendVolumeByDistance"></canvas>
-            </div>
-        </div>
-        <div class="chart-container">
-            <h3 class="chart-title">A. Sales</h3>
+
+        <!-- TAB CONTENT -->
+        <div id="logistic-content" class="tab-content active">
+            <!-- A. Delivery -->
             <div class="chart-container">
-                <h4 class="chart-title">A. Volume per Sales</h4>
-                <canvas id="chartVolumePerSales"></canvas>
+                <h3 class="chart-title"><i class="fas fa-truck-loading"></i> A. Delivery</h3>
+                <div id="volumeByArea" class="chart-container" style="display:none;">
+                    <h4 class="chart-title"><i class="fas fa-map-marker-alt"></i> A1. Volume by Area</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartVolumeByArea"></canvas>
+                    </div>
+                </div>
+                <div id="volumeByPlant" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-industry"></i> A2. Volume by Plant</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartVolumeByPlant"></canvas>
+                    </div>
+                </div>
+                <div id="avgVolumeByPlant" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-chart-bar"></i> A3. Avg Volume by Plant</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartAvgVolumeByPlant"></canvas>
+                    </div>
+                </div>
+                <div id="avgVolumePerDay" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-calendar-day"></i> A4. Avg Volume per Day</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartAvgVolumePerDay"></canvas>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="chart-container">
-            <h3 class="chart-title">B. Customer</h3>
+
+            <!-- B. Utilization Truck -->
             <div class="chart-container">
-                <h4 class="chart-title">B. Volume per End Customer</h4>
-                <canvas id="chartVolumePerCustomer"></canvas>
+                <h3 class="chart-title"><i class="fas fa-truck-monster"></i> B. Utilization Truck</h3>
+                <div id="volumePerTruck" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-truck"></i> B1. Volume per Truck</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartVolumePerTruck"></canvas>
+                    </div>
+                </div>
+                <div id="totalTripPerTruck" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-route"></i> B2. Total Trip per Truck</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartTotalTripPerTruck"></canvas>
+                    </div>
+                </div>
+                <div id="avgLoadPerTruck" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-weight-hanging"></i> B3. Avg Load per Truck</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartAvgLoadPerTruck"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- C. Distance -->
+            <div class="chart-container">
+                <h3 class="chart-title"><i class="fas fa-road"></i> C. Distance</h3>
+                <div id="avgDistancePerPlant" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-map-marked-alt"></i> C1. Avg Distance per Plant</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartAvgDistancePerPlant"></canvas>
+                    </div>
+                </div>
+                <div id="trendVolumeByDistance" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-chart-line"></i> C2. Trend Volume by Distance</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartTrendVolumeByDistance"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div id="sales-content" class="tab-content">
+            <!-- A. Sales -->
+            <div class="chart-container">
+                <h3 class="chart-title"><i class="fas fa-user-tie"></i> A. Sales</h3>
+                <div class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-handshake"></i> A. Volume per Sales</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartVolumePerSales"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B. Customer -->
+            <div class="chart-container">
+                <h3 class="chart-title"><i class="fas fa-users"></i> B. Customer</h3>
+                <div class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-user-circle"></i> B. Volume per End Customer</h4>
+                    <div class="chart-canvas-container">
+                        <canvas id="chartVolumePerCustomer"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- FOOTER -->
         <div class="footer">Summary Daily Delivery And Sales by L=23-51Xe.</div>
     </div>
@@ -534,11 +700,13 @@
         let filteredData = [];
         let charts = {};
         let dataLabelsEnabled = true;
+        
         // Colors for highlighting (Top 10)
         const highlightColors = [
             '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
             '#1abc9c', '#d35400', '#2c3e50', '#e67e22', '#c0392b'
         ];
+        
         // Normalisasi string: hapus semua non-alphanumeric, ubah ke lowercase, hilangkan spasi berlebih
         function normalizeKey(str) {
             if (!str) return '';
@@ -548,6 +716,7 @@
                 .replace(/[^\w\s]/g, '')  // Hapus simbol
                 .replace(/\s+/g, ' ');     // Ganti spasi berlebih jadi satu spasi
         }
+        
         // Normalisasi area (untuk menangani variasi nama)
         function normalizeArea(area) {
             if (!area) return area;
@@ -590,6 +759,7 @@
             const clean = area.toString().toLowerCase().trim();
             return map[clean] || area;
         }
+        
         // Fungsi untuk parsing tanggal Excel
         function parseExcelDate(dateValue) {
             if (!dateValue) return new Date();
@@ -614,10 +784,12 @@
             }
             return new Date();
         }
+        
         // DOM Elements
         let sidebar, main, toggleBtn, excelFile, startDate, endDate, dataLabelToggle;
         let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolume, kpiTruck, kpiAvgLoadTruck, lastUpdate;
         let loadingOverlay, errorMessage;
+        
         document.addEventListener('DOMContentLoaded', () => {
             sidebar = document.getElementById('sidebar');
             main = document.getElementById('main');
@@ -637,26 +809,32 @@
             lastUpdate = document.getElementById('lastUpdate');
             loadingOverlay = document.getElementById('loadingOverlay');
             errorMessage = document.getElementById('errorMessage');
+            
             if (!sidebar || !toggleBtn) {
                 console.error("DOM elements not found!");
                 return;
             }
+            
             // Toggle Sidebar
             toggleBtn.addEventListener('click', () => {
                 sidebar.classList.toggle('collapsed');
                 main.classList.toggle('collapsed');
                 toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
             });
+            
             // Handle File Upload
             excelFile.addEventListener('change', handleFileUpload);
+            
             // Filter Event Listeners
             [startDate, endDate].forEach(el => {
                 el.addEventListener('change', applyFilters);
             });
+            
             dataLabelToggle.addEventListener('change', () => {
                 dataLabelsEnabled = dataLabelToggle.checked;
                 updateCharts();
             });
+            
             // Initialize on load
             window.addEventListener('load', () => {
                 const today = new Date();
@@ -666,9 +844,11 @@
                 applyFilters();
             });
         });
+
         function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
+
             const fileSizeMB = file.size / (1024 * 1024);
             if (fileSizeMB < 0.002) {
                 alert("File terlalu kecil! Minimal 2KB.");
@@ -678,6 +858,7 @@
                 alert("File terlalu besar! Maksimal 30MB.");
                 return;
             }
+            
             const ext = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
             if (!ext) {
                 loadingOverlay.style.display = 'none';
@@ -688,8 +869,10 @@
                 }, 8000);
                 return;
             }
+
             loadingOverlay.style.display = 'flex';
             errorMessage.style.display = 'none';
+
             const reader = new FileReader();
             reader.onload = function (event) {
                 try {
@@ -699,18 +882,24 @@
                         cellDates: true,
                         dateNF: 'yyyy-mm-dd'
                     });
+                    
                     if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
                         throw new Error("Tidak ditemukan sheet dalam file.");
                     }
+                    
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
+                    
                     // Konversi ke JSON dengan header
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
                     if (!Array.isArray(jsonData) || jsonData.length < 2) {
                         throw new Error("Tidak ada data dalam sheet.");
                     }
+                    
                     // Ambil header dari baris pertama
                     const headers = jsonData[0].map(h => h ? String(h).trim() : '');
+                    
                     // Mapping kolom berdasarkan file contoh Anda
                     const columnMapping = {
                         'DP No': ['DP No', 'No'],
@@ -724,9 +913,11 @@
                         'Distance': ['Distance'],
                         'DP Date': ['DP Date']
                     };
+                    
                     // Cari indeks untuk setiap kolom yang diperlukan
                     const columnIndices = {};
                     let missingColumns = [];
+                    
                     for (const [standardKey, possibleNames] of Object.entries(columnMapping)) {
                         let found = false;
                         for (const name of possibleNames) {
@@ -742,20 +933,25 @@
                             missingColumns.push(standardKey);
                         }
                     }
+                    
                     if (missingColumns.length > 0) {
                         throw new Error(`Kolom berikut tidak ditemukan: ${missingColumns.join(', ')}`);
                     }
+                    
                     // Proses data
                     rawData = jsonData.slice(1).map(row => {
                         if (!Array.isArray(row)) return null;
+                        
                         const mappedRow = {};
                         for (const [key, index] of Object.entries(columnIndices)) {
                             mappedRow[key] = index < row.length ? row[index] : null;
                         }
+                        
                         // Validasi baris
                         if (!mappedRow['DP No'] || !mappedRow['QTY']) {
                             return null;
                         }
+                        
                         return mappedRow;
                     }).filter(row => row !== null).map(row => {
                         // Transformasi data
@@ -767,9 +963,11 @@
                             'DP Date': parseExcelDate(row['DP Date'])
                         };
                     });
+                    
                     if (rawData.length === 0) {
                         throw new Error("Tidak ada data yang valid setelah pemrosesan.");
                     }
+                    
                     updateFilters();
                     applyFilters();
                     loadingOverlay.style.display = 'none';
@@ -783,6 +981,7 @@
                     }, 8000);
                 }
             };
+            
             reader.onerror = function () {
                 loadingOverlay.style.display = 'none';
                 errorMessage.textContent = "Gagal! Gagal membaca file. Coba gunakan file lain.";
@@ -791,96 +990,159 @@
                     errorMessage.style.display = 'none';
                 }, 8000);
             };
+            
             reader.readAsArrayBuffer(file);
         }
+
         function updateFilters() {
             const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
             const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
             const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
+            
             clearDropdown('areaMenu');
             clearDropdown('plantMenu');
             clearDropdown('truckTypeMenu');
-            addOption('areaMenu', "Select All", "all");
+            
+            addOption('areaMenu', "Select All", "all", true);
             areas.forEach(a => addOption('areaMenu', a, a));
-            addOption('plantMenu', "Select All", "all");
+            
+            addOption('plantMenu', "Select All", "all", true);
             plants.forEach(p => addOption('plantMenu', p, p));
-            addOption('truckTypeMenu', "Select All", "all");
+            
+            addOption('truckTypeMenu', "Select All", "all", true);
             truckTypes.forEach(t => addOption('truckTypeMenu', t, t));
         }
+        
         function clearDropdown(menuId) {
             const menu = document.getElementById(menuId);
             while (menu.children.length > 0) {
                 menu.removeChild(menu.firstChild);
             }
         }
-        function addOption(menuId, text, value) {
+        
+        function addOption(menuId, text, value, selected = false) {
             const menu = document.getElementById(menuId);
             const option = document.createElement('option');
             option.text = text;
             option.value = value;
+            if (selected) {
+                option.classList.add('selected');
+            }
             menu.appendChild(option);
         }
+        
         document.addEventListener('click', function(e) {
+            // Close dropdowns when clicking outside
+            if (!e.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+                document.querySelectorAll('.dropdown-header i').forEach(icon => {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                });
+            }
+            
             const option = e.target.closest('.dropdown-menu option');
             if (!option) return;
+            
             const menu = option.closest('.dropdown-menu');
             const dropdown = menu.parentElement;
             const label = dropdown.querySelector('.dropdown-header span');
-            menu.querySelectorAll('option').forEach(opt => opt.removeAttribute('selected'));
-            option.setAttribute('selected', '');
+            const icon = dropdown.querySelector('.dropdown-header i');
+            
+            // Handle single selection
+            menu.querySelectorAll('option').forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+            
             if (option.value === 'all') {
                 label.textContent = 'Select All';
             } else {
                 label.textContent = option.textContent;
             }
+            
+            menu.classList.remove('show');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+            
             applyFilters();
         });
+        
         function toggleDropdown(id) {
             const dropdown = document.getElementById(id);
             const menu = dropdown.querySelector('.dropdown-menu');
             const icon = dropdown.querySelector('.dropdown-header i');
-            const label = dropdown.querySelector('.dropdown-header span');
-            if (menu.style.display === 'block') {
-                menu.style.display = 'none';
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(m => {
+                if (m !== menu) {
+                    m.classList.remove('show');
+                }
+            });
+            document.querySelectorAll('.dropdown-header i').forEach(i => {
+                if (i !== icon) {
+                    i.classList.remove('fa-chevron-up');
+                    i.classList.add('fa-chevron-down');
+                }
+            });
+            
+            if (menu.classList.contains('show')) {
+                menu.classList.remove('show');
                 icon.classList.remove('fa-chevron-up');
                 icon.classList.add('fa-chevron-down');
             } else {
-                menu.style.display = 'block';
+                menu.classList.add('show');
                 icon.classList.remove('fa-chevron-down');
                 icon.classList.add('fa-chevron-up');
             }
         }
+        
         function applyFilters() {
             let filtered = [...rawData];
+            
+            // Filter by date
             const start = startDate.value ? new Date(startDate.value) : null;
             const end = endDate.value ? new Date(endDate.value) : null;
+            
             if (start || end) {
                 filtered = filtered.filter(row => {
                     const rowDate = row['DP Date'];
                     if (!rowDate) return false;
+                    
                     if (start && rowDate < start) return false;
                     if (end && rowDate > end) return false;
+                    
                     return true;
                 });
             }
+            
+            // Filter by area
             const areaMenu = document.getElementById('areaMenu');
-            const selectedAreaOptions = areaMenu.querySelectorAll('option[selected]');
+            const selectedAreaOptions = areaMenu.querySelectorAll('option.selected');
             const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
+            
             if (!selectedAreas.includes('all')) {
                 filtered = filtered.filter(row => selectedAreas.includes(row.Area));
             }
+            
+            // Filter by plant
             const plantMenu = document.getElementById('plantMenu');
-            const selectedPlantOptions = plantMenu.querySelectorAll('option[selected]');
+            const selectedPlantOptions = plantMenu.querySelectorAll('option.selected');
             const selectedPlants = Array.from(selectedPlantOptions).map(o => o.value);
+            
             if (!selectedPlants.includes('all')) {
                 filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
             }
+            
+            // Filter by truck type
             const truckTypeMenu = document.getElementById('truckTypeMenu');
-            const selectedTruckTypeOptions = truckTypeMenu.querySelectorAll('option[selected]');
+            const selectedTruckTypeOptions = truckTypeMenu.querySelectorAll('option.selected');
             const selectedTruckTypes = Array.from(selectedTruckTypeOptions).map(o => o.value);
+            
             if (!selectedTruckTypes.includes('all')) {
                 filtered = filtered.filter(row => selectedTruckTypes.includes(row['Truck Type']));
             }
+            
             filteredData = filtered;
             updateKPIs();
             updateDashboardTitle();
@@ -888,6 +1150,7 @@
             updateCharts();
             lastUpdate.textContent = `Last Update: ${new Date().toLocaleString()}`;
         }
+        
         function updateKPIs() {
             const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
             const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
@@ -895,6 +1158,7 @@
             const avgVolume = totalVolume > 0 ? (totalVolume / filteredData.length).toFixed(2) : 0;
             const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].length;
             const avgLoadPerTruck = totalTruck > 0 ? (totalVolume / totalTruck).toFixed(2) : 0;
+            
             kpiArea.textContent = totalArea;
             kpiPlant.textContent = totalPlant;
             kpiVolume.textContent = totalVolume.toFixed(2);
@@ -902,88 +1166,116 @@
             kpiTruck.textContent = totalTruck;
             kpiAvgLoadTruck.textContent = avgLoadPerTruck;
         }
+        
         function updateDashboardTitle() {
-            const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.textContent);
+            const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option.selected')).map(o => o.textContent);
             const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
             dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
         }
+        
         function updatePeriodeText() {
             const start = startDate.value ? new Date(startDate.value).toLocaleDateString('id-ID') : '--';
             const end = endDate.value ? new Date(endDate.value).toLocaleDateString('id-ID') : '--';
             periodeText.textContent = `Periode: ${start} - ${end}`;
         }
+        
         function updateCharts() {
             destroyAllCharts();
+            
             if (!filteredData.length) return;
-            const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.value);
+            
+            const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option.selected')).map(o => o.value);
             const showVolumeByArea = areaFilterSelected.includes('all');
+            
             document.getElementById('volumeByArea').style.display = showVolumeByArea ? 'block' : 'none';
+            
             if (showVolumeByArea) {
                 createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
             }
+            
             createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
             createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
             createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
             createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
             createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
+            
             const totalVol = filteredData.reduce((s, r) => s + r.QTY, 0);
             const totalTrucks = [...new Set(filteredData.map(r => r['Truck No']))].length;
             const avgLoad = totalTrucks > 0 ? totalVol / totalTrucks : 0;
+            
             createSingleValueBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', avgLoad.toFixed(2), 'm³');
             createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
             createScatterChart('chartTrendVolumeByDistance', 'Trend Volume by Distance', filteredData.map(r => ({ x: r.Distance, y: r.QTY })));
             createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
             createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
         }
+        
         function destroyAllCharts() {
             Object.values(charts).forEach(chart => chart.destroy());
             charts = {};
         }
+        
         function getGroupedData(groupBy, metric, isAvg = false) {
             const map = new Map();
+            
             filteredData.forEach(row => {
                 const key = row[groupBy];
                 if (!key) return;
+                
                 if (!map.has(key)) map.set(key, []);
                 map.get(key).push(parseFloat(row[metric]) || 0);
             });
+            
             return Array.from(map.entries()).map(([key, values]) => ({
                 label: key,
-                value: isAvg ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : values.reduce((a,b)=>a+b,0)
+                value: isAvg ? 
+                    (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : 
+                    values.reduce((a,b)=>a+b,0)
             })).sort((a,b) => b.value - a.value).slice(0, 10);
         }
+        
         function getTripCountByTruck() {
             const tripMap = new Map();
+            
             filteredData.forEach(row => {
-                const key = `${row['Truck No']} - ${row['DP No']}`;
                 const truckNo = row['Truck No'];
+                if (!truckNo) return;
+                
                 if (!tripMap.has(truckNo)) tripMap.set(truckNo, new Set());
-                tripMap.get(truckNo).add(key);
+                tripMap.get(truckNo).add(row['DP No']);
             });
+            
             return Array.from(tripMap.entries()).map(([truck, trips]) => ({
                 label: truck,
                 value: trips.size
             })).sort((a,b) => b.value - a.value).slice(0, 10);
         }
+        
         function getDailyAvgVolume() {
             const dailyMap = new Map();
+            
             filteredData.forEach(row => {
                 const dateStr = row['DP Date'].toISOString().split('T')[0];
                 if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, { sum: 0, count: 0 });
+                
                 dailyMap.get(dateStr).sum += row.QTY;
                 dailyMap.get(dateStr).count += 1;
             });
+            
             return Array.from(dailyMap.entries())
                 .map(([date, { sum, count }]) => ({ date, avg: (sum / count).toFixed(2) }))
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
         }
+        
         function createBarChart(canvasId, title, data, enableHighlight = false) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const labels = data.map(d => d.label);
-            const values = data.map(d => d.value);
+            const values = data.map(d => parseFloat(d.value));
+            
             const backgroundColors = enableHighlight ?
                 labels.map((_, i) => highlightColors[i % highlightColors.length]) :
                 Array(labels.length).fill('#3498db');
+            
             const datasets = [{
                 label: title,
                 data: values,
@@ -991,6 +1283,7 @@
                 borderColor: 'rgba(0,0,0,0.1)',
                 borderWidth: 1,
             }];
+            
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
@@ -999,21 +1292,33 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: dataLabelsEnabled },
+                        tooltip: { enabled: true },
                         title: { display: true, text: title, font: { size: 16 } },
                     },
                     scales: {
-                        y: { beginAtZero: true, ticks: { color: '#555' } },
-                        x: { ticks: { color: '#555', maxRotation: 45, minRotation: 0 } }
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { color: '#555' } 
+                        },
+                        x: { 
+                            ticks: { 
+                                color: '#555', 
+                                maxRotation: 45, 
+                                minRotation: 0 
+                            } 
+                        }
                     }
                 }
             };
+            
             charts[canvasId] = new Chart(ctx, config);
         }
+        
         function createLineChart(canvasId, title, data) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const labels = data.map(d => d.date);
             const values = data.map(d => parseFloat(d.avg));
+            
             const datasets = [{
                 label: 'Avg Volume (m³)',
                 data: values,
@@ -1024,6 +1329,7 @@
                 pointRadius: 4,
                 pointHoverRadius: 8
             }];
+            
             const config = {
                 type: 'line',
                 data: { labels, datasets },
@@ -1032,20 +1338,31 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: dataLabelsEnabled },
+                        tooltip: { enabled: true },
                         title: { display: true, text: title, font: { size: 16 } },
                     },
                     scales: {
-                        y: { beginAtZero: true, ticks: { color: '#555' } },
-                        x: { ticks: { color: '#555', maxRotation: 45 } }
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { color: '#555' } 
+                        },
+                        x: { 
+                            ticks: { 
+                                color: '#555', 
+                                maxRotation: 45 
+                            } 
+                        }
                     }
                 }
             };
+            
             charts[canvasId] = new Chart(ctx, config);
         }
+        
         function createScatterChart(canvasId, title, data) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const points = data.map(p => ({ x: p.x, y: p.y }));
+            
             const datasets = [{
                 label: 'Volume vs Distance',
                 data: points,
@@ -1054,6 +1371,7 @@
                 pointRadius: 4,
                 pointHoverRadius: 8
             }];
+            
             const config = {
                 type: 'scatter',
                 data: { datasets },
@@ -1062,21 +1380,31 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: dataLabelsEnabled },
+                        tooltip: { enabled: true },
                         title: { display: true, text: title, font: { size: 16 } },
                     },
                     scales: {
-                        x: { title: { display: true, text: 'Distance (km)' }, ticks: { color: '#555' } },
-                        y: { title: { display: true, text: 'Volume (m³)' }, beginAtZero: true, ticks: { color: '#555' } }
+                        x: { 
+                            title: { display: true, text: 'Distance (km)' }, 
+                            ticks: { color: '#555' } 
+                        },
+                        y: { 
+                            title: { display: true, text: 'Volume (m³)' }, 
+                            beginAtZero: true, 
+                            ticks: { color: '#555' } 
+                        }
                     }
                 }
             };
+            
             charts[canvasId] = new Chart(ctx, config);
         }
+        
         function createSingleValueBarChart(canvasId, title, value, unit) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const labels = ['Avg Load'];
             const values = [parseFloat(value)];
+            
             const datasets = [{
                 label: title,
                 data: values,
@@ -1084,6 +1412,7 @@
                 borderColor: 'rgba(0,0,0,0.1)',
                 borderWidth: 1,
             }];
+            
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
@@ -1092,22 +1421,60 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: dataLabelsEnabled },
+                        tooltip: { enabled: true },
                         title: { display: true, text: title, font: { size: 16 } },
-                        datalabels: {
-                            display: dataLabelsEnabled,
-                            formatter: (value) => `${value} ${unit}`,
-                            color: '#000',
-                            font: { weight: 'bold' }
-                        }
                     },
                     scales: {
-                        y: { display: false, beginAtZero: true },
+                        y: { 
+                            display: false, 
+                            beginAtZero: true 
+                        },
                         x: { display: false }
                     }
                 }
             };
+            
             charts[canvasId] = new Chart(ctx, config);
+        }
+        
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(`${tabId}-content`).classList.add('active');
+        }
+        
+        function exportFilteredData() {
+            if (filteredData.length === 0) {
+                alert("Tidak ada data untuk diekspor.");
+                return;
+            }
+            
+            try {
+                // Prepare data for export
+                const headers = Object.keys(filteredData[0]);
+                const dataToExport = [headers].concat(
+                    filteredData.map(row => headers.map(header => row[header]))
+                );
+                
+                // Create worksheet
+                const ws = XLSX.utils.aoa_to_sheet(dataToExport);
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Filtered Data");
+                
+                // Generate filename with timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+                const filename = `Summary_Delivery_${timestamp}.xlsx`;
+                
+                // Export to file
+                XLSX.writeFile(wb, filename);
+            } catch (error) {
+                console.error("Error exporting data:", error);
+                alert("Gagal mengekspor data. Silakan coba lagi.");
+            }
         }
     </script>
 </body>
