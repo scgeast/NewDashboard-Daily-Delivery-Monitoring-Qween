@@ -441,23 +441,6 @@
             border-top: 1px solid #eee;
             margin-top: 20px;
         }
-        /* EXPORT BUTTON */
-        .export-btn {
-            background-color: var(--success);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        .export-btn:hover {
-            background-color: #219652;
-        }
         /* RESPONSIVE */
         @media (max-width: 992px) {
             .kpi-container {
@@ -545,9 +528,6 @@
                     <option value="all" class="selected">Select All</option>
                 </div>
             </div>
-            <button class="export-btn" onclick="exportFilteredData()">
-                <i class="fas fa-download"></i> Ekspor Data
-            </button>
         </div>
         <div class="data-label-toggle">
             <label class="toggle-switch">
@@ -1443,38 +1423,6 @@
             
             document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
             document.getElementById(`${tabId}-content`).classList.add('active');
-        }
-        
-        function exportFilteredData() {
-            if (filteredData.length === 0) {
-                alert("Tidak ada data untuk diekspor.");
-                return;
-            }
-            
-            try {
-                // Prepare data for export
-                const headers = Object.keys(filteredData[0]);
-                const dataToExport = [headers].concat(
-                    filteredData.map(row => headers.map(header => row[header]))
-                );
-                
-                // Create worksheet
-                const ws = XLSX.utils.aoa_to_sheet(dataToExport);
-                
-                // Create workbook
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Filtered Data");
-                
-                // Generate filename with timestamp
-                const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-                const filename = `Summary_Delivery_${timestamp}.xlsx`;
-                
-                // Export to file
-                XLSX.writeFile(wb, filename);
-            } catch (error) {
-                console.error("Error exporting data:", error);
-                alert("Gagal mengekspor data. Silakan coba lagi.");
-            }
         }
     </script>
 </body>
