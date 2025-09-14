@@ -831,7 +831,7 @@
               const cell = row[j];
               if (cell === null || cell === undefined) continue;
 
-              // ✅ PERBAIKAN KRITIS: Gunakan cell.v untuk nilai asli
+              // ✅ PERBAIKAN KRITIS: Gunakan .v untuk nilai asli
               const cleanCell = (cell.v !== undefined && cell.v !== null)
                 ? String(cell.v).trim().toLowerCase()
                 : '';
@@ -1175,14 +1175,14 @@
         : Array(labels.length).fill('#3498db');
       const datasets = [{
         label: title,
-         values,
+        data: values,
         backgroundColor: backgroundColors,
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
       }];
       const config = {
         type: 'bar',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1208,14 +1208,14 @@
       const values = [parseFloat(value)];
       const datasets = [{
         label: title,
-         values,
+        data: values,
         backgroundColor: '#2ecc71',
         borderColor: 'rgba(0,0,0,0.1)',
         borderWidth: 1,
       }];
       const config = {
         type: 'bar',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1247,7 +1247,7 @@
       const values = data.map(d => parseFloat(d.avg));
       const datasets = [{
         label: 'Avg Volume (m³)',
-         values,
+        data: values,
         borderColor: '#3498db',
         backgroundColor: 'rgba(52, 152, 219, 0.1)',
         tension: 0.3,
@@ -1257,7 +1257,7 @@
       }];
       const config = {
         type: 'line',
-         {
+        data: {
           labels,
           datasets
         },
@@ -1282,7 +1282,7 @@
       const points = data.map(p => ({ x: p.x, y: p.y }));
       const datasets = [{
         label: 'Volume vs Distance',
-         points,
+        data: points,
         backgroundColor: 'rgba(52, 152, 219, 0.6)',
         borderColor: 'rgba(52, 152, 219, 0.8)',
         pointRadius: 4,
@@ -1290,7 +1290,7 @@
       }];
       const config = {
         type: 'scatter',
-         {
+        data: {
           datasets
         },
         options: {
