@@ -806,22 +806,67 @@
             }
           }
 
-          // Daftar kolom kunci yang harus ada — DIPERLUAS
+          // ⚡ DAFTAR KOLOM KRITIS — DIPERLUAS UNTUK SEMUA VARIASI
           const colMap = {
-            'DP No': ['dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn', 'dp.no', 'dp no.', 'dp_no_'],
-            'QTY': ['qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah', 'qty m3', 'volume m3', 'qty_m3', 'volume_m3', 'qte m3'],
-            'Area': ['area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'province', 'area ', 'wilayah ', 'region '],
-            'Plant Name': ['plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location', 'site', 'plantname', 'plant name ', 'p_name_', 'plant_name_'],
-            'Truck No': ['truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id', 'truck no ', 'truck_no_', 'truckno ', 'trk_no_', 'truckid', 'truck id', 'no_truck'],
-            'Truck Type': ['truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk', 'trucktype', 'type_truck', 'trk_type_', 'tipe truk', 'tipe_truk_', 'type truck'],
-            'Sales Man': ['sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan', 'sales_man', 'sales-man', 'sales ', 'sales_', 'sales name', 'nama sales'],
-            'End Customer Name': ['end customer name', 'customer', 'end_customer', 'client', 'pelanggan', 'cust_name', 'end_customer_name', 'customer_name', 'cust name', 'nama pelanggan', 'customer '],
-            'Distance': ['distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km', 'distance ', 'dist_', 'jarak_', 'km_', 'jarak (km)', 'distance (km)']
+            'DP No': [
+              'dp no', 'dp_no', 'dpno', 'dp-no', 'd_p_no', 'delivery note', 'dn',
+              'dp.no', 'dp no.', 'dp_no_', 'dp no ', 'dp_no ', 'dp-no ', 'dpno ',
+              'dp no.', 'dp_no.', 'dp-no.', 'dp no-', 'dp_no-'
+            ],
+            'QTY': [
+              'qty', 'quantity', 'volume', 'qte', 'qty (m3)', 'volume (m3)', 'jumlah',
+              'qty m3', 'volume m3', 'qty_m3', 'volume_m3', 'qte m3', 'qty. ', 'vol ',
+              'volume ', 'jmlh', 'jumlah ', 'qty(', 'qty)', 'qte(m3)', 'volume(m3)',
+              'qty(m3)', 'vol(m3)', 'qte m3 ', 'volume m3 '
+            ],
+            'Area': [
+              'area', 'region', 'wilayah', 'lokasi', 'zone', 'regional', 'province',
+              'area ', 'wilayah ', 'region ', 'lokasi ', 'zona', 'provinsi', 'daerah',
+              'area.', 'area-', 'area_', 'area,', 'wilayah,', 'region,', 'lokasi,',
+              'area-', 'wilayah-', 'region-', 'lokasi-'
+            ],
+            'Plant Name': [
+              'plant name', 'plant', 'plant_name', 'p_name', 'p-name', 'location', 'site',
+              'plantname', 'plant name ', 'p_name_', 'plant_name_', 'p.name', 'p.name ',
+              'p-name ', 'p name', 'p name ', 'lokasi pabrik', 'nama pabrik', 'p.name-',
+              'p.name_', 'plant-', 'plant_', 'p name-', 'p name_'
+            ],
+            'Truck No': [
+              'truck no', 'truck_number', 'truckno', 'truck-no', 'trk_no', 'vehicle_id',
+              'truck no ', 'truck_no_', 'truckno ', 'trk_no_', 'truckid', 'truck id',
+              'no_truck', 'truck#', 'truck# ', 'truk', 'nomor truk', 'nopol', 'nopol ',
+              'trk no', 'trk no.', 'trk no-', 'truck no.', 'truck no-', 'truck_no.',
+              'truck_no-', 'truk no', 'truk no.'
+            ],
+            'Truck Type': [
+              'truck type', 'truck_type', 'trk_type', 'type', 'vehicle_type', 'tipe_truk',
+              'trucktype', 'type_truck', 'trk_type_', 'tipe truk', 'tipe_truk_', 'type truck',
+              'tipe', 'jenis truk', 'jenis_truk', 'truk type', 'truk_type', 'type-',
+              'type_', 'tipe-', 'tipe_', 'trk-type', 'trk_type'
+            ],
+            'Sales Man': [
+              'sales man', 'salesman', 'sales', 'sales_rep', 'salesperson', 'penjualan',
+              'sales_man', 'sales-man', 'sales ', 'sales_', 'sales name', 'nama sales',
+              'sales rep', 'salesrep', 'salesperson ', 'salesman ', 'sales no', 'sales no.',
+              'sales-no', 'sales_no', 'salesman-', 'salesman_', 'penjualan-', 'penjualan_'
+            ],
+            'End Customer Name': [
+              'end customer name', 'customer', 'end_customer', 'client', 'pelanggan',
+              'cust_name', 'end_customer_name', 'customer_name', 'cust name', 'nama pelanggan',
+              'customer ', 'cust ', 'pelanggan ', 'client ', 'nama customer', 'nama client',
+              'cust-name', 'cust_name-', 'cust_name_', 'pelanggan-', 'pelanggan_'
+            ],
+            'Distance': [
+              'distance', 'dist', 'jarak', 'km', 'distance_km', 'jarak_km', 'distance ',
+              'dist_', 'jarak_', 'km_', 'jarak (km)', 'distance (km)', 'jarak km',
+              'dist.', 'dist-', 'dist_', 'jarak.', 'jarak-', 'jarak_', 'km.',
+              'km-', 'distance.', 'distance-', 'distance_'
+            ]
           };
 
           let headerRowIndex = -1;
 
-          // Cari header di semua baris (bukan hanya baris pertama)
+          // 🔍 DETEKSI HEADER — TOLERAN TERHADAP APA PUN FORMAT
           for (let i = 0; i < jsonData.length; i++) {
             const row = jsonData[i];
             if (!Array.isArray(row)) continue;
@@ -829,15 +874,17 @@
             let hasValidHeader = false;
             for (let j = 0; j < row.length; j++) {
               const cell = row[j];
+
+              // ✅ KUNCI UTAMA: HANYA BACA .v — IGNORE FORMAT BOLD/WARNA/SPASI
               if (cell === null || cell === undefined) continue;
+              const rawValue = cell.v; // ← Ini nilai aslinya, tanpa format!
+              if (rawValue === undefined || rawValue === null) continue;
 
-              // ✅ PERBAIKAN KRITIS: Gunakan .v untuk nilai asli
-              const cleanCell = (cell.v !== undefined && cell.v !== null)
-                ? String(cell.v).trim().toLowerCase()
-                : '';
+              const cleanCell = String(rawValue).trim().toLowerCase();
 
+              // Cek apakah ada yang cocok dengan alias di colMap
               for (const key of Object.keys(colMap)) {
-                const aliases = colMap[key].map(normalizeKey);
+                const aliases = colMap[key].map(normalizeKey); // normalizeKey() sudah ada
                 if (aliases.includes(cleanCell)) {
                   hasValidHeader = true;
                   break;
@@ -856,16 +903,17 @@
             throw new Error(
               "Gagal! Tidak ditemukan header yang valid. Pastikan file Anda memiliki salah satu dari:\n" +
               "- DP No, QTY, Area, Plant Name, Truck No, Truck Type, Sales Man, End Customer Name, Distance\n\n" +
-              "Periksa ejaan, spasi, atau gunakan format standar."
+              "Periksa ejaan, spasi, atau gunakan format standar.\n" +
+              "Contoh: 'DP No' | 'dp no' | 'dp.no' | 'dp_no' | 'truck no' | 'trk no' | 'nopol'"
             );
           }
 
-          // Ambil header dari baris yang ditemukan — PAKAI .v!
+          // ✅ AMBIL HEADER ASLI — PAKAI .v JUGA
           const headers = jsonData[headerRowIndex].map(h =>
             h && h.v !== undefined ? String(h.v).trim() : ''
           );
 
-          // Buat mapping header asli → standard key
+          // ✅ BUAT MAPPING HEADER ASLI → STANDARD KEY
           const headerToStandard = {};
           let foundAny = false;
 
@@ -889,7 +937,7 @@
             );
           }
 
-          // Ambil data dari baris setelah header
+          // ✅ EKSTRAK DATA — TETAP PAKAI .v
           rawData = jsonData.slice(headerRowIndex + 1).map(row => {
             if (!Array.isArray(row)) return {};
             const mappedRow = {};
@@ -902,7 +950,9 @@
                 }
               }
               const idx = headers.indexOf(foundHeader);
-              mappedRow[key] = idx >= 0 && idx < row.length ? row[idx] : null;
+              // ✅ Ambil nilai dari cell.v — bukan langsung dari array
+              const cell = idx >= 0 && idx < row.length ? row[idx] : null;
+              mappedRow[key] = cell && cell.v !== undefined ? cell.v : null;
             });
             return mappedRow;
           }).filter(row =>
@@ -919,7 +969,7 @@
             ...row,
             'QTY': parseFloat(row['QTY']) || 0,
             'Distance': parseFloat(row['Distance']) || 0,
-            'Area': normalizeArea(row['Area']), // NORMALISASI AREA
+            'Area': normalizeArea(row['Area']),
             'Date': extractDateFromRow(row)
           }));
 
