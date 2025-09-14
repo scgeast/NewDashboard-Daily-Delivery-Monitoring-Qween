@@ -735,6 +735,7 @@
         applyFilters();
       });
     });
+
     // --- FUNGSI UTAMA ---
     function handleFileUpload(e) {
       const file = e.target.files[0];
@@ -1003,6 +1004,7 @@
 
       reader.readAsArrayBuffer(file);
     }
+
     function extractDateFromRow(row) {
       const dateCols = ['date', 'delivery date', 'delivery_date', 'tanggal', 'dp date'];
       for (let col in row) {
@@ -1020,6 +1022,7 @@
       }
       return new Date();
     }
+
     function updateFilters() {
       const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
       const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
@@ -1034,12 +1037,14 @@
       addOption('truckTypeMenu', "Select All", "all");
       truckTypes.forEach(t => addOption('truckTypeMenu', t, t));
     }
+
     function clearDropdown(menuId) {
       const menu = document.getElementById(menuId);
       while (menu.children.length > 0) {
         menu.removeChild(menu.firstChild);
       }
     }
+
     function addOption(menuId, text, value) {
       const menu = document.getElementById(menuId);
       const option = document.createElement('option');
@@ -1047,6 +1052,7 @@
       option.value = value;
       menu.appendChild(option);
     }
+
     // Fungsi untuk menangani klik pada option di custom dropdown
     document.addEventListener('click', function(e) {
       const option = e.target.closest('.dropdown-menu option');
@@ -1067,6 +1073,7 @@
       // Terapkan filter otomatis
       applyFilters();
     });
+
     function toggleDropdown(id) {
       const dropdown = document.getElementById(id);
       const menu = dropdown.querySelector('.dropdown-menu');
@@ -1082,6 +1089,7 @@
         icon.classList.add('fa-chevron-up');
       }
     }
+
     function applyFilters() {
       let filtered = [...rawData];
       // Date Filter
@@ -1124,6 +1132,7 @@
       updateCharts();
       lastUpdate.textContent = `Last Update: ${new Date().toLocaleString()}`;
     }
+
     function updateKPIs() {
       const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
       const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
@@ -1138,16 +1147,19 @@
       kpiTruck.textContent = totalTruck;
       kpiAvgLoadTruck.textContent = avgLoadPerTruck;
     }
+
     function updateDashboardTitle() {
       const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option[selected]')).map(o => o.textContent);
       const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
       dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
     }
+
     function updatePeriodeText() {
       const start = startDate.value ? new Date(startDate.value).toLocaleDateString('id-ID') : '--';
       const end = endDate.value ? new Date(endDate.value).toLocaleDateString('id-ID') : '--';
       periodeText.textContent = `Periode: ${start} - ${end}`;
     }
+
     function updateCharts() {
       destroyAllCharts();
       if (!filteredData.length) return;
@@ -1171,6 +1183,7 @@
       createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
       createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
     }
+
     function getGroupedData(groupBy, metric, isAvg = false) {
       const map = new Map();
       filteredData.forEach(row => {
@@ -1184,6 +1197,7 @@
         value: isAvg ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : values.reduce((a,b)=>a+b,0)
       })).sort((a,b) => b.value - a.value).slice(0, 10);
     }
+
     function getTripCountByTruck() {
       const tripMap = new Map();
       filteredData.forEach(row => {
@@ -1197,6 +1211,7 @@
         value: trips.size
       })).sort((a,b) => b.value - a.value).slice(0, 10);
     }
+
     function getDailyAvgVolume() {
       const dailyMap = new Map();
       filteredData.forEach(row => {
@@ -1212,10 +1227,12 @@
         }))
         .sort((a, b) => new Date(a.date) - new Date(b.date));
     }
+
     function destroyAllCharts() {
       Object.values(charts).forEach(chart => chart.destroy());
       charts = {};
     }
+
     function createBarChart(canvasId, title, data, enableHighlight = false) {
       const ctx = document.getElementById(canvasId).getContext('2d');
       const labels = data.map(d => d.label);
@@ -1252,6 +1269,7 @@
       };
       charts[canvasId] = new Chart(ctx, config);
     }
+
     function createSingleValueBarChart(canvasId, title, value, unit) {
       const ctx = document.getElementById(canvasId).getContext('2d');
       const labels = ['Avg Load'];
@@ -1291,6 +1309,7 @@
       };
       charts[canvasId] = new Chart(ctx, config);
     }
+
     function createLineChart(canvasId, title, data) {
       const ctx = document.getElementById(canvasId).getContext('2d');
       const labels = data.map(d => d.date);
@@ -1327,6 +1346,7 @@
       };
       charts[canvasId] = new Chart(ctx, config);
     }
+
     function createScatterChart(canvasId, title, data) {
       const ctx = document.getElementById(canvasId).getContext('2d');
       const points = data.map(p => ({ x: p.x, y: p.y }));
