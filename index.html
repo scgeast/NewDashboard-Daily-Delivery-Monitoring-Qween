@@ -13,7 +13,7 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* CSS tetap sama seperti sebelumnya */
+        /* CSS remains the same as before */
         :root {
             --primary: #3498db;
             --secondary: #2c3e50;
@@ -821,6 +821,11 @@
             return new Date();
         }
         
+        // Format angka dengan pemisah ribuan
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+        
         // DOM Elements
         let sidebar, main, toggleBtn, excelFile, startDate, endDate, dataLabelToggle;
         let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolumePerDay, kpiTruck, kpiAvgLoadTruck, kpiAvgTripTruck, lastUpdate;
@@ -1224,14 +1229,17 @@
         }
         
         function updateKPIs() {
-            const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
-            const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
-            const totalVolume = filteredData.reduce((sum, r) => sum + r.QTY, 0);
-            
             // Calculate number of days in date range
             const start = startDate.value ? new Date(startDate.value) : null;
             const end = endDate.value ? new Date(endDate.value) : null;
             const daysDiff = start && end ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 1;
+            
+            // Total Area - count unique areas from the Area column in the file
+            const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
+            
+            const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
+            const totalVolume = filteredData.reduce((sum, r) => sum + r.QTY, 0);
+            
             const avgVolumePerDay = totalVolume > 0 ? (totalVolume / daysDiff).toFixed(2) : 0;
             
             const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].length;
@@ -1242,16 +1250,16 @@
             // Calculate Avg Load/Truck (Total Volume / Total Trips)
             const avgLoadPerTruck = totalTrips > 0 ? (totalVolume / totalTrips).toFixed(2) : 0;
             
-            // Calculate Avg Trip/Truck (Total Trips / Total Truck)
-            const avgTripPerTruck = totalTruck > 0 ? (totalTrips / totalTruck).toFixed(2) : 0;
+            // Calculate Avg Trip/Truck (Total Trips / Total Truck / Days)
+            const avgTripPerTruck = totalTruck > 0 && daysDiff > 0 ? (totalTrips / totalTruck / daysDiff).toFixed(2) : 0;
             
-            kpiArea.textContent = totalArea;
-            kpiPlant.textContent = totalPlant;
-            kpiVolume.textContent = totalVolume.toFixed(2);
-            kpiAvgVolumePerDay.textContent = avgVolumePerDay;
-            kpiTruck.textContent = totalTruck;
-            kpiAvgLoadTruck.textContent = avgLoadPerTruck;
-            kpiAvgTripTruck.textContent = avgTripPerTruck;
+            kpiArea.textContent = formatNumber(totalArea);
+            kpiPlant.textContent = formatNumber(totalPlant);
+            kpiVolume.textContent = formatNumber(totalVolume.toFixed(2));
+            kpiAvgVolumePerDay.textContent = formatNumber(avgVolumePerDay);
+            kpiTruck.textContent = formatNumber(totalTruck);
+            kpiAvgLoadTruck.textContent = formatNumber(avgLoadPerTruck);
+            kpiAvgTripTruck.textContent = formatNumber(avgTripPerTruck);
         }
         
         function updateDashboardTitle() {
@@ -1264,14 +1272,23 @@
             const selectedAreas = selectedAreaOptions.map(o => o.textContent);
             const selectedPlants = selectedPlantOptions.map(o => o.textContent);
             
+            // Check if both filters are "Select All"
+            const isAreaAll = selectedAreas.includes('Select All') || selectedAreas.length === 0;
+            const isPlantAll = selectedPlants.includes('Select All') || selectedPlants.length === 0;
+            
+            if (isAreaAll && isPlantAll) {
+                dashboardTitle.textContent = 'Summary Daily Delivery All Area';
+                return;
+            }
+            
             let areaDisplay = 'All';
             let plantDisplay = 'All';
             
-            if (!selectedAreas.includes('Select All')) {
+            if (!selectedAreas.includes('Select All') && selectedAreas.length > 0) {
                 areaDisplay = selectedAreas.join(', ');
             }
             
-            if (!selectedPlants.includes('Select All')) {
+            if (!selectedPlants.includes('Select All') && selectedPlants.length > 0) {
                 plantDisplay = selectedPlants.join(', ');
             }
             
@@ -1302,17 +1319,31 @@
             document.getElementById('avgVolumeByPlant').style.display = showPlantCharts ? 'block' : 'none';
             document.getElementById('avgDistancePerPlant').style.display = showPlantCharts ? 'block' : 'none';
             
+            // Calculate number of days for average calculations
+            const start = startDate.value ? new Date(startDate.value) : null;
+            const end = endDate.value ? new Date(endDate.value) : null;
+            const daysDiff = start && end ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 1;
+            
             if (showAreaCharts) {
                 createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
             }
             
             if (showPlantCharts) {
                 createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
-                createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
+                createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true, daysDiff), true);
                 createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
             }
             
             createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
+            
+            // Adjust chart height based on number of trucks
+            const truckCount = [...new Set(filteredData.map(r => r['Truck No']))].length;
+            const chartHeight = Math.max(400, truckCount * 30); // Minimum 400px, 30px per truck
+            
+            document.getElementById('chartVolumePerTruck').parentElement.style.height = `${chartHeight}px`;
+            document.getElementById('chartTotalTripPerTruck').parentElement.style.height = `${chartHeight}px`;
+            document.getElementById('chartAvgLoadPerTruck').parentElement.style.height = `${chartHeight}px`;
+            
             createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
             createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
             
@@ -1330,7 +1361,7 @@
             charts = {};
         }
         
-        function getGroupedData(groupBy, metric, isAvg = false) {
+        function getGroupedData(groupBy, metric, isAvg = false, days = 1) {
             const map = new Map();
             
             filteredData.forEach(row => {
@@ -1344,7 +1375,7 @@
             return Array.from(map.entries()).map(([key, values]) => ({
                 label: key,
                 value: isAvg ? 
-                    (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : 
+                    (values.reduce((a,b)=>a+b,0)/days).toFixed(2) : 
                     values.reduce((a,b)=>a+b,0)
             })).sort((a,b) => b.value - a.value);
         }
@@ -1434,7 +1465,14 @@
             
             const plugins = {
                 legend: { display: false },
-                tooltip: { enabled: true },
+                tooltip: { 
+                    enabled: true,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${formatNumber(context.raw)}`;
+                        }
+                    }
+                },
                 title: { display: true, text: title, font: { size: 16 } },
             };
             
@@ -1449,7 +1487,7 @@
                         size: 12
                     },
                     formatter: function(value) {
-                        return value.toFixed(2);
+                        return formatNumber(value.toFixed(2));
                     }
                 };
             }
@@ -1464,7 +1502,12 @@
                     scales: {
                         y: { 
                             beginAtZero: true, 
-                            ticks: { color: '#555' } 
+                            ticks: { 
+                                color: '#555',
+                                callback: function(value) {
+                                    return formatNumber(value);
+                                }
+                            } 
                         },
                         x: { 
                             ticks: { 
@@ -1508,7 +1551,14 @@
             
             const plugins = {
                 legend: { display: false },
-                tooltip: { enabled: true },
+                tooltip: { 
+                    enabled: true,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${formatNumber(context.raw)}`;
+                        }
+                    }
+                },
                 title: { display: true, text: title, font: { size: 16 } },
             };
             
@@ -1523,7 +1573,7 @@
                         size: 12
                     },
                     formatter: function(value) {
-                        return value.toFixed(2);
+                        return formatNumber(value.toFixed(2));
                     }
                 };
             }
@@ -1538,7 +1588,12 @@
                     scales: {
                         y: { 
                             beginAtZero: true, 
-                            ticks: { color: '#555' } 
+                            ticks: { 
+                                color: '#555',
+                                callback: function(value) {
+                                    return formatNumber(value);
+                                }
+                            } 
                         },
                         x: { 
                             ticks: { 
@@ -1574,18 +1629,35 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: true },
+                        tooltip: { 
+                            enabled: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Distance: ${formatNumber(context.raw.x)}, Volume: ${formatNumber(context.raw.y)}`;
+                                }
+                            }
+                        },
                         title: { display: true, text: title, font: { size: 16 } },
                     },
                     scales: {
                         x: { 
                             title: { display: true, text: 'Distance (km)' }, 
-                            ticks: { color: '#555' } 
+                            ticks: { 
+                                color: '#555',
+                                callback: function(value) {
+                                    return formatNumber(value);
+                                }
+                            } 
                         },
                         y: { 
                             title: { display: true, text: 'Volume (m³)' }, 
                             beginAtZero: true, 
-                            ticks: { color: '#555' } 
+                            ticks: { 
+                                color: '#555',
+                                callback: function(value) {
+                                    return formatNumber(value);
+                                }
+                            } 
                         }
                     }
                 }
