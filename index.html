@@ -22,6 +22,8 @@
             --light: #ecf0f1;
             --dark: #2c3e50;
             --gray: #95a5a6;
+            --gradient-start: #3498db;
+            --gradient-end: #2c3e50;
         }
         * {
             margin: 0;
@@ -39,7 +41,7 @@
         /* SIDEBAR */
         #sidebar {
             width: 280px;
-            background-color: var(--secondary);
+            background: linear-gradient(135deg, var(--secondary), #1a2530);
             color: white;
             transition: all 0.3s ease;
             height: 100vh;
@@ -97,7 +99,7 @@
             display: none;
         }
         .upload-btn {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), #2980b9);
             color: white;
             border: none;
             padding: 10px 15px;
@@ -111,8 +113,8 @@
             transition: all 0.3s ease;
         }
         .upload-btn:hover {
-            background-color: #2980b9;
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         .upload-info {
             font-size: 12px;
@@ -332,7 +334,7 @@
             margin-bottom: 25px;
         }
         .kpi-card {
-            background: white;
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -416,14 +418,14 @@
         }
         .chart-canvas-container {
             position: relative;
-            height: 300px; /* Diperkecil dari 400px */
+            height: 350px;
             width: 100%;
         }
         .chart-canvas-container.small {
-            height: 250px; /* Diperkecil dari 300px */
+            height: 300px;
         }
         .chart-canvas-container.large {
-            height: 350px; /* Diperkecil dari 500px */
+            height: 400px;
         }
         /* DATA LABEL TOGGLE */
         .data-label-toggle {
@@ -652,10 +654,10 @@
                         <canvas id="chartAvgVolumeByPlant"></canvas>
                     </div>
                 </div>
-                <div id="avgVolumePerDay" class="chart-container">
-                    <h4 class="chart-title"><i class="fas fa-calendar-day"></i> A4. Avg Volume per Day</h4>
+                <div id="volumePerDay" class="chart-container">
+                    <h4 class="chart-title"><i class="fas fa-calendar-day"></i> A4. Volume per Day</h4>
                     <div class="chart-canvas-container">
-                        <canvas id="chartAvgVolumePerDay"></canvas>
+                        <canvas id="chartVolumePerDay"></canvas>
                     </div>
                 </div>
             </div>
@@ -743,49 +745,6 @@
                 .trim()
                 .replace(/[^\w\s]/g, '')  // Hapus simbol
                 .replace(/\s+/g, ' ');     // Ganti spasi berlebih jadi satu spasi
-        }
-        
-        // Normalisasi area (untuk menangani variasi nama)
-        function normalizeArea(area) {
-            if (!area) return area;
-            const map = {
-                'east': 'East Java',
-                'west indonesia 1': 'West Java',
-                'west indonesia 2': 'West Java',
-                'west indonesia 3': 'West Java',
-                'east indonesia': 'East Java',
-                'jakarta special capital region': 'Jakarta',
-                'lampung': 'Lampung',
-                'banten': 'Banten',
-                'jawa timur': 'East Java',
-                'jawa tengah': 'Central Java',
-                'sumatera': 'Sumatra',
-                'kalimantan': 'Kalimantan',
-                'sulawesi': 'Sulawesi',
-                'nusa tenggara': 'Nusa Tenggara',
-                'papua': 'Papua',
-                'jawa': 'Java',
-                'jakarta raya': 'Jakarta',
-                'jabodetabek': 'Jakarta',
-                'jabar': 'West Java',
-                'jatim': 'East Java',
-                'jateng': 'Central Java',
-                'sumut': 'Sumatra',
-                'sumsel': 'Sumatra',
-                'kalbar': 'Kalimantan',
-                'kaltim': 'Kalimantan',
-                'sulsel': 'Sulawesi',
-                'sultra': 'Sulawesi',
-                'ntt': 'Nusa Tenggara',
-                'ntb': 'Nusa Tenggara',
-                'papua barat': 'Papua',
-                'papua tengah': 'Papua',
-                'east java': 'East Java',
-                'west java': 'West Java',
-                'central java': 'Central Java'
-            };
-            const clean = area.toString().toLowerCase().trim();
-            return map[clean] || area;
         }
         
         // Fungsi untuk parsing tanggal Excel
@@ -989,13 +948,10 @@
                         return mappedRow;
                     }).filter(row => row !== null).map(row => {
                         // Transformasi data - simpan nilai asli dan nilai yang dinormalisasi
-                        const normalizedArea = normalizeArea(row['Area']);
                         return {
                             ...row,
                             'QTY': parseFloat(String(row['QTY']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
                             'Distance': parseFloat(String(row['Distance']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
-                            'Area': normalizedArea,
-                            'AreaOriginal': row['Area'], // Simpan nilai asli untuk filter
                             'DP Date': parseExcelDate(row['DP Date'])
                         };
                     });
@@ -1031,8 +987,8 @@
         }
 
         function updateFilters() {
-            // Gunakan nilai asli (AreaOriginal) untuk filter, bukan nilai yang sudah dinormalisasi
-            const areas = [...new Set(rawData.map(r => r.AreaOriginal).filter(a => a))].sort();
+            // Gunakan nilai asli untuk filter
+            const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
             const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
             const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
             
@@ -1124,10 +1080,10 @@
                 addOption('plantMenu', "Select All", "all", true);
                 allPlants.forEach(p => addOption('plantMenu', p, p));
             } else {
-                // Show plants only from selected areas (gunakan AreaOriginal untuk filter)
+                // Show plants only from selected areas
                 const filteredPlants = [...new Set(
                     rawData
-                        .filter(row => selectedAreas.includes(row.AreaOriginal))
+                        .filter(row => selectedAreas.includes(row.Area))
                         .map(r => r['Plant Name'])
                         .filter(p => p)
                 )].sort();
@@ -1185,13 +1141,13 @@
                 });
             }
             
-            // Filter by area (gunakan AreaOriginal untuk filter)
+            // Filter by area
             const areaMenu = document.getElementById('areaMenu');
             const selectedAreaOptions = areaMenu.querySelectorAll('option.selected');
             const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
             
             if (!selectedAreas.includes('all')) {
-                filtered = filtered.filter(row => selectedAreas.includes(row.AreaOriginal));
+                filtered = filtered.filter(row => selectedAreas.includes(row.Area));
             }
             
             // Filter by plant
@@ -1226,7 +1182,7 @@
             const end = endDate.value ? new Date(endDate.value) : null;
             const daysDiff = start && end ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 1;
             
-            // Total Area - count unique areas from the Area column in the file
+            // Total Area - count unique areas
             const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
             
             // Total Area - sesuai dengan jumlah area yang dipilih di filter
@@ -1321,22 +1277,18 @@
             document.getElementById('avgVolumeByPlant').style.display = showPlantCharts ? 'block' : 'none';
             document.getElementById('avgDistancePerPlant').style.display = showPlantCharts ? 'block' : 'none';
             
-            // Calculate number of days for average calculations
-            const start = startDate.value ? new Date(startDate.value) : null;
-            const end = endDate.value ? new Date(endDate.value) : null;
-            const daysDiff = start && end ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 1;
-            
             if (showAreaCharts) {
                 createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), false);
             }
             
             if (showPlantCharts) {
                 createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), false);
-                createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true, daysDiff), false);
+                createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), false);
                 createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), false);
             }
             
-            createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
+            // Mengubah dari Avg Volume per Day menjadi Volume per Day
+            createLineChart('chartVolumePerDay', 'Volume per Day', getDailyVolume());
             
             // Adjust chart height based on number of items
             const truckCount = [...new Set(filteredData.map(r => r['Truck No']))].length;
@@ -1367,7 +1319,7 @@
             charts = {};
         }
         
-        function getGroupedData(groupBy, metric, isAvg = false, days = 1) {
+        function getGroupedData(groupBy, metric, isAvg = false) {
             const map = new Map();
             
             filteredData.forEach(row => {
@@ -1381,7 +1333,7 @@
             return Array.from(map.entries()).map(([key, values]) => ({
                 label: key,
                 value: isAvg ? 
-                    (values.reduce((a,b)=>a+b,0)/days).toFixed(2) : 
+                    (values.reduce((a,b)=>a+b,0)/values.length).toFixed(2) : 
                     values.reduce((a,b)=>a+b,0)
             })).sort((a,b) => b.value - a.value);
         }
@@ -1421,19 +1373,19 @@
             })).sort((a,b) => b.value - a.value);
         }
         
-        function getDailyAvgVolume() {
+        // Mengubah dari Avg Volume per Day menjadi Volume per Day
+        function getDailyVolume() {
             const dailyMap = new Map();
             
             filteredData.forEach(row => {
                 const dateStr = row['DP Date'].toISOString().split('T')[0];
-                if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, { sum: 0, count: 0 });
+                if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, 0);
                 
-                dailyMap.get(dateStr).sum += row.QTY;
-                dailyMap.get(dateStr).count += 1;
+                dailyMap.set(dateStr, dailyMap.get(dateStr) + row.QTY);
             });
             
             return Array.from(dailyMap.entries())
-                .map(([date, { sum, count }]) => ({ date, avg: (sum / count).toFixed(2) }))
+                .map(([date, volume]) => ({ date, volume: parseFloat(volume.toFixed(2)) }))
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
         }
         
@@ -1451,7 +1403,7 @@
             const backgroundColors = labels.map((_, i) => {
                 const gradient = ctx.createLinearGradient(0, 0, 0, 400);
                 gradient.addColorStop(0, '#3498db');
-                gradient.addColorStop(1, 'rgba(52, 152, 219, 0.7)');
+                gradient.addColorStop(1, '#2c3e50');
                 return gradient;
             });
             
@@ -1531,7 +1483,7 @@
         function createLineChart(canvasId, title, data) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const labels = data.map(d => d.date);
-            const values = data.map(d => parseFloat(d.avg));
+            const values = data.map(d => parseFloat(d.volume));
             
             // Create gradient for line chart
             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
@@ -1539,7 +1491,7 @@
             gradient.addColorStop(1, 'rgba(52, 152, 219, 0.1)');
             
             const datasets = [{
-                label: 'Avg Volume (m³)',
+                label: 'Volume (m³)',
                 data: values,
                 borderColor: '#3498db',
                 backgroundColor: gradient,
