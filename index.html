@@ -6,6 +6,8 @@
     <title>Summary Daily Delivery - Excel Upload</title>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Data Labels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <!-- SheetJS (xlsx) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Font Awesome for Icons -->
@@ -107,13 +109,16 @@
             align-items: center;
             gap: 8px;
             margin-bottom: 10px;
+            transition: all 0.3s ease;
         }
         .upload-btn:hover {
             background-color: #2980b9;
+            transform: translateY(-2px);
         }
         .upload-info {
             font-size: 12px;
             color: #bdc3c7;
+            margin-top: 5px;
         }
         /* Loading Overlay */
         .loading-overlay {
@@ -177,6 +182,12 @@
             margin-bottom: 10px;
             font-size: 14px;
             opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-section h4 i {
+            font-size: 16px;
         }
         .filter-section input[type="date"] {
             width: 100%;
@@ -186,6 +197,12 @@
             border: 1px solid rgba(255,255,255,0.2);
             background-color: rgba(255,255,255,0.1);
             color: white;
+            transition: all 0.3s ease;
+        }
+        .filter-section input[type="date"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: rgba(255,255,255,0.2);
         }
         .custom-dropdown {
             position: relative;
@@ -202,6 +219,10 @@
             cursor: pointer;
             font-size: 14px;
             color: white;
+            transition: all 0.3s ease;
+        }
+        .dropdown-header:hover {
+            background-color: rgba(255,255,255,0.2);
         }
         .dropdown-header i {
             font-size: 14px;
@@ -220,6 +241,7 @@
             max-height: 200px;
             overflow-y: auto;
             z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .dropdown-menu.show {
             display: block;
@@ -234,6 +256,7 @@
             display: block;
             width: 100%;
             text-align: left;
+            transition: all 0.2s ease;
         }
         .dropdown-menu option:hover {
             background-color: #f0f0f0;
@@ -526,10 +549,10 @@
                 <div class="error-message" id="errorMessage">Gagal! File tidak valid atau tidak lengkap.</div>
             </div>
             <div class="filter-section">
-                <h4>Tanggal</h4>
+                <h4><i class="fas fa-calendar"></i> Tanggal</h4>
                 <input type="date" id="startDate" />
                 <input type="date" id="endDate" />
-                <h4>Area</h4>
+                <h4><i class="fas fa-map-marker-alt"></i> Area</h4>
                 <div class="custom-dropdown" id="areaDropdown">
                     <div class="dropdown-header" onclick="toggleDropdown('areaDropdown')">
                         <span id="areaLabel">Select All</span>
@@ -539,7 +562,7 @@
                         <option value="all" class="selected">Select All</option>
                     </div>
                 </div>
-                <h4>Plant</h4>
+                <h4><i class="fas fa-industry"></i> Plant</h4>
                 <div class="custom-dropdown" id="plantDropdown">
                     <div class="dropdown-header" onclick="toggleDropdown('plantDropdown')">
                         <span id="plantLabel">Select All</span>
@@ -549,7 +572,7 @@
                         <option value="all" class="selected">Select All</option>
                     </div>
                 </div>
-                <h4>Type Truck</h4>
+                <h4><i class="fas fa-truck"></i> Type Truck</h4>
                 <div class="custom-dropdown" id="truckTypeDropdown">
                     <div class="dropdown-header" onclick="toggleDropdown('truckTypeDropdown')">
                         <span id="truckTypeLabel">Select All</span>
@@ -575,7 +598,7 @@
         <div class="dashboard-header-expanded">
             <div class="header-top">
                 <div class="header-center">
-                    <h1 id="dashboardTitle">Summary Daily Delivery...Area (All)</h1>
+                    <h1 id="dashboardTitle">Summary Daily Delivery Plant All Area</h1>
                 </div>
                 <div class="header-right">
                     <div class="last-update" id="lastUpdate">Last Update: --</div>
@@ -1215,7 +1238,11 @@
             
             // Calculate total trips (unique DP No)
             const totalTrips = [...new Set(filteredData.map(r => r['DP No']))].length;
-            const avgLoadPerTruck = totalTruck > 0 ? (totalVolume / totalTruck).toFixed(2) : 0;
+            
+            // Calculate Avg Load/Truck (Total Volume / Total Trips)
+            const avgLoadPerTruck = totalTrips > 0 ? (totalVolume / totalTrips).toFixed(2) : 0;
+            
+            // Calculate Avg Trip/Truck (Total Trips / Total Truck)
             const avgTripPerTruck = totalTruck > 0 ? (totalTrips / totalTruck).toFixed(2) : 0;
             
             kpiArea.textContent = totalArea;
@@ -1228,9 +1255,27 @@
         }
         
         function updateDashboardTitle() {
-            const selectedAreas = Array.from(document.getElementById('areaMenu').querySelectorAll('option.selected')).map(o => o.textContent);
-            const areaDisplay = selectedAreas.includes('Select All') ? 'All' : selectedAreas.join(', ');
-            dashboardTitle.textContent = `Summary Daily Delivery...Area (${areaDisplay})`;
+            const areaMenu = document.getElementById('areaMenu');
+            const plantMenu = document.getElementById('plantMenu');
+            
+            const selectedAreaOptions = Array.from(areaMenu.querySelectorAll('option.selected'));
+            const selectedPlantOptions = Array.from(plantMenu.querySelectorAll('option.selected'));
+            
+            const selectedAreas = selectedAreaOptions.map(o => o.textContent);
+            const selectedPlants = selectedPlantOptions.map(o => o.textContent);
+            
+            let areaDisplay = 'All';
+            let plantDisplay = 'All';
+            
+            if (!selectedAreas.includes('Select All')) {
+                areaDisplay = selectedAreas.join(', ');
+            }
+            
+            if (!selectedPlants.includes('Select All')) {
+                plantDisplay = selectedPlants.join(', ');
+            }
+            
+            dashboardTitle.textContent = `Summary Daily Delivery Plant ${plantDisplay} ${areaDisplay} Area`;
         }
         
         function updatePeriodeText() {
@@ -1249,7 +1294,7 @@
             const plantFilterSelected = Array.from(document.getElementById('plantMenu').querySelectorAll('option.selected')).map(o => o.value);
             
             const showAreaCharts = areaFilterSelected.includes('all');
-            const showPlantCharts = areaFilterSelected.includes('all') && plantFilterSelected.includes('all');
+            const showPlantCharts = !areaFilterSelected.includes('all') && plantFilterSelected.includes('all');
             
             // Show/hide charts based on filter selections
             document.getElementById('volumeByArea').style.display = showAreaCharts ? 'block' : 'none';
@@ -1271,11 +1316,10 @@
             createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
             createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
             
-            const totalVol = filteredData.reduce((s, r) => s + r.QTY, 0);
-            const totalTrucks = [...new Set(filteredData.map(r => r['Truck No']))].length;
-            const avgLoad = totalTrucks > 0 ? totalVol / totalTrucks : 0;
+            // Calculate Avg Load per Truck for chart
+            const truckData = getAvgLoadPerTruck();
+            createBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', truckData, true);
             
-            createSingleValueBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', avgLoad.toFixed(2), 'm³');
             createScatterChart('chartTrendVolumeByDistance', 'Trend Volume by Distance', filteredData.map(r => ({ x: r.Distance, y: r.QTY })));
             createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
             createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
@@ -1319,6 +1363,24 @@
             return Array.from(tripMap.entries()).map(([truck, trips]) => ({
                 label: truck,
                 value: trips.size
+            })).sort((a,b) => b.value - a.value);
+        }
+        
+        function getAvgLoadPerTruck() {
+            const truckMap = new Map();
+            
+            filteredData.forEach(row => {
+                const truckNo = row['Truck No'];
+                if (!truckNo) return;
+                
+                if (!truckMap.has(truckNo)) truckMap.set(truckNo, { totalVolume: 0, tripCount: 0 });
+                truckMap.get(truckNo).totalVolume += row.QTY;
+                truckMap.get(truckNo).tripCount += 1;
+            });
+            
+            return Array.from(truckMap.entries()).map(([truck, { totalVolume, tripCount }]) => ({
+                label: truck,
+                value: tripCount > 0 ? (totalVolume / tripCount).toFixed(2) : 0
             })).sort((a,b) => b.value - a.value);
         }
         
@@ -1370,17 +1432,35 @@
                 borderRadius: 4,
             }];
             
+            const plugins = {
+                legend: { display: false },
+                tooltip: { enabled: true },
+                title: { display: true, text: title, font: { size: 16 } },
+            };
+            
+            // Add data labels if enabled
+            if (dataLabelsEnabled) {
+                plugins.datalabels = {
+                    color: '#fff',
+                    anchor: 'end',
+                    align: 'top',
+                    font: {
+                        weight: 'bold',
+                        size: 12
+                    },
+                    formatter: function(value) {
+                        return value.toFixed(2);
+                    }
+                };
+            }
+            
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: true },
-                        title: { display: true, text: title, font: { size: 16 } },
-                    },
+                    plugins: plugins,
                     scales: {
                         y: { 
                             beginAtZero: true, 
@@ -1426,17 +1506,35 @@
                 pointHoverRadius: 8
             }];
             
+            const plugins = {
+                legend: { display: false },
+                tooltip: { enabled: true },
+                title: { display: true, text: title, font: { size: 16 } },
+            };
+            
+            // Add data labels if enabled
+            if (dataLabelsEnabled) {
+                plugins.datalabels = {
+                    color: '#2c3e50',
+                    anchor: 'end',
+                    align: 'top',
+                    font: {
+                        weight: 'bold',
+                        size: 12
+                    },
+                    formatter: function(value) {
+                        return value.toFixed(2);
+                    }
+                };
+            }
+            
             const config = {
                 type: 'line',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: true },
-                        title: { display: true, text: title, font: { size: 16 } },
-                    },
+                    plugins: plugins,
                     scales: {
                         y: { 
                             beginAtZero: true, 
@@ -1489,49 +1587,6 @@
                             beginAtZero: true, 
                             ticks: { color: '#555' } 
                         }
-                    }
-                }
-            };
-            
-            charts[canvasId] = new Chart(ctx, config);
-        }
-        
-        function createSingleValueBarChart(canvasId, title, value, unit) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            const labels = ['Avg Load'];
-            const values = [parseFloat(value)];
-            
-            // Create gradient for single value bar
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(46, 204, 113, 0.8)');
-            gradient.addColorStop(1, 'rgba(46, 204, 113, 0.4)');
-            
-            const datasets = [{
-                label: title,
-                data: values,
-                backgroundColor: gradient,
-                borderColor: 'rgba(0,0,0,0.1)',
-                borderWidth: 1,
-                borderRadius: 4,
-            }];
-            
-            const config = {
-                type: 'bar',
-                data: { labels, datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: true },
-                        title: { display: true, text: title, font: { size: 16 } },
-                    },
-                    scales: {
-                        y: { 
-                            display: false, 
-                            beginAtZero: true 
-                        },
-                        x: { display: false }
                     }
                 }
             };
