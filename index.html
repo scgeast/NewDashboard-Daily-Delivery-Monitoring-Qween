@@ -11,6 +11,7 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        /* CSS tetap sama seperti sebelumnya */
         :root {
             --primary: #3498db;
             --secondary: #2c3e50;
@@ -967,12 +968,14 @@
                         
                         return mappedRow;
                     }).filter(row => row !== null).map(row => {
-                        // Transformasi data
+                        // Transformasi data - simpan nilai asli dan nilai yang dinormalisasi
+                        const normalizedArea = normalizeArea(row['Area']);
                         return {
                             ...row,
                             'QTY': parseFloat(String(row['QTY']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
                             'Distance': parseFloat(String(row['Distance']).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
-                            'Area': normalizeArea(row['Area']),
+                            'Area': normalizedArea,
+                            'AreaOriginal': row['Area'], // Simpan nilai asli untuk filter
                             'DP Date': parseExcelDate(row['DP Date'])
                         };
                     });
@@ -1008,7 +1011,8 @@
         }
 
         function updateFilters() {
-            const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
+            // Gunakan nilai asli (AreaOriginal) untuk filter, bukan nilai yang sudah dinormalisasi
+            const areas = [...new Set(rawData.map(r => r.AreaOriginal).filter(a => a))].sort();
             const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
             const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
             
@@ -1100,10 +1104,10 @@
                 addOption('plantMenu', "Select All", "all", true);
                 allPlants.forEach(p => addOption('plantMenu', p, p));
             } else {
-                // Show plants only from selected areas
+                // Show plants only from selected areas (gunakan AreaOriginal untuk filter)
                 const filteredPlants = [...new Set(
                     rawData
-                        .filter(row => selectedAreas.includes(row.Area))
+                        .filter(row => selectedAreas.includes(row.AreaOriginal))
                         .map(r => r['Plant Name'])
                         .filter(p => p)
                 )].sort();
@@ -1161,13 +1165,13 @@
                 });
             }
             
-            // Filter by area
+            // Filter by area (gunakan AreaOriginal untuk filter)
             const areaMenu = document.getElementById('areaMenu');
             const selectedAreaOptions = areaMenu.querySelectorAll('option.selected');
             const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
             
             if (!selectedAreas.includes('all')) {
-                filtered = filtered.filter(row => selectedAreas.includes(row.Area));
+                filtered = filtered.filter(row => selectedAreas.includes(row.AreaOriginal));
             }
             
             // Filter by plant
@@ -1366,35 +1370,17 @@
                 borderRadius: 4,
             }];
             
-            // Configure data labels plugin if enabled
-            const plugins = {
-                legend: { display: false },
-                tooltip: { enabled: true },
-                title: { display: true, text: title, font: { size: 16 } },
-            };
-            
-            if (dataLabelsEnabled) {
-                plugins.datalabels = {
-                    color: '#fff',
-                    anchor: 'end',
-                    align: 'top',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: function(value) {
-                        return value.toFixed(2);
-                    }
-                };
-            }
-            
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: plugins,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true },
+                        title: { display: true, text: title, font: { size: 16 } },
+                    },
                     scales: {
                         y: { 
                             beginAtZero: true, 
@@ -1440,35 +1426,17 @@
                 pointHoverRadius: 8
             }];
             
-            // Configure data labels plugin if enabled
-            const plugins = {
-                legend: { display: false },
-                tooltip: { enabled: true },
-                title: { display: true, text: title, font: { size: 16 } },
-            };
-            
-            if (dataLabelsEnabled) {
-                plugins.datalabels = {
-                    color: '#2c3e50',
-                    anchor: 'end',
-                    align: 'top',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: function(value) {
-                        return value.toFixed(2);
-                    }
-                };
-            }
-            
             const config = {
                 type: 'line',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: plugins,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true },
+                        title: { display: true, text: title, font: { size: 16 } },
+                    },
                     scales: {
                         y: { 
                             beginAtZero: true, 
@@ -1547,35 +1515,17 @@
                 borderRadius: 4,
             }];
             
-            // Configure data labels plugin if enabled
-            const plugins = {
-                legend: { display: false },
-                tooltip: { enabled: true },
-                title: { display: true, text: title, font: { size: 16 } },
-            };
-            
-            if (dataLabelsEnabled) {
-                plugins.datalabels = {
-                    color: '#fff',
-                    anchor: 'end',
-                    align: 'top',
-                    font: {
-                        weight: 'bold',
-                        size: 16
-                    },
-                    formatter: function(value) {
-                        return value + ' ' + unit;
-                    }
-                };
-            }
-            
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: plugins,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true },
+                        title: { display: true, text: title, font: { size: 16 } },
+                    },
                     scales: {
                         y: { 
                             display: false, 
