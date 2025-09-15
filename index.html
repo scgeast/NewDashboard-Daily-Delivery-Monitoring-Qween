@@ -591,9 +591,10 @@
             <div class="kpi-card"><h3>Total Area</h3><p id="kpiArea">0</p></div>
             <div class="kpi-card"><h3>Total Plant</h3><p id="kpiPlant">0</p></div>
             <div class="kpi-card"><h3>Total Volume (m³)</h3><p id="kpiVolume">0</p></div>
-            <div class="kpi-card"><h3>Avg Volume (m³)</h3><p id="kpiAvgVolume">0</p></div>
+            <div class="kpi-card"><h3>Avg Volume/Day (m³)</h3><p id="kpiAvgVolumePerDay">0</p></div>
             <div class="kpi-card"><h3>Total Truk</h3><p id="kpiTruck">0</p></div>
             <div class="kpi-card"><h3>Avg Load/Truck (m³)</h3><p id="kpiAvgLoadTruck">0</p></div>
+            <div class="kpi-card"><h3>Avg Trip/Truck</h3><p id="kpiAvgTripTruck">0</p></div>
         </div>
 
         <!-- TAB NAVIGATION -->
@@ -798,7 +799,7 @@
         
         // DOM Elements
         let sidebar, main, toggleBtn, excelFile, startDate, endDate, dataLabelToggle;
-        let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolume, kpiTruck, kpiAvgLoadTruck, lastUpdate;
+        let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolumePerDay, kpiTruck, kpiAvgLoadTruck, kpiAvgTripTruck, lastUpdate;
         let loadingOverlay, errorMessage;
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -814,9 +815,10 @@
             kpiArea = document.getElementById('kpiArea');
             kpiPlant = document.getElementById('kpiPlant');
             kpiVolume = document.getElementById('kpiVolume');
-            kpiAvgVolume = document.getElementById('kpiAvgVolume');
+            kpiAvgVolumePerDay = document.getElementById('kpiAvgVolumePerDay');
             kpiTruck = document.getElementById('kpiTruck');
             kpiAvgLoadTruck = document.getElementById('kpiAvgLoadTruck');
+            kpiAvgTripTruck = document.getElementById('kpiAvgTripTruck');
             lastUpdate = document.getElementById('lastUpdate');
             loadingOverlay = document.getElementById('loadingOverlay');
             errorMessage = document.getElementById('errorMessage');
@@ -1198,16 +1200,27 @@
             const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
             const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
             const totalVolume = filteredData.reduce((sum, r) => sum + r.QTY, 0);
-            const avgVolume = totalVolume > 0 ? (totalVolume / filteredData.length).toFixed(2) : 0;
+            
+            // Calculate number of days in date range
+            const start = startDate.value ? new Date(startDate.value) : null;
+            const end = endDate.value ? new Date(endDate.value) : null;
+            const daysDiff = start && end ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 1;
+            const avgVolumePerDay = totalVolume > 0 ? (totalVolume / daysDiff).toFixed(2) : 0;
+            
             const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].length;
+            
+            // Calculate total trips (unique DP No)
+            const totalTrips = [...new Set(filteredData.map(r => r['DP No']))].length;
             const avgLoadPerTruck = totalTruck > 0 ? (totalVolume / totalTruck).toFixed(2) : 0;
+            const avgTripPerTruck = totalTruck > 0 ? (totalTrips / totalTruck).toFixed(2) : 0;
             
             kpiArea.textContent = totalArea;
             kpiPlant.textContent = totalPlant;
             kpiVolume.textContent = totalVolume.toFixed(2);
-            kpiAvgVolume.textContent = avgVolume;
+            kpiAvgVolumePerDay.textContent = avgVolumePerDay;
             kpiTruck.textContent = totalTruck;
             kpiAvgLoadTruck.textContent = avgLoadPerTruck;
+            kpiAvgTripTruck.textContent = avgTripPerTruck;
         }
         
         function updateDashboardTitle() {
@@ -1227,17 +1240,24 @@
             
             if (!filteredData.length) return;
             
+            // Check which filters have "Select All" selected
             const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option.selected')).map(o => o.value);
-            const showAreaCharts = areaFilterSelected.includes('all');
+            const plantFilterSelected = Array.from(document.getElementById('plantMenu').querySelectorAll('option.selected')).map(o => o.value);
             
-            // Show/hide charts based on area filter
+            const showAreaCharts = areaFilterSelected.includes('all');
+            const showPlantCharts = areaFilterSelected.includes('all') && plantFilterSelected.includes('all');
+            
+            // Show/hide charts based on filter selections
             document.getElementById('volumeByArea').style.display = showAreaCharts ? 'block' : 'none';
-            document.getElementById('volumeByPlant').style.display = showAreaCharts ? 'block' : 'none';
-            document.getElementById('avgVolumeByPlant').style.display = showAreaCharts ? 'block' : 'none';
-            document.getElementById('avgDistancePerPlant').style.display = showAreaCharts ? 'block' : 'none';
+            document.getElementById('volumeByPlant').style.display = showPlantCharts ? 'block' : 'none';
+            document.getElementById('avgVolumeByPlant').style.display = showPlantCharts ? 'block' : 'none';
+            document.getElementById('avgDistancePerPlant').style.display = showPlantCharts ? 'block' : 'none';
             
             if (showAreaCharts) {
                 createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
+            }
+            
+            if (showPlantCharts) {
                 createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
                 createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true), true);
                 createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
@@ -1346,17 +1366,35 @@
                 borderRadius: 4,
             }];
             
+            // Configure data labels plugin if enabled
+            const plugins = {
+                legend: { display: false },
+                tooltip: { enabled: true },
+                title: { display: true, text: title, font: { size: 16 } },
+            };
+            
+            if (dataLabelsEnabled) {
+                plugins.datalabels = {
+                    color: '#fff',
+                    anchor: 'end',
+                    align: 'top',
+                    font: {
+                        weight: 'bold',
+                        size: 12
+                    },
+                    formatter: function(value) {
+                        return value.toFixed(2);
+                    }
+                };
+            }
+            
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: true },
-                        title: { display: true, text: title, font: { size: 16 } },
-                    },
+                    plugins: plugins,
                     scales: {
                         y: { 
                             beginAtZero: true, 
@@ -1402,17 +1440,35 @@
                 pointHoverRadius: 8
             }];
             
+            // Configure data labels plugin if enabled
+            const plugins = {
+                legend: { display: false },
+                tooltip: { enabled: true },
+                title: { display: true, text: title, font: { size: 16 } },
+            };
+            
+            if (dataLabelsEnabled) {
+                plugins.datalabels = {
+                    color: '#2c3e50',
+                    anchor: 'end',
+                    align: 'top',
+                    font: {
+                        weight: 'bold',
+                        size: 12
+                    },
+                    formatter: function(value) {
+                        return value.toFixed(2);
+                    }
+                };
+            }
+            
             const config = {
                 type: 'line',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: true },
-                        title: { display: true, text: title, font: { size: 16 } },
-                    },
+                    plugins: plugins,
                     scales: {
                         y: { 
                             beginAtZero: true, 
@@ -1491,17 +1547,35 @@
                 borderRadius: 4,
             }];
             
+            // Configure data labels plugin if enabled
+            const plugins = {
+                legend: { display: false },
+                tooltip: { enabled: true },
+                title: { display: true, text: title, font: { size: 16 } },
+            };
+            
+            if (dataLabelsEnabled) {
+                plugins.datalabels = {
+                    color: '#fff',
+                    anchor: 'end',
+                    align: 'top',
+                    font: {
+                        weight: 'bold',
+                        size: 16
+                    },
+                    formatter: function(value) {
+                        return value + ' ' + unit;
+                    }
+                };
+            }
+            
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: true },
-                        title: { display: true, text: title, font: { size: 16 } },
-                    },
+                    plugins: plugins,
                     scales: {
                         y: { 
                             display: false, 
