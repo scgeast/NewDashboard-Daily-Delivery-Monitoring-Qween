@@ -13,7 +13,6 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* CSS remains the same as before */
         :root {
             --primary: #3498db;
             --secondary: #2c3e50;
@@ -188,6 +187,7 @@
         }
         .filter-section h4 i {
             font-size: 16px;
+            width: 20px;
         }
         .filter-section input[type="date"] {
             width: 100%;
@@ -418,6 +418,12 @@
             position: relative;
             height: 400px;
             width: 100%;
+        }
+        .chart-canvas-container.small {
+            height: 300px;
+        }
+        .chart-canvas-container.large {
+            height: 500px;
         }
         /* DATA LABEL TOGGLE */
         .data-label-toggle {
@@ -667,19 +673,19 @@
                 <h3 class="chart-title"><i class="fas fa-truck-monster"></i> B. Utilization Truck</h3>
                 <div id="volumePerTruck" class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-truck"></i> B1. Volume per Truck</h4>
-                    <div class="chart-canvas-container">
+                    <div class="chart-canvas-container large">
                         <canvas id="chartVolumePerTruck"></canvas>
                     </div>
                 </div>
                 <div id="totalTripPerTruck" class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-route"></i> B2. Total Trip per Truck</h4>
-                    <div class="chart-canvas-container">
+                    <div class="chart-canvas-container large">
                         <canvas id="chartTotalTripPerTruck"></canvas>
                     </div>
                 </div>
                 <div id="avgLoadPerTruck" class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-weight-hanging"></i> B3. Avg Load per Truck</h4>
-                    <div class="chart-canvas-container">
+                    <div class="chart-canvas-container large">
                         <canvas id="chartAvgLoadPerTruck"></canvas>
                     </div>
                 </div>
@@ -709,7 +715,7 @@
                 <h3 class="chart-title"><i class="fas fa-user-tie"></i> A. Sales</h3>
                 <div class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-handshake"></i> A. Volume per Sales</h4>
-                    <div class="chart-canvas-container">
+                    <div class="chart-canvas-container large">
                         <canvas id="chartVolumePerSales"></canvas>
                     </div>
                 </div>
@@ -720,7 +726,7 @@
                 <h3 class="chart-title"><i class="fas fa-users"></i> B. Customer</h3>
                 <div class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-user-circle"></i> B. Volume per End Customer</h4>
-                    <div class="chart-canvas-container">
+                    <div class="chart-canvas-container large">
                         <canvas id="chartVolumePerCustomer"></canvas>
                     </div>
                 </div>
@@ -1472,8 +1478,7 @@
                             return `${context.dataset.label}: ${formatNumber(context.raw)}`;
                         }
                     }
-                },
-                title: { display: true, text: title, font: { size: 16 } },
+                }
             };
             
             // Add data labels if enabled
@@ -1558,8 +1563,7 @@
                             return `${context.dataset.label}: ${formatNumber(context.raw)}`;
                         }
                     }
-                },
-                title: { display: true, text: title, font: { size: 16 } },
+                }
             };
             
             // Add data labels if enabled
@@ -1636,8 +1640,7 @@
                                     return `Distance: ${formatNumber(context.raw.x)}, Volume: ${formatNumber(context.raw.y)}`;
                                 }
                             }
-                        },
-                        title: { display: true, text: title, font: { size: 16 } },
+                        }
                     },
                     scales: {
                         x: { 
