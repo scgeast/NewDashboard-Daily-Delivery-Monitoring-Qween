@@ -416,14 +416,14 @@
         }
         .chart-canvas-container {
             position: relative;
-            height: 400px;
+            height: 300px; /* Diperkecil dari 400px */
             width: 100%;
         }
         .chart-canvas-container.small {
-            height: 300px;
+            height: 250px; /* Diperkecil dari 300px */
         }
         .chart-canvas-container.large {
-            height: 500px;
+            height: 350px; /* Diperkecil dari 500px */
         }
         /* DATA LABEL TOGGLE */
         .data-label-toggle {
@@ -524,14 +524,6 @@
         .sidebar-content {
             -ms-overflow-style: none;
             scrollbar-width: none;
-        }
-        /* Highlight style */
-        .highlight {
-            background: linear-gradient(135deg, #ff7e5f, #feb47b);
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -742,12 +734,6 @@
         let filteredData = [];
         let charts = {};
         let dataLabelsEnabled = true;
-        
-        // Colors for highlighting (Top 10) - Orange to Purple gradient
-        const highlightColors = [
-            '#FF6B6B', '#FF9E6B', '#FFB46B', '#FFCA6B', '#FFDF6B',
-            '#C56BFF', '#A46BFF', '#836BFF', '#6B7AFF', '#6B9BFF'
-        ];
         
         // Normalisasi string: hapus semua non-alphanumeric, ubah ke lowercase, hilangkan spasi berlebih
         function normalizeKey(str) {
@@ -1243,6 +1229,16 @@
             // Total Area - count unique areas from the Area column in the file
             const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
             
+            // Total Area - sesuai dengan jumlah area yang dipilih di filter
+            const areaMenu = document.getElementById('areaMenu');
+            const selectedAreaOptions = areaMenu.querySelectorAll('option.selected');
+            const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
+            
+            let totalAreaKPI = totalArea;
+            if (!selectedAreas.includes('all')) {
+                totalAreaKPI = selectedAreas.length;
+            }
+            
             const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
             const totalVolume = filteredData.reduce((sum, r) => sum + r.QTY, 0);
             
@@ -1259,7 +1255,7 @@
             // Calculate Avg Trip/Truck (Total Trips / Total Truck / Days)
             const avgTripPerTruck = totalTruck > 0 && daysDiff > 0 ? (totalTrips / totalTruck / daysDiff).toFixed(2) : 0;
             
-            kpiArea.textContent = formatNumber(totalArea);
+            kpiArea.textContent = formatNumber(totalAreaKPI);
             kpiPlant.textContent = formatNumber(totalPlant);
             kpiVolume.textContent = formatNumber(totalVolume.toFixed(2));
             kpiAvgVolumePerDay.textContent = formatNumber(avgVolumePerDay);
@@ -1331,35 +1327,39 @@
             const daysDiff = start && end ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 1;
             
             if (showAreaCharts) {
-                createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), true);
+                createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), false);
             }
             
             if (showPlantCharts) {
-                createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), true);
-                createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true, daysDiff), true);
-                createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), true);
+                createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), false);
+                createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true, daysDiff), false);
+                createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), false);
             }
             
             createLineChart('chartAvgVolumePerDay', 'Avg Volume per Day', getDailyAvgVolume());
             
-            // Adjust chart height based on number of trucks
+            // Adjust chart height based on number of items
             const truckCount = [...new Set(filteredData.map(r => r['Truck No']))].length;
-            const chartHeight = Math.max(400, truckCount * 30); // Minimum 400px, 30px per truck
+            const salesCount = [...new Set(filteredData.map(r => r['Sales Man']))].length;
+            const customerCount = [...new Set(filteredData.map(r => r['End Customer Name']))].length;
             
-            document.getElementById('chartVolumePerTruck').parentElement.style.height = `${chartHeight}px`;
-            document.getElementById('chartTotalTripPerTruck').parentElement.style.height = `${chartHeight}px`;
-            document.getElementById('chartAvgLoadPerTruck').parentElement.style.height = `${chartHeight}px`;
+            // Set heights based on number of items
+            document.getElementById('chartVolumePerTruck').parentElement.style.height = `${Math.max(300, truckCount * 25)}px`;
+            document.getElementById('chartTotalTripPerTruck').parentElement.style.height = `${Math.max(300, truckCount * 25)}px`;
+            document.getElementById('chartAvgLoadPerTruck').parentElement.style.height = `${Math.max(300, truckCount * 25)}px`;
+            document.getElementById('chartVolumePerSales').parentElement.style.height = `${Math.max(300, salesCount * 25)}px`;
+            document.getElementById('chartVolumePerCustomer').parentElement.style.height = `${Math.max(300, customerCount * 25)}px`;
             
-            createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), true);
-            createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), true);
+            createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), false);
+            createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), false);
             
             // Calculate Avg Load per Truck for chart
             const truckData = getAvgLoadPerTruck();
-            createBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', truckData, true);
+            createBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', truckData, false);
             
             createScatterChart('chartTrendVolumeByDistance', 'Trend Volume by Distance', filteredData.map(r => ({ x: r.Distance, y: r.QTY })));
-            createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), true);
-            createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), true);
+            createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), false);
+            createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), false);
         }
         
         function destroyAllCharts() {
@@ -1440,9 +1440,9 @@
         function createBarChart(canvasId, title, data, enableHighlight = false) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             
-            // Sort data by value descending and take top 10 for highlighting
+            // Sort data by value descending - TIDAK membatasi hanya top 10
             const sortedData = [...data].sort((a, b) => b.value - a.value);
-            const displayData = enableHighlight ? sortedData.slice(0, 10) : sortedData;
+            const displayData = sortedData; // Tampilkan semua data, bukan hanya top 10
             
             const labels = displayData.map(d => d.label);
             const values = displayData.map(d => parseFloat(d.value));
@@ -1450,13 +1450,8 @@
             // Create gradient colors
             const backgroundColors = labels.map((_, i) => {
                 const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                if (enableHighlight) {
-                    gradient.addColorStop(0, highlightColors[i % highlightColors.length]);
-                    gradient.addColorStop(1, highlightColors[i % highlightColors.length].replace(')', ', 0.7)').replace('rgb', 'rgba'));
-                } else {
-                    gradient.addColorStop(0, '#3498db');
-                    gradient.addColorStop(1, 'rgba(52, 152, 219, 0.7)');
-                }
+                gradient.addColorStop(0, '#3498db');
+                gradient.addColorStop(1, 'rgba(52, 152, 219, 0.7)');
                 return gradient;
             });
             
@@ -1489,7 +1484,7 @@
                     align: 'top',
                     font: {
                         weight: 'bold',
-                        size: 12
+                        size: 10 // Ukuran font lebih kecil
                     },
                     formatter: function(value) {
                         return formatNumber(value.toFixed(2));
@@ -1574,7 +1569,7 @@
                     align: 'top',
                     font: {
                         weight: 'bold',
-                        size: 12
+                        size: 10 // Ukuran font lebih kecil
                     },
                     formatter: function(value) {
                         return formatNumber(value.toFixed(2));
@@ -1678,4 +1673,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
