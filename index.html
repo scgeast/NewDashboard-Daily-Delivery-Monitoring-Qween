@@ -622,7 +622,6 @@
                 <span id="periodeText">Periode: --</span>
             </div>
         </div>
-
         <!-- KPI -->
         <div class="kpi-container">
             <div class="kpi-card"><h3>Total Area</h3><p id="kpiArea">0</p></div>
@@ -633,7 +632,6 @@
             <div class="kpi-card"><h3>Avg Load/Truck (m³)</h3><p id="kpiAvgLoadTruck">0</p></div>
             <div class="kpi-card"><h3>Avg Trip/Truck</h3><p id="kpiAvgTripTruck">0</p></div>
         </div>
-
         <!-- TAB NAVIGATION -->
         <div class="tab-container">
             <button class="tab-btn active" onclick="switchTab('logistic')">
@@ -643,7 +641,6 @@
                 <i class="fas fa-chart-line"></i> SALES AND CUSTOMER PERFORMANCE
             </button>
         </div>
-
         <!-- TAB CONTENT -->
         <div id="logistic-content" class="tab-content active">
             <!-- A. Delivery -->
@@ -674,7 +671,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- B. Utilization Truck -->
             <div class="chart-container">
                 <h3 class="chart-title"><i class="fas fa-truck-monster"></i> B. Utilization Truck</h3>
@@ -697,7 +693,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- C. Distance -->
             <div class="chart-container">
                 <h3 class="chart-title"><i class="fas fa-road"></i> C. Distance</h3>
@@ -715,7 +710,6 @@
                 </div>
             </div>
         </div>
-
         <div id="sales-content" class="tab-content">
             <!-- A. Sales -->
             <div class="chart-container">
@@ -727,7 +721,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- B. Customer -->
             <div class="chart-container">
                 <h3 class="chart-title"><i class="fas fa-users"></i> B. Customer</h3>
@@ -739,7 +732,6 @@
                 </div>
             </div>
         </div>
-
         <!-- FOOTER -->
         <div class="footer">Summary Daily Delivery And Sales by L=23-51Xe.</div>
     </div>
@@ -749,7 +741,6 @@
         let filteredData = [];
         let charts = {};
         let dataLabelsEnabled = true;
-        
         // Normalisasi string: hapus semua non-alphanumeric, ubah ke lowercase, hilangkan spasi berlebih
         function normalizeKey(str) {
             if (!str) return '';
@@ -759,7 +750,6 @@
                 .replace(/[^\w\s]/g, '')  // Hapus simbol
                 .replace(/\s+/g, ' ');     // Ganti spasi berlebih jadi satu spasi
         }
-        
         // Fungsi untuk parsing tanggal Excel
         function parseExcelDate(dateValue) {
             if (!dateValue) return new Date();
@@ -784,17 +774,14 @@
             }
             return new Date();
         }
-        
         // Format angka dengan pemisah ribuan
         function formatNumber(num) {
             return new Intl.NumberFormat('id-ID').format(num);
         }
-        
         // DOM Elements
         let sidebar, main, toggleBtn, excelFile, startDate, endDate, dataLabelToggle;
         let dashboardTitle, periodeText, kpiArea, kpiPlant, kpiVolume, kpiAvgVolumePerDay, kpiTruck, kpiAvgLoadTruck, kpiAvgTripTruck, lastUpdate;
         let loadingOverlay, errorMessage;
-        
         document.addEventListener('DOMContentLoaded', () => {
             sidebar = document.getElementById('sidebar');
             main = document.getElementById('main');
@@ -815,32 +802,26 @@
             lastUpdate = document.getElementById('lastUpdate');
             loadingOverlay = document.getElementById('loadingOverlay');
             errorMessage = document.getElementById('errorMessage');
-            
             if (!sidebar || !toggleBtn) {
                 console.error("DOM elements not found!");
                 return;
             }
-            
             // Toggle Sidebar
             toggleBtn.addEventListener('click', () => {
                 sidebar.classList.toggle('collapsed');
                 main.classList.toggle('collapsed');
                 toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '>>' : '<<';
             });
-            
             // Handle File Upload
             excelFile.addEventListener('change', handleFileUpload);
-            
             // Filter Event Listeners
             [startDate, endDate].forEach(el => {
                 el.addEventListener('change', applyFilters);
             });
-            
             dataLabelToggle.addEventListener('change', () => {
                 dataLabelsEnabled = dataLabelToggle.checked;
                 updateCharts();
             });
-            
             // Initialize on load
             window.addEventListener('load', () => {
                 const today = new Date();
@@ -850,11 +831,9 @@
                 applyFilters();
             });
         });
-
         function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
-
             const fileSizeMB = file.size / (1024 * 1024);
             if (fileSizeMB < 0.002) {
                 alert("File terlalu kecil! Minimal 2KB.");
@@ -864,7 +843,6 @@
                 alert("File terlalu besar! Maksimal 30MB.");
                 return;
             }
-            
             const ext = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
             if (!ext) {
                 loadingOverlay.style.display = 'none';
@@ -875,10 +853,8 @@
                 }, 8000);
                 return;
             }
-
             loadingOverlay.style.display = 'flex';
             errorMessage.style.display = 'none';
-
             const reader = new FileReader();
             reader.onload = function (event) {
                 try {
@@ -888,24 +864,18 @@
                         cellDates: true,
                         dateNF: 'yyyy-mm-dd'
                     });
-                    
                     if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
                         throw new Error("Tidak ditemukan sheet dalam file.");
                     }
-                    
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
-                    
                     // Konversi ke JSON dengan header
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    
                     if (!Array.isArray(jsonData) || jsonData.length < 2) {
                         throw new Error("Tidak ada data dalam sheet.");
                     }
-                    
                     // Ambil header dari baris pertama
                     const headers = jsonData[0].map(h => h ? String(h).trim() : '');
-                    
                     // Mapping kolom berdasarkan file contoh Anda
                     const columnMapping = {
                         'DP No': ['DP No', 'No'],
@@ -919,11 +889,9 @@
                         'Distance': ['Distance'],
                         'DP Date': ['DP Date']
                     };
-                    
                     // Cari indeks untuk setiap kolom yang diperlukan
                     const columnIndices = {};
                     let missingColumns = [];
-                    
                     for (const [standardKey, possibleNames] of Object.entries(columnMapping)) {
                         let found = false;
                         for (const name of possibleNames) {
@@ -939,25 +907,20 @@
                             missingColumns.push(standardKey);
                         }
                     }
-                    
                     if (missingColumns.length > 0) {
                         throw new Error(`Kolom berikut tidak ditemukan: ${missingColumns.join(', ')}`);
                     }
-                    
                     // Proses data
                     rawData = jsonData.slice(1).map(row => {
                         if (!Array.isArray(row)) return null;
-                        
                         const mappedRow = {};
                         for (const [key, index] of Object.entries(columnIndices)) {
                             mappedRow[key] = index < row.length ? row[index] : null;
                         }
-                        
                         // Validasi baris
                         if (!mappedRow['DP No'] || !mappedRow['QTY']) {
                             return null;
                         }
-                        
                         return mappedRow;
                     }).filter(row => row !== null).map(row => {
                         // Transformasi data - simpan nilai asli dan nilai yang dinormalisasi
@@ -968,11 +931,9 @@
                             'DP Date': parseExcelDate(row['DP Date'])
                         };
                     });
-                    
                     if (rawData.length === 0) {
                         throw new Error("Tidak ada data yang valid setelah pemrosesan.");
                     }
-                    
                     updateFilters();
                     applyFilters();
                     loadingOverlay.style.display = 'none';
@@ -986,7 +947,6 @@
                     }, 8000);
                 }
             };
-            
             reader.onerror = function () {
                 loadingOverlay.style.display = 'none';
                 errorMessage.textContent = "Gagal! Gagal membaca file. Coba gunakan file lain.";
@@ -995,37 +955,29 @@
                     errorMessage.style.display = 'none';
                 }, 8000);
             };
-            
             reader.readAsArrayBuffer(file);
         }
-
         function updateFilters() {
             // Gunakan nilai asli untuk filter
             const areas = [...new Set(rawData.map(r => r.Area).filter(a => a))].sort();
             const plants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
             const truckTypes = [...new Set(rawData.map(r => r['Truck Type']).filter(t => t))].sort();
-            
             clearDropdown('areaMenu');
             clearDropdown('plantMenu');
             clearDropdown('truckTypeMenu');
-            
             addOption('areaMenu', "Select All", "all", true);
             areas.forEach(a => addOption('areaMenu', a, a));
-            
             addOption('plantMenu', "Select All", "all", true);
             plants.forEach(p => addOption('plantMenu', p, p));
-            
             addOption('truckTypeMenu', "Select All", "all", true);
             truckTypes.forEach(t => addOption('truckTypeMenu', t, t));
         }
-        
         function clearDropdown(menuId) {
             const menu = document.getElementById(menuId);
             while (menu.children.length > 0) {
                 menu.removeChild(menu.firstChild);
             }
         }
-        
         function addOption(menuId, text, value, selected = false) {
             const menu = document.getElementById(menuId);
             const option = document.createElement('option');
@@ -1036,7 +988,6 @@
             }
             menu.appendChild(option);
         }
-        
         document.addEventListener('click', function(e) {
             // Close dropdowns when clicking outside
             if (!e.target.closest('.custom-dropdown')) {
@@ -1048,45 +999,35 @@
                     icon.classList.add('fa-chevron-down');
                 });
             }
-            
             const option = e.target.closest('.dropdown-menu option');
             if (!option) return;
-            
             const menu = option.closest('.dropdown-menu');
             const dropdown = menu.parentElement;
             const label = dropdown.querySelector('.dropdown-header span');
             const icon = dropdown.querySelector('.dropdown-header i');
-            
             // Handle single selection
             menu.querySelectorAll('option').forEach(opt => opt.classList.remove('selected'));
             option.classList.add('selected');
-            
             if (option.value === 'all') {
                 label.textContent = 'Select All';
             } else {
                 label.textContent = option.textContent;
             }
-            
             // Update plant filter based on selected area
             if (dropdown.id === 'areaDropdown') {
                 updatePlantFilter();
             }
-            
             menu.classList.remove('show');
             icon.classList.remove('fa-chevron-up');
             icon.classList.add('fa-chevron-down');
-            
             applyFilters();
         });
-        
         function updatePlantFilter() {
             const areaMenu = document.getElementById('areaMenu');
             const selectedAreaOptions = areaMenu.querySelectorAll('option.selected');
             const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
-            
             // Clear plant dropdown
             clearDropdown('plantMenu');
-            
             if (selectedAreas.includes('all')) {
                 // Show all plants
                 const allPlants = [...new Set(rawData.map(r => r['Plant Name']).filter(p => p))].sort();
@@ -1100,17 +1041,14 @@
                         .map(r => r['Plant Name'])
                         .filter(p => p)
                 )].sort();
-                
                 addOption('plantMenu', "Select All", "all", true);
                 filteredPlants.forEach(p => addOption('plantMenu', p, p));
             }
         }
-        
         function toggleDropdown(id) {
             const dropdown = document.getElementById(id);
             const menu = dropdown.querySelector('.dropdown-menu');
             const icon = dropdown.querySelector('.dropdown-header i');
-            
             // Close all other dropdowns
             document.querySelectorAll('.dropdown-menu').forEach(m => {
                 if (m !== menu) {
@@ -1123,7 +1061,6 @@
                     i.classList.add('fa-chevron-down');
                 }
             });
-            
             if (menu.classList.contains('show')) {
                 menu.classList.remove('show');
                 icon.classList.remove('fa-chevron-up');
@@ -1134,53 +1071,41 @@
                 icon.classList.add('fa-chevron-up');
             }
         }
-        
         function applyFilters() {
             let filtered = [...rawData];
-            
             // Filter by date
             const start = startDate.value ? new Date(startDate.value) : null;
             const end = endDate.value ? new Date(endDate.value) : null;
-            
             if (start || end) {
                 filtered = filtered.filter(row => {
                     const rowDate = row['DP Date'];
                     if (!rowDate) return false;
-                    
                     if (start && rowDate < start) return false;
                     if (end && rowDate > end) return false;
-                    
                     return true;
                 });
             }
-            
             // Filter by area
             const areaMenu = document.getElementById('areaMenu');
             const selectedAreaOptions = areaMenu.querySelectorAll('option.selected');
             const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
-            
             if (!selectedAreas.includes('all')) {
                 filtered = filtered.filter(row => selectedAreas.includes(row.Area));
             }
-            
             // Filter by plant
             const plantMenu = document.getElementById('plantMenu');
             const selectedPlantOptions = plantMenu.querySelectorAll('option.selected');
             const selectedPlants = Array.from(selectedPlantOptions).map(o => o.value);
-            
             if (!selectedPlants.includes('all')) {
                 filtered = filtered.filter(row => selectedPlants.includes(row['Plant Name']));
             }
-            
             // Filter by truck type
             const truckTypeMenu = document.getElementById('truckTypeMenu');
             const selectedTruckTypeOptions = truckTypeMenu.querySelectorAll('option.selected');
             const selectedTruckTypes = Array.from(selectedTruckTypeOptions).map(o => o.value);
-            
             if (!selectedTruckTypes.includes('all')) {
                 filtered = filtered.filter(row => selectedTruckTypes.includes(row['Truck Type']));
             }
-            
             filteredData = filtered;
             updateKPIs();
             updateDashboardTitle();
@@ -1188,42 +1113,31 @@
             updateCharts();
             lastUpdate.textContent = `Last Update: ${new Date().toLocaleString()}`;
         }
-        
         function updateKPIs() {
             // Calculate number of days in date range
             const start = startDate.value ? new Date(startDate.value) : null;
             const end = endDate.value ? new Date(endDate.value) : null;
             const daysDiff = start && end ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 1;
-            
             // Total Area - count unique areas
             const totalArea = [...new Set(filteredData.map(r => r.Area))].length;
-            
             // Total Area - sesuai dengan jumlah area yang dipilih di filter
             const areaMenu = document.getElementById('areaMenu');
             const selectedAreaOptions = areaMenu.querySelectorAll('option.selected');
             const selectedAreas = Array.from(selectedAreaOptions).map(o => o.value);
-            
             let totalAreaKPI = totalArea;
             if (!selectedAreas.includes('all')) {
                 totalAreaKPI = selectedAreas.length;
             }
-            
             const totalPlant = [...new Set(filteredData.map(r => r['Plant Name']))].length;
             const totalVolume = filteredData.reduce((sum, r) => sum + r.QTY, 0);
-            
             const avgVolumePerDay = totalVolume > 0 ? (totalVolume / daysDiff).toFixed(2) : 0;
-            
             const totalTruck = [...new Set(filteredData.map(r => r['Truck No']))].length;
-            
             // Calculate total trips (unique DP No)
             const totalTrips = [...new Set(filteredData.map(r => r['DP No']))].length;
-            
             // Calculate Avg Load/Truck (Total Volume / Total Trips)
             const avgLoadPerTruck = totalTrips > 0 ? (totalVolume / totalTrips).toFixed(2) : 0;
-            
             // Calculate Avg Trip/Truck (Total Trips / Total Truck / Days)
             const avgTripPerTruck = totalTruck > 0 && daysDiff > 0 ? (totalTrips / totalTruck / daysDiff).toFixed(2) : 0;
-            
             kpiArea.textContent = formatNumber(totalAreaKPI);
             kpiPlant.textContent = formatNumber(totalPlant);
             kpiVolume.textContent = formatNumber(totalVolume.toFixed(2));
@@ -1232,73 +1146,55 @@
             kpiAvgLoadTruck.textContent = formatNumber(avgLoadPerTruck);
             kpiAvgTripTruck.textContent = formatNumber(avgTripPerTruck);
         }
-        
         function updateDashboardTitle() {
             const areaMenu = document.getElementById('areaMenu');
             const plantMenu = document.getElementById('plantMenu');
-            
             const selectedAreaOptions = Array.from(areaMenu.querySelectorAll('option.selected'));
             const selectedPlantOptions = Array.from(plantMenu.querySelectorAll('option.selected'));
-            
             const selectedAreas = selectedAreaOptions.map(o => o.textContent);
             const selectedPlants = selectedPlantOptions.map(o => o.textContent);
-            
             // Check if both filters are "Select All"
             const isAreaAll = selectedAreas.includes('Select All') || selectedAreas.length === 0;
             const isPlantAll = selectedPlants.includes('Select All') || selectedPlants.length === 0;
-            
             if (isAreaAll && isPlantAll) {
                 dashboardTitle.textContent = 'Summary Daily Delivery All Area';
                 return;
             }
-            
             let areaDisplay = 'All';
             let plantDisplay = 'All';
-            
             if (!selectedAreas.includes('Select All') && selectedAreas.length > 0) {
                 areaDisplay = selectedAreas.join(', ');
             }
-            
             if (!selectedPlants.includes('Select All') && selectedPlants.length > 0) {
                 plantDisplay = selectedPlants.join(', ');
             }
-            
             dashboardTitle.textContent = `Summary Daily Delivery Plant ${plantDisplay} ${areaDisplay} Area`;
         }
-        
         function updatePeriodeText() {
             const start = startDate.value ? new Date(startDate.value).toLocaleDateString('id-ID') : '--';
             const end = endDate.value ? new Date(endDate.value).toLocaleDateString('id-ID') : '--';
             periodeText.textContent = `Periode: ${start} - ${end}`;
         }
-        
         function updateCharts() {
             destroyAllCharts();
-            
             if (!filteredData.length) return;
-            
             // Check which filters have "Select All" selected
             const areaFilterSelected = Array.from(document.getElementById('areaMenu').querySelectorAll('option.selected')).map(o => o.value);
             const plantFilterSelected = Array.from(document.getElementById('plantMenu').querySelectorAll('option.selected')).map(o => o.value);
-            
             const showAreaCharts = areaFilterSelected.includes('all');
             const showPlantCharts = !areaFilterSelected.includes('all') && plantFilterSelected.includes('all');
-            
             // Show/hide charts based on filter selections
             document.getElementById('volumeByArea').style.display = showAreaCharts ? 'block' : 'none';
             document.getElementById('volumeByPlant').style.display = showPlantCharts ? 'block' : 'none';
             document.getElementById('avgVolumeByPlant').style.display = showPlantCharts ? 'block' : 'none';
             document.getElementById('avgDistancePerPlant').style.display = showPlantCharts ? 'block' : 'none';
-            
             // Calculate number of days for average calculations
             const start = startDate.value ? new Date(startDate.value) : null;
             const end = endDate.value ? new Date(endDate.value) : null;
             const daysDiff = start && end ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 1;
-            
             if (showAreaCharts) {
                 createBarChart('chartVolumeByArea', 'Volume by Area', getGroupedData('Area', 'QTY'), false);
             }
-            
             if (showPlantCharts) {
                 createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), false);
                 // Perbaikan: Avg Volume by Plant = Total volume per plant : total hari sesuai filter
@@ -1306,47 +1202,37 @@
                 // Perbaikan: Avg Distance per Plant = Total distance per plant : jumlah hari sesuai filter
                 createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true, daysDiff), false);
             }
-            
             // Mengubah dari Avg Volume per Day menjadi Volume per Day
             createLineChart('chartVolumePerDay', 'Volume per Day', getDailyVolume());
-            
-            // Set fixed height for all charts to match the standard .chart-canvas-container height (280px)
-            // Ini agar konsisten dan tidak terlalu tinggi
+            // === PERBAIKAN: TINGGI CHART DIBUAT KONSISTEN 280px ===
+            // Gantikan semua tinggi dinamis dengan tinggi tetap 280px
             document.getElementById('chartVolumePerTruck').parentElement.style.height = '280px';
             document.getElementById('chartTotalTripPerTruck').parentElement.style.height = '280px';
             document.getElementById('chartAvgLoadPerTruck').parentElement.style.height = '280px';
-
-            // Untuk chart Sales & Customer, kita juga atur ke tinggi tetap agar seragam
             document.getElementById('chartVolumePerSales').parentElement.style.height = '280px';
             document.getElementById('chartVolumePerCustomer').parentElement.style.height = '280px';
+            // Lanjutkan membuat chart
             createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), false);
             createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), false);
-            
             // Calculate Avg Load per Truck for chart
             const truckData = getAvgLoadPerTruck();
             createBarChart('chartAvgLoadPerTruck', 'Avg Load per Truck', truckData, false);
-            
             createScatterChart('chartTrendVolumeByDistance', 'Trend Volume by Distance', filteredData.map(r => ({ x: r.Distance, y: r.QTY })));
             createBarChart('chartVolumePerSales', 'Volume per Sales', getGroupedData('Sales Man', 'QTY'), false);
             createBarChart('chartVolumePerCustomer', 'Volume per End Customer', getGroupedData('End Customer Name', 'QTY'), false);
         }
-        
         function destroyAllCharts() {
             Object.values(charts).forEach(chart => chart.destroy());
             charts = {};
         }
-        
         function getGroupedData(groupBy, metric, isAvg = false, days = 1) {
             const map = new Map();
-            
             filteredData.forEach(row => {
                 const key = row[groupBy];
                 if (!key) return;
-                
                 if (!map.has(key)) map.set(key, []);
                 map.get(key).push(parseFloat(row[metric]) || 0);
             });
-            
             return Array.from(map.entries()).map(([key, values]) => ({
                 label: key,
                 value: isAvg ? 
@@ -1354,68 +1240,52 @@
                     values.reduce((a,b)=>a+b,0)
             })).sort((a,b) => b.value - a.value);
         }
-        
         function getTripCountByTruck() {
             const tripMap = new Map();
-            
             filteredData.forEach(row => {
                 const truckNo = row['Truck No'];
                 if (!truckNo) return;
-                
                 if (!tripMap.has(truckNo)) tripMap.set(truckNo, new Set());
                 tripMap.get(truckNo).add(row['DP No']);
             });
-            
             return Array.from(tripMap.entries()).map(([truck, trips]) => ({
                 label: truck,
                 value: trips.size
             })).sort((a,b) => b.value - a.value);
         }
-        
         function getAvgLoadPerTruck() {
             const truckMap = new Map();
-            
             filteredData.forEach(row => {
                 const truckNo = row['Truck No'];
                 if (!truckNo) return;
-                
                 if (!truckMap.has(truckNo)) truckMap.set(truckNo, { totalVolume: 0, tripCount: 0 });
                 truckMap.get(truckNo).totalVolume += row.QTY;
                 truckMap.get(truckNo).tripCount += 1;
             });
-            
             return Array.from(truckMap.entries()).map(([truck, { totalVolume, tripCount }]) => ({
                 label: truck,
                 value: tripCount > 0 ? (totalVolume / tripCount).toFixed(2) : 0
             })).sort((a,b) => b.value - a.value);
         }
-        
         // Mengubah dari Avg Volume per Day menjadi Volume per Day
         function getDailyVolume() {
             const dailyMap = new Map();
-            
             filteredData.forEach(row => {
                 const dateStr = row['DP Date'].toISOString().split('T')[0];
                 if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, 0);
-                
                 dailyMap.set(dateStr, dailyMap.get(dateStr) + row.QTY);
             });
-            
             return Array.from(dailyMap.entries())
                 .map(([date, volume]) => ({ date, volume: parseFloat(volume.toFixed(2)) }))
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
         }
-        
         function createBarChart(canvasId, title, data, enableHighlight = false) {
             const ctx = document.getElementById(canvasId).getContext('2d');
-            
             // Sort data by value descending - TIDAK membatasi hanya top 10
             const sortedData = [...data].sort((a, b) => b.value - a.value);
             const displayData = sortedData; // Tampilkan semua data, bukan hanya top 10
-            
             const labels = displayData.map(d => d.label);
             const values = displayData.map(d => parseFloat(d.value));
-            
             // Create gradient colors
             const backgroundColors = labels.map((_, i) => {
                 const gradient = ctx.createLinearGradient(0, 0, 0, 400);
@@ -1423,7 +1293,6 @@
                 gradient.addColorStop(1, '#8E54E9');
                 return gradient;
             });
-            
             const datasets = [{
                 label: title,
                 data: values,
@@ -1432,7 +1301,6 @@
                 borderWidth: 1,
                 borderRadius: 4,
             }];
-            
             const plugins = {
                 legend: { display: false },
                 tooltip: { 
@@ -1444,7 +1312,6 @@
                     }
                 }
             };
-            
             // Add data labels if enabled - PERBAIKAN: Data labels sekarang berfungsi
             if (dataLabelsEnabled) {
                 plugins.datalabels = {
@@ -1460,7 +1327,6 @@
                     }
                 };
             }
-            
             const config = {
                 type: 'bar',
                 data: { labels, datasets },
@@ -1494,20 +1360,16 @@
                 },
                 plugins: dataLabelsEnabled ? [ChartDataLabels] : [] // PERBAIKAN: Register plugin hanya jika aktif
             };
-            
             charts[canvasId] = new Chart(ctx, config);
         }
-        
         function createLineChart(canvasId, title, data) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const labels = data.map(d => d.date);
             const values = data.map(d => parseFloat(d.volume));
-            
             // Create gradient for line chart
             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
             gradient.addColorStop(0, 'rgba(71, 118, 230, 0.8)');
             gradient.addColorStop(1, 'rgba(142, 84, 233, 0.1)');
-            
             const datasets = [{
                 label: 'Volume (m³)',
                 data: values,
@@ -1518,7 +1380,6 @@
                 pointRadius: 4,
                 pointHoverRadius: 8
             }];
-            
             const plugins = {
                 legend: { display: false },
                 tooltip: { 
@@ -1530,7 +1391,6 @@
                     }
                 }
             };
-            
             // Add data labels if enabled - PERBAIKAN: Data labels sekarang berfungsi
             if (dataLabelsEnabled) {
                 plugins.datalabels = {
@@ -1546,7 +1406,6 @@
                     }
                 };
             }
-            
             const config = {
                 type: 'line',
                 data: { labels, datasets },
@@ -1574,14 +1433,11 @@
                 },
                 plugins: dataLabelsEnabled ? [ChartDataLabels] : [] // PERBAIKAN: Register plugin hanya jika aktif
             };
-            
             charts[canvasId] = new Chart(ctx, config);
         }
-        
         function createScatterChart(canvasId, title, data) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const points = data.map(p => ({ x: p.x, y: p.y }));
-            
             const datasets = [{
                 label: 'Volume vs Distance',
                 data: points,
@@ -1590,7 +1446,6 @@
                 pointRadius: 4,
                 pointHoverRadius: 8
             }];
-            
             const config = {
                 type: 'scatter',
                 data: { datasets },
@@ -1631,14 +1486,11 @@
                     }
                 }
             };
-            
             charts[canvasId] = new Chart(ctx, config);
         }
-        
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
             document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
             document.getElementById(`${tabId}-content`).classList.add('active');
         }
