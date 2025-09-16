@@ -1310,18 +1310,15 @@
             // Mengubah dari Avg Volume per Day menjadi Volume per Day
             createLineChart('chartVolumePerDay', 'Volume per Day', getDailyVolume());
             
-            // Adjust chart height based on number of items
-            const truckCount = [...new Set(filteredData.map(r => r['Truck No']))].length;
-            const salesCount = [...new Set(filteredData.map(r => r['Sales Man']))].length;
-            const customerCount = [...new Set(filteredData.map(r => r['End Customer Name']))].length;
-            
-            // Set heights based on number of items - lebih pendek dari sebelumnya
-            document.getElementById('chartVolumePerTruck').parentElement.style.height = `${Math.max(250, truckCount * 20)}px`;
-            document.getElementById('chartTotalTripPerTruck').parentElement.style.height = `${Math.max(250, truckCount * 20)}px`;
-            document.getElementById('chartAvgLoadPerTruck').parentElement.style.height = `${Math.max(250, truckCount * 20)}px`;
-            document.getElementById('chartVolumePerSales').parentElement.style.height = `${Math.max(250, salesCount * 20)}px`;
-            document.getElementById('chartVolumePerCustomer').parentElement.style.height = `${Math.max(250, customerCount * 20)}px`;
-            
+            // Set fixed height for all charts to match the standard .chart-canvas-container height (280px)
+            // Ini agar konsisten dan tidak terlalu tinggi
+            document.getElementById('chartVolumePerTruck').parentElement.style.height = '280px';
+            document.getElementById('chartTotalTripPerTruck').parentElement.style.height = '280px';
+            document.getElementById('chartAvgLoadPerTruck').parentElement.style.height = '280px';
+
+            // Untuk chart Sales & Customer, kita juga atur ke tinggi tetap agar seragam
+            document.getElementById('chartVolumePerSales').parentElement.style.height = '280px';
+            document.getElementById('chartVolumePerCustomer').parentElement.style.height = '280px';
             createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), false);
             createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), false);
             
