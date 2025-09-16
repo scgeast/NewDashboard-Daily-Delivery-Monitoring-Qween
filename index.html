@@ -431,14 +431,14 @@
         }
         .chart-canvas-container {
             position: relative;
-            height: 350px;
+            height: 280px;
             width: 100%;
         }
         .chart-canvas-container.small {
-            height: 300px;
+            height: 250px;
         }
         .chart-canvas-container.large {
-            height: 400px;
+            height: 350px;
         }
         /* DATA LABEL TOGGLE */
         .data-label-toggle {
@@ -680,19 +680,19 @@
                 <h3 class="chart-title"><i class="fas fa-truck-monster"></i> B. Utilization Truck</h3>
                 <div id="volumePerTruck" class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-truck"></i> B1. Volume per Truck</h4>
-                    <div class="chart-canvas-container large">
+                    <div class="chart-canvas-container">
                         <canvas id="chartVolumePerTruck"></canvas>
                     </div>
                 </div>
                 <div id="totalTripPerTruck" class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-route"></i> B2. Total Trip per Truck</h4>
-                    <div class="chart-canvas-container large">
+                    <div class="chart-canvas-container">
                         <canvas id="chartTotalTripPerTruck"></canvas>
                     </div>
                 </div>
                 <div id="avgLoadPerTruck" class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-weight-hanging"></i> B3. Avg Load per Truck</h4>
-                    <div class="chart-canvas-container large">
+                    <div class="chart-canvas-container">
                         <canvas id="chartAvgLoadPerTruck"></canvas>
                     </div>
                 </div>
@@ -722,7 +722,7 @@
                 <h3 class="chart-title"><i class="fas fa-user-tie"></i> A. Sales</h3>
                 <div class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-handshake"></i> A. Volume per Sales</h4>
-                    <div class="chart-canvas-container large">
+                    <div class="chart-canvas-container">
                         <canvas id="chartVolumePerSales"></canvas>
                     </div>
                 </div>
@@ -733,7 +733,7 @@
                 <h3 class="chart-title"><i class="fas fa-users"></i> B. Customer</h3>
                 <div class="chart-container">
                     <h4 class="chart-title"><i class="fas fa-user-circle"></i> B. Volume per End Customer</h4>
-                    <div class="chart-canvas-container large">
+                    <div class="chart-canvas-container">
                         <canvas id="chartVolumePerCustomer"></canvas>
                     </div>
                 </div>
@@ -1303,7 +1303,8 @@
                 createBarChart('chartVolumeByPlant', 'Volume by Plant', getGroupedData('Plant Name', 'QTY'), false);
                 // Perbaikan: Avg Volume by Plant = Total volume per plant : total hari sesuai filter
                 createBarChart('chartAvgVolumeByPlant', 'Avg Volume by Plant', getGroupedData('Plant Name', 'QTY', true, daysDiff), false);
-                createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true), false);
+                // Perbaikan: Avg Distance per Plant = Total distance per plant : jumlah hari sesuai filter
+                createBarChart('chartAvgDistancePerPlant', 'Avg Distance per Plant', getGroupedData('Plant Name', 'Distance', true, daysDiff), false);
             }
             
             // Mengubah dari Avg Volume per Day menjadi Volume per Day
@@ -1314,12 +1315,12 @@
             const salesCount = [...new Set(filteredData.map(r => r['Sales Man']))].length;
             const customerCount = [...new Set(filteredData.map(r => r['End Customer Name']))].length;
             
-            // Set heights based on number of items
-            document.getElementById('chartVolumePerTruck').parentElement.style.height = `${Math.max(300, truckCount * 25)}px`;
-            document.getElementById('chartTotalTripPerTruck').parentElement.style.height = `${Math.max(300, truckCount * 25)}px`;
-            document.getElementById('chartAvgLoadPerTruck').parentElement.style.height = `${Math.max(300, truckCount * 25)}px`;
-            document.getElementById('chartVolumePerSales').parentElement.style.height = `${Math.max(300, salesCount * 25)}px`;
-            document.getElementById('chartVolumePerCustomer').parentElement.style.height = `${Math.max(300, customerCount * 25)}px`;
+            // Set heights based on number of items - lebih pendek dari sebelumnya
+            document.getElementById('chartVolumePerTruck').parentElement.style.height = `${Math.max(250, truckCount * 20)}px`;
+            document.getElementById('chartTotalTripPerTruck').parentElement.style.height = `${Math.max(250, truckCount * 20)}px`;
+            document.getElementById('chartAvgLoadPerTruck').parentElement.style.height = `${Math.max(250, truckCount * 20)}px`;
+            document.getElementById('chartVolumePerSales').parentElement.style.height = `${Math.max(250, salesCount * 20)}px`;
+            document.getElementById('chartVolumePerCustomer').parentElement.style.height = `${Math.max(250, customerCount * 20)}px`;
             
             createBarChart('chartVolumePerTruck', 'Volume per Truck', getGroupedData('Truck No', 'QTY'), false);
             createBarChart('chartTotalTripPerTruck', 'Total Trip per Truck', getTripCountByTruck(), false);
@@ -1447,7 +1448,7 @@
                 }
             };
             
-            // Add data labels if enabled
+            // Add data labels if enabled - PERBAIKAN: Data labels sekarang berfungsi
             if (dataLabelsEnabled) {
                 plugins.datalabels = {
                     color: '#fff',
@@ -1455,7 +1456,7 @@
                     align: 'top',
                     font: {
                         weight: 'bold',
-                        size: 10 // Ukuran font lebih kecil
+                        size: 10
                     },
                     formatter: function(value) {
                         return formatNumber(value.toFixed(2));
@@ -1493,7 +1494,8 @@
                             } 
                         }
                     }
-                }
+                },
+                plugins: dataLabelsEnabled ? [ChartDataLabels] : [] // PERBAIKAN: Register plugin hanya jika aktif
             };
             
             charts[canvasId] = new Chart(ctx, config);
@@ -1532,7 +1534,7 @@
                 }
             };
             
-            // Add data labels if enabled
+            // Add data labels if enabled - PERBAIKAN: Data labels sekarang berfungsi
             if (dataLabelsEnabled) {
                 plugins.datalabels = {
                     color: '#2c3e50',
@@ -1540,7 +1542,7 @@
                     align: 'top',
                     font: {
                         weight: 'bold',
-                        size: 10 // Ukuran font lebih kecil
+                        size: 10
                     },
                     formatter: function(value) {
                         return formatNumber(value.toFixed(2));
@@ -1572,7 +1574,8 @@
                             } 
                         }
                     }
-                }
+                },
+                plugins: dataLabelsEnabled ? [ChartDataLabels] : [] // PERBAIKAN: Register plugin hanya jika aktif
             };
             
             charts[canvasId] = new Chart(ctx, config);
